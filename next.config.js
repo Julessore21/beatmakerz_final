@@ -1,6 +1,12 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
-
+const nextConfig = {
+  reactStrictMode: true,
+  experimental: {
+    typedRoutes: true,
+    optimizePackageImports: ["react-icons", "framer-motion"],
+  },
+};
+module.exports = nextConfig;
 module.exports = nextConfig;
 
 // next.config.js
@@ -35,6 +41,46 @@ module.exports = {
       {
         source: "/cgv",
         destination: "/web/cgv",
+        permanent: true,
+      },
+      {
+        source: "/faq",
+        destination: "/web/faq",
+        permanent: true,
+      },
+      {
+        source: "/politique",
+        destination: "/web/politique",
+        permanent: true,
+      },
+      {
+        source: "/mentions",
+        destination: "/web/mentions",
+        permanent: true,
+      },
+      {
+        source: "/contact",
+        destination: "/web/contact",
+        permanent: true,
+      },
+      {
+        source: "/cartecadeau",
+        destination: "/web/cartes-cadeau",
+        permanent: true,
+      },
+      {
+        source: "/panier",
+        destination: "/web/panier",
+        permanent: true,
+      },
+      {
+        source: "/profil",
+        destination: "/web/profil",
+        permanent: true,
+      },
+      {
+        source: "/catalogue",
+        destination: "/web/catalogue",
         permanent: true,
       },
 
