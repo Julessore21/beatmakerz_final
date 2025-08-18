@@ -1,11 +1,12 @@
-// src/app/layout.tsx
-import React from "react";
+import "@/styles/globals.css";
+import type { Metadata } from "next";
+import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
+import GlobalAudioPlayer from "@/components/GlobalAudioPlayer";
 import NavBar from "@/components/Navbar";
-import "../styles/globals.css"; // si tu as des styles globaux
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Beatmakerz",
-  description: "Catalogue de beats & services audio",
+  description: "...",
 };
 
 export default function RootLayout({
@@ -14,13 +15,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body>
-        <div className="min-h-screen flex flex-col bg-black text-white">
-          <NavBar />
-          <main className="flex-grow">{children}</main>
-          {/* Optionnel : Footer ici */}
-        </div>
+        <AudioPlayerProvider>
+          <header>
+            <NavBar />
+          </header>
+
+          {children}
+
+          <GlobalAudioPlayer />
+        </AudioPlayerProvider>
       </body>
     </html>
   );

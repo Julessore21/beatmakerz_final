@@ -1,30 +1,45 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import BeatCard from "@/components/BeatCard";
 import {
   Search,
-  SlidersHorizontal,
   Grid3X3,
   Rows3,
-  Play,
-  Pause,
-  X,
+  SlidersHorizontal,
+  PlayCircle,
+  Plus,
   Heart,
-  ShoppingCart,
-  ChevronLeft,
-  ChevronRight,
+  Music4,
 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scrollarea";
-import AudioPlayer from "@/components/ui/audioplayer";
-import Pagination from "@/components/ui/pagination";
-import BeatRow from "@/components/ui/beatrow";
-import { useAudioPlayer } from "@/hooks/useAudioPlayer";
+import { useAudio } from "@/context/AudioPlayerContext";
 
-/* --------------------------- Demo data (identique) --------------------------- */
-const genres = [
+/* ------------------------------- Types ---------------------------------- */
+
+type Tag = "Tendance" | "Nouveau" | "Populaire";
+type ViewMode = "grid" | "table";
+
+export type Beat = {
+  id: number;
+  name: string;
+  artist: string;
+  genre: string;
+  bpm: number;
+  key: string;
+  tag: Tag | null;
+  audio: string;
+};
+
+/* -------------------------- Données / Constantes ------------------------- */
+
+const TEST_AUDIO =
+  "/audio/Woke up late, still rich from yesterday  (Remix) (Instrumental) (1).mp3"; // place un fichier ici
+
+const GENRES = [
   "Drill",
   "Trap",
   "Lofi",
@@ -32,568 +47,358 @@ const genres = [
   "R&B",
   "Soul",
   "West Coast",
-];
-const keys = ["Fm", "Cm", "Gm", "Am", "Dm", "Bb", "Eb", "Abm", "C#m", "F#m"];
+] as const;
+const KEYS = [
+  "Fm",
+  "Cm",
+  "Gm",
+  "Am",
+  "Dm",
+  "Bb",
+  "Eb",
+  "Abm",
+  "C#m",
+  "F#m",
+] as const;
+const QUICK_TAGS: Tag[] = ["Tendance", "Nouveau", "Populaire"];
+const SORTS = ["Pertinence", "Nouveautés", "Populaire"] as const;
 
-type Beat = {
-  id: number;
-  name: string;
-  artist: string;
-  genre: string;
-  bpm: number;
-  key: string;
-  tag: string | null;
-  audio: string;
-};
-
+/** Génère une liste fixe au premier rendu pour éviter tout mismatch SSR/CSR */
 const generateRandomBeats = (count: number): Beat[] => {
   const artists = [
-    "Central Cee",
-    "Travis Scott",
+    "Metro Boomin",
+    "Kendrick Lamar",
+    "Drake",
     "J. Cole",
     "Nas",
-    "Metro Boomin",
-    "Drake",
-    "Kanye West",
-    "Lil Baby",
-    "Kendrick Lamar",
+    "Travis Scott",
     "The Weeknd",
   ];
-  const adjectives = [
-    "Fire",
-    "Epic",
-    "Dark",
-    "Smooth",
-    "Melodic",
-    "Hard",
-    "Soulful",
-    "Vibing",
-    "Vintage",
-    "Dreamy",
-  ];
-  const tags = ["🔥", "Nouveauté", "Populaire", null];
-
   return Array.from({ length: count }, (_, i) => ({
     id: i + 1,
-    name: `${adjectives[Math.floor(Math.random() * adjectives.length)]} Beat ${
-      i + 1
-    }`,
+    name: `Beat ${i + 1}`,
     artist: `${artists[Math.floor(Math.random() * artists.length)]} Type Beat`,
-    genre: genres[Math.floor(Math.random() * genres.length)],
-    bpm: Math.floor(Math.random() * (160 - 80) + 80),
-    key: keys[Math.floor(Math.random() * keys.length)],
-    tag: tags[Math.floor(Math.random() * tags.length)],
-    audio: "/audio/beats/beats.mp3",
+    genre: GENRES[Math.floor(Math.random() * GENRES.length)],
+    bpm: 80 + Math.floor(Math.random() * 80),
+    key: KEYS[Math.floor(Math.random() * KEYS.length)],
+    tag: QUICK_TAGS[Math.floor(Math.random() * QUICK_TAGS.length)] ?? null,
+    audio: TEST_AUDIO,
   }));
 };
 
-/* -------------------------------- Helpers -------------------------------- */
-type BPMRange = { label: string; min: number; max: number };
-const bpmRanges: BPMRange[] = [
-  { label: "80-100", min: 80, max: 100 },
-  { label: "101-120", min: 101, max: 120 },
-  { label: "121-140", min: 121, max: 140 },
-  { label: "141+", min: 141, max: Infinity },
-];
-type ViewMode = "grid" | "table";
+/* --------------------------------- UI ----------------------------------- */
 
-const Chip: React.FC<{
-  children: React.ReactNode;
+const Chip = ({
+  active,
+  onClick,
+  children,
+  className = "",
+}: {
   active?: boolean;
   onClick?: () => void;
+  children: React.ReactNode;
   className?: string;
-}> = ({ children, active, onClick, className }) => (
+}) => (
   <button
     onClick={onClick}
-    className={[
-      "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-all border shadow-sm",
+    className={`px-3 py-1.5 rounded-full border text-sm transition-colors ${
       active
-        ? "bg-[#5b3bc4] border-[#5b3bc4] text-white"
-        : "bg-black/40 border-white/10 text-gray-300 hover:bg-white/10",
-      className || "",
-    ].join(" ")}
+        ? "bg-[#7C5CFF] border-[#7C5CFF] text-white"
+        : "border-white/15 text-zinc-200 hover:bg-white/5"
+    } ${className}`}
   >
     {children}
   </button>
 );
 
-/* ----------------------------- Beat Card (new) ----------------------------- */
-const BeatCard: React.FC<{
-  beat: Beat;
-  isCurrent: boolean;
-  isPlaying: boolean;
-  onPlay: (b: Beat) => void;
-  onFav: (id: number) => void;
-  fav: boolean;
-  onAddToCart: (id: number) => void;
-}> = ({ beat, isCurrent, isPlaying, onPlay, onFav, fav, onAddToCart }) => (
+const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+  <div className="text-xs uppercase tracking-wider text-zinc-400 mb-2">
+    {children}
+  </div>
+);
+
+const Card = ({ children }: { children: React.ReactNode }) => (
   <motion.div
     layout
-    whileHover={{ y: -4 }}
-    className="group relative rounded-2xl border border-white/10 bg-gradient-to-b from-zinc-900/60 to-black p-4 shadow-lg"
+    whileHover={{ y: -2 }}
+    className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#2b233f]/60 to-[#181622]/60 p-4 shadow-xl"
   >
-    {/* corner dot */}
-    {beat.tag && (
-      <span className="absolute -top-2 left-4 rounded-full bg-white/10 backdrop-blur px-2 py-0.5 text-[10px] uppercase tracking-wide">
-        {beat.tag}
-      </span>
-    )}
-
-    <div className="flex items-start gap-3">
-      <button
-        onClick={() => onPlay(beat)}
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/5 transition hover:bg-white/10"
-        aria-label={isCurrent && isPlaying ? "Pause" : "Lecture"}
-      >
-        {isCurrent && isPlaying ? <Pause size={18} /> : <Play size={18} />}
-      </button>
-
-      <div className="min-w-0 flex-1">
-        <h3 className="truncate text-sm font-semibold">{beat.name}</h3>
-        <p className="truncate text-xs text-gray-400">{beat.artist}</p>
-      </div>
-
-      <button
-        onClick={() => onFav(beat.id)}
-        className={`rounded-full p-2 transition ${
-          fav ? "text-[#ff3b81]" : "text-gray-400 hover:text-white"
-        }`}
-        aria-label="Ajouter aux favoris"
-        title="Favori"
-      >
-        <Heart size={18} fill={fav ? "#ff3b81" : "transparent"} />
-      </button>
-    </div>
-
-    <div className="mt-4 grid grid-cols-3 gap-2 text-center text-[11px] text-gray-300">
-      <div className="rounded-lg border border-white/10 bg-white/5 py-1">
-        Genre
-        <br />
-        <span className="text-white">{beat.genre}</span>
-      </div>
-      <div className="rounded-lg border border-white/10 bg-white/5 py-1">
-        BPM
-        <br />
-        <span className="text-white">{beat.bpm}</span>
-      </div>
-      <div className="rounded-lg border border-white/10 bg-white/5 py-1">
-        Key
-        <br />
-        <span className="text-white">{beat.key}</span>
-      </div>
-    </div>
-
-    <div className="mt-4 flex items-center justify-between">
-      <button
-        onClick={() => onPlay(beat)}
-        className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-semibold transition hover:bg-[#5b3bc4] hover:border-[#5b3bc4]"
-      >
-        {isCurrent && isPlaying ? "Pause" : "Écouter"}
-      </button>
-
-      <button
-        onClick={() => onAddToCart(beat.id)}
-        className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold transition hover:bg-white/10"
-      >
-        <ShoppingCart size={14} /> Ajouter
-      </button>
-    </div>
-
-    {/* glow on hover */}
-    <div
-      className="pointer-events-none absolute inset-0 -z-10 rounded-2xl opacity-0 blur-2xl transition duration-300 group-hover:opacity-100"
-      style={{
-        background:
-          "radial-gradient(600px circle at 0% 0%, rgba(91,59,196,0.2), transparent 40%)",
-      }}
-    />
+    {children}
   </motion.div>
 );
 
-/* --------------------------------- Page --------------------------------- */
-const Catalogue: React.FC = () => {
-  const [beats, setBeats] = useState<Beat[]>([]);
-  useEffect(() => {
-    setBeats(generateRandomBeats(500));
-  }, []);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [placeholder, setPlaceholder] = useState(
-    "Rechercher un beat, artiste, genre…"
-  );
+/* ------------------------------ Page ------------------------------------ */
+
+export default function CataloguePage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // lecteur global
+  const { play, isPlaying, track, setQueue } = useAudio();
+
+  // état filtres / vue
+  const [query, setQuery] = useState("");
+  const [debounced, setDebounced] = useState("");
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [selectedBPM, setSelectedBPM] = useState<BPMRange | null>(null);
+  const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
+  const [sort, setSort] = useState<(typeof SORTS)[number]>("Pertinence");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [sort, setSort] = useState<"relevance" | "bpm-asc" | "bpm-desc">(
-    "relevance"
-  );
-  const [favs, setFavs] = useState<number[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      return JSON.parse(localStorage.getItem("favBeats") || "[]");
-    } catch {
-      return [];
-    }
-  });
+
+  // pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const beatsPerPage = 50;
+  const pageSize = 8;
 
-  const {
-    beat: currentBeat,
-    isPlaying,
-    playBeat,
-    togglePlay,
-  } = useAudioPlayer();
+  // dataset stable
+  const beats = useMemo(() => generateRandomBeats(50), []);
 
-  // Placeholder dynamique (vibes)
+  /* ------------------------ Debounce de la recherche ------------------------ */
   useEffect(() => {
-    const pool = [
-      "Rechercher un beat, artiste, genre…",
-      "Essaye : Travis Scott Type Beat",
-      "Filtrer par tonalité (ex : F#m)…",
-      "Trouver par BPM (ex : 120)…",
-      "Nouveauté, Populaire, 🔥 …",
-    ];
-    let i = 0;
-    const id = setInterval(() => {
-      i = (i + 1) % pool.length;
-      setPlaceholder(pool[i]);
-    }, 4000);
-    return () => clearInterval(id);
-  }, []);
+    const t = setTimeout(() => setDebounced(query), 350);
+    return () => clearTimeout(t);
+  }, [query]);
 
-  // Persist favoris
+  /* ------------------ Lecture des filtres depuis l'URL (mount) -------------- */
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("favBeats", JSON.stringify(favs));
+    if (!searchParams) return;
+    const q = searchParams.get("q") ?? "";
+    const g = searchParams.get("genres")?.split(",").filter(Boolean) ?? [];
+    const k = searchParams.get("keys")?.split(",").filter(Boolean) ?? [];
+    const tag = (searchParams.get("tag") as Tag) || null;
+    const s =
+      (searchParams.get("sort") as (typeof SORTS)[number]) || "Pertinence";
+    const v = (searchParams.get("view") as ViewMode) || "grid";
+
+    setQuery(q);
+    setDebounced(q);
+    setSelectedGenres(g);
+    setSelectedKeys(k);
+    setSelectedTag(tag);
+    setSort(s);
+    setViewMode(v);
+  }, []); // pas de deps ici
+
+  /* ------------------ Sync URL (avec garde pour éviter boucles) -------------- */
+  const lastQSRef = useRef<string>("");
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (debounced) p.set("q", debounced);
+    if (selectedGenres.length) p.set("genres", selectedGenres.join(","));
+    if (selectedKeys.length) p.set("keys", selectedKeys.join(","));
+    if (selectedTag) p.set("tag", selectedTag);
+    p.set("sort", sort);
+    p.set("view", viewMode);
+    const qs = p.toString();
+    if (qs !== lastQSRef.current) {
+      lastQSRef.current = qs;
+      router.replace(qs ? `?${qs}` : "?", { scroll: false });
     }
-  }, [favs]);
-
-  useEffect(
-    () => setCurrentPage(1),
-    [
-      searchTerm,
-      selectedGenres,
-      selectedKeys,
-      selectedTag,
-      selectedBPM,
-      sort,
-      viewMode,
-    ]
-  );
-
-  const toggleList = (
-    value: string,
-    list: string[],
-    setList: (v: string[]) => void
-  ) =>
-    setList(
-      list.includes(value) ? list.filter((x) => x !== value) : [...list, value]
-    );
-
-  const filteredBeats = useMemo(() => {
-    const term = searchTerm.trim().toLowerCase();
-    const arr = beats.filter((b) => {
-      const matchesSearch =
-        !term ||
-        b.name.toLowerCase().includes(term) ||
-        b.artist.toLowerCase().includes(term) ||
-        b.genre.toLowerCase().includes(term) ||
-        b.key.toLowerCase().includes(term);
-      const matchesGenre =
-        selectedGenres.length === 0 || selectedGenres.includes(b.genre);
-      const matchesKey =
-        selectedKeys.length === 0 || selectedKeys.includes(b.key);
-      const matchesTag = !selectedTag || b.tag === selectedTag;
-      const matchesBPM =
-        !selectedBPM || (b.bpm >= selectedBPM.min && b.bpm <= selectedBPM.max);
-      return (
-        matchesSearch && matchesGenre && matchesKey && matchesTag && matchesBPM
-      );
-    });
-    if (sort === "bpm-asc") arr.sort((a, b) => a.bpm - b.bpm);
-    if (sort === "bpm-desc") arr.sort((a, b) => b.bpm - a.bpm);
-    return arr;
   }, [
-    beats,
-    searchTerm,
+    debounced,
     selectedGenres,
     selectedKeys,
     selectedTag,
-    selectedBPM,
     sort,
+    viewMode,
+    router,
   ]);
 
-  // Pagination
-  const startIndex = (currentPage - 1) * beatsPerPage;
-  const currentBeats = filteredBeats.slice(
-    startIndex,
-    startIndex + beatsPerPage
-  );
-  const totalPages = Math.ceil(filteredBeats.length / beatsPerPage);
+  /* -------------------- Reset pagination si filtres changent ----------------- */
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debounced, selectedGenres, selectedKeys, selectedTag, sort, viewMode]);
 
-  // Actions
-  const onFav = (id: number) =>
-    setFavs((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  const onAddToCart = (id: number) => {
-    // branche ton store/cart ici
-    console.log("ADD_TO_CART", id);
-  };
+  /* ------------------------------- Filtrage --------------------------------- */
+  const filtered = useMemo(() => {
+    return beats.filter((b) => {
+      const mQ =
+        !debounced ||
+        b.name.toLowerCase().includes(debounced.toLowerCase()) ||
+        b.artist.toLowerCase().includes(debounced.toLowerCase()) ||
+        b.genre.toLowerCase().includes(debounced.toLowerCase());
 
-  // Next/Prev (lecture)
-  const goPrev = () => {
-    if (!currentBeat) return;
-    const idx = currentBeats.findIndex((b) => b.id === currentBeat.id);
-    const prev = currentBeats[idx - 1];
-    if (prev) playBeat(prev);
-  };
-  const goNext = () => {
-    if (!currentBeat) return;
-    const idx = currentBeats.findIndex((b) => b.id === currentBeat.id);
-    const next = currentBeats[idx + 1];
-    if (next) playBeat(next);
-  };
+      const mG = selectedGenres.length
+        ? selectedGenres.includes(b.genre)
+        : true;
+      const mK = selectedKeys.length ? selectedKeys.includes(b.key) : true;
+      const mT = selectedTag ? b.tag === selectedTag : true;
+
+      return mQ && mG && mK && mT;
+    });
+  }, [beats, debounced, selectedGenres, selectedKeys, selectedTag]);
+
+  /* -------------------------------- Tri ------------------------------------ */
+  const sorted = useMemo(() => {
+    switch (sort) {
+      case "Nouveautés":
+        return [...filtered].reverse();
+      case "Populaire":
+        return [...filtered].sort((a, b) => (a.tag === "Populaire" ? -1 : 1));
+      default:
+        return filtered;
+    }
+  }, [filtered, sort]);
+
+  /* ----------------------------- Pagination --------------------------------- */
+  const indexOfLast = currentPage * pageSize;
+  const currentBeats = sorted.slice(indexOfLast - pageSize, indexOfLast);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+
+  /* --------------- Alimente la queue du lecteur sans boucle ----------------- */
+  const lastQueueKey = useRef<string>("");
+  useEffect(() => {
+    const key = currentBeats.map((b) => b.id).join(",");
+    if (key !== lastQueueKey.current) {
+      lastQueueKey.current = key;
+      setQueue(currentBeats);
+    }
+  }, [currentBeats, setQueue]);
+
+  /* ------------------------------ Actions UI -------------------------------- */
+  const toggleInArray = (
+    val: string,
+    arr: string[],
+    set: (v: string[]) => void
+  ) => set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
+
+  const onPlay = (b: Beat) => play(b, currentBeats);
+
+  /* --------------------------------- UI ------------------------------------ */
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-zinc-900/80 to-black text-white pb-36 pt-[84px]">
-      {/* HERO */}
-      <section className="mx-auto w-full max-w-7xl px-4">
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-[#1b1633] via-[#120f25] to-black p-6 md:p-8 shadow-xl">
-          <div className="flex flex-col items-start gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Catalogue
-              </h1>
-              <p className="mt-1 text-sm text-gray-400">
-                {filteredBeats.length} résultat
-                {filteredBeats.length > 1 ? "s" : ""} • {genres.length} genres •
-                vue {viewMode === "grid" ? "grille" : "tableau"}
-              </p>
-            </div>
-
-            {/* Search + view + sort */}
-            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
-              <div className="relative md:w-96">
-                <Search
-                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"
-                  size={18}
-                />
-                <Input
-                  className="w-full rounded-full border border-white/10 bg-black/50 pl-10"
-                  placeholder={placeholder}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-
-              <div className="flex items-center gap-2 self-stretch md:self-auto">
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                    viewMode === "grid"
-                      ? "bg-white/10 border-white/10"
-                      : "border-white/10 hover:bg-white/5"
-                  }`}
-                  aria-label="Vue grille"
-                >
-                  <Grid3X3 size={16} /> Grille
-                </button>
-                <button
-                  onClick={() => setViewMode("table")}
-                  className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
-                    viewMode === "table"
-                      ? "bg-white/10 border-white/10"
-                      : "border-white/10 hover:bg-white/5"
-                  }`}
-                  aria-label="Vue tableau"
-                >
-                  <Rows3 size={16} /> Tableau
-                </button>
-
-                <div className="relative">
-                  <select
-                    value={sort}
-                    onChange={(e) => setSort(e.target.value as typeof sort)}
-                    className="rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-xs font-semibold"
-                    aria-label="Trier"
-                  >
-                    <option value="relevance">Pertinence</option>
-                    <option value="bpm-asc">BPM ↑</option>
-                    <option value="bpm-desc">BPM ↓</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick filters bar */}
-          <div className="mt-5 flex items-center gap-2 text-xs">
-            <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 font-semibold">
-              <SlidersHorizontal size={14} /> Filtres rapides
-            </span>
-            <ScrollArea className="h-8 w-full">
-              <div className="flex w-max items-center gap-2 pl-2">
-                {["🔥", "Nouveauté", "Populaire"].map((t) => (
-                  <Chip
-                    key={t}
-                    active={selectedTag === t}
-                    onClick={() =>
-                      setSelectedTag((prev) => (prev === t ? null : t))
-                    }
-                  >
-                    {t}
-                  </Chip>
-                ))}
-                {bpmRanges.map((b) => (
-                  <Chip
-                    key={b.label}
-                    active={selectedBPM?.label === b.label}
-                    onClick={() =>
-                      setSelectedBPM((p) => (p?.label === b.label ? null : b))
-                    }
-                  >
-                    {b.label}
-                  </Chip>
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black text-white pt-24 pb-36">
+      {/* En-tête */}
+      <motion.div
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mx-auto w-[min(1200px,92vw)] rounded-3xl border border-white/10 bg-gradient-to-r from-[#7C5CFF]/35 to-[#b8aaff]/20 p-6 shadow-xl"
+      >
+        <div className="flex items-center gap-3 text-2xl font-bold">
+          <Music4 className="opacity-80" />
+          Catalogue
         </div>
-      </section>
+        <div className="mt-1 text-sm text-zinc-300">
+          500 résultats • 7 genres • vue {viewMode}
+        </div>
+      </motion.div>
 
-      {/* ACTIVE FILTERS */}
-      <section className="mx-auto mt-4 w-full max-w-7xl px-4">
+      {/* Barre outils + recherche */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mx-auto mt-6 flex w-[min(1200px,92vw)] flex-col gap-4 rounded-2xl border border-white/10 bg-black/40 p-4"
+      >
         <div className="flex flex-wrap items-center gap-2">
-          {[...selectedGenres, ...selectedKeys, selectedTag, selectedBPM?.label]
-            .filter(Boolean)
-            .map((label) => (
-              <span
-                key={label as string}
-                className="bg-[#5b3bc4] text-white text-xs px-3 py-1 rounded-full inline-flex items-center gap-2"
-              >
-                {label}
-                <button
-                  onClick={() => {
-                    setSelectedGenres((g) => g.filter((x) => x !== label));
-                    setSelectedKeys((k) => k.filter((x) => x !== label));
-                    if (selectedTag === label) setSelectedTag(null);
-                    if (selectedBPM?.label === label) setSelectedBPM(null);
-                  }}
-                  className="hover:opacity-80"
-                >
-                  <X size={14} />
-                </button>
-              </span>
-            ))}
-          {(selectedGenres.length ||
-            selectedKeys.length ||
-            selectedTag ||
-            selectedBPM) && (
-            <button
-              onClick={() => {
-                setSelectedGenres([]);
-                setSelectedKeys([]);
-                setSelectedTag(null);
-                setSelectedBPM(null);
-              }}
-              className="text-xs text-gray-400 underline-offset-2 hover:underline"
-            >
-              Tout effacer
-            </button>
-          )}
-        </div>
-      </section>
-
-      {/* BODY */}
-      <section className="mx-auto mt-6 grid w-full max-w-7xl grid-cols-1 gap-8 px-4 md:grid-cols-[280px,1fr]">
-        {/* Side filters */}
-        <aside className="order-2 md:order-1">
-          <div className="sticky top-24 space-y-6 rounded-2xl border border-white/10 bg-black/40 p-4">
-            <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                Genres
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {genres.map((g) => (
-                  <Chip
-                    key={g}
-                    active={selectedGenres.includes(g)}
-                    onClick={() =>
-                      toggleList(g, selectedGenres, setSelectedGenres)
-                    }
-                  >
-                    {g}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                Tonalités
-              </p>
-              <ScrollArea className="h-24">
-                <div className="flex flex-wrap gap-2 pr-2">
-                  {keys.map((k) => (
-                    <Chip
-                      key={k}
-                      active={selectedKeys.includes(k)}
-                      onClick={() =>
-                        toggleList(k, selectedKeys, setSelectedKeys)
-                      }
-                    >
-                      {k}
-                    </Chip>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-
-            <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                Tags
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {["🔥", "Nouveauté", "Populaire"].map((t) => (
-                  <Chip
-                    key={t}
-                    active={selectedTag === t}
-                    onClick={() =>
-                      setSelectedTag((prev) => (prev === t ? null : t))
-                    }
-                  >
-                    {t}
-                  </Chip>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                BPM
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {bpmRanges.map((b) => (
-                  <Chip
-                    key={b.label}
-                    active={selectedBPM?.label === b.label}
-                    onClick={() =>
-                      setSelectedBPM((p) => (p?.label === b.label ? null : b))
-                    }
-                  >
-                    {b.label}
-                  </Chip>
-                ))}
-              </div>
-            </div>
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal size={16} className="text-zinc-400" />
+            <span className="text-sm text-zinc-400">Filtres rapides</span>
           </div>
+          <div className="flex flex-wrap gap-2">
+            {QUICK_TAGS.map((t) => (
+              <Chip
+                key={t}
+                active={selectedTag === t}
+                onClick={() => setSelectedTag(selectedTag === t ? null : t)}
+              >
+                {t}
+              </Chip>
+            ))}
+          </div>
+
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${
+                viewMode === "grid"
+                  ? "border-[#7C5CFF] bg-[#7C5CFF] text-white"
+                  : "border-white/15 hover:bg-white/5"
+              }`}
+            >
+              <Grid3X3 size={16} /> Grille
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${
+                viewMode === "table"
+                  ? "border-[#7C5CFF] bg-[#7C5CFF] text-white"
+                  : "border-white/15 hover:bg-white/5"
+              }`}
+            >
+              <Rows3 size={16} /> Tableau
+            </button>
+
+            <select
+              value={sort}
+              onChange={(e) =>
+                setSort(e.target.value as (typeof SORTS)[number])
+              }
+              className="rounded-full border border-white/15 bg-black/50 px-3 py-1.5 text-sm outline-none"
+            >
+              {SORTS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Recherche */}
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500"
+            size={18}
+          />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Tape un artiste, un genre…"
+            className="w-full rounded-2xl border border-white/15 bg-black/60 pl-11 py-3"
+          />
+        </div>
+      </motion.div>
+
+      {/* Contenu */}
+      <div className="mx-auto mt-8 grid w-[min(1200px,92vw)] grid-cols-12 gap-6">
+        {/* Filtres latéraux */}
+        <aside className="col-span-12 md:col-span-3">
+          <Card>
+            <SectionTitle>Genres</SectionTitle>
+            <div className="flex flex-wrap gap-2">
+              {GENRES.map((g) => (
+                <Chip
+                  key={g}
+                  active={selectedGenres.includes(g)}
+                  onClick={() =>
+                    toggleInArray(g, selectedGenres, setSelectedGenres)
+                  }
+                >
+                  {g}
+                </Chip>
+              ))}
+            </div>
+
+            <div className="mt-5">
+              <SectionTitle>Tonalités</SectionTitle>
+              <div className="flex flex-wrap gap-2">
+                {KEYS.map((k) => (
+                  <Chip
+                    key={k}
+                    active={selectedKeys.includes(k)}
+                    onClick={() =>
+                      toggleInArray(k, selectedKeys, setSelectedKeys)
+                    }
+                  >
+                    {k}
+                  </Chip>
+                ))}
+              </div>
+            </div>
+          </Card>
         </aside>
 
-        {/* Results */}
-        <main className="order-1 md:order-2">
+        {/* Liste des beats */}
+        <section className="col-span-12 md:col-span-9">
           <AnimatePresence mode="popLayout">
             {viewMode === "grid" ? (
               <motion.div
@@ -601,118 +406,101 @@ const Catalogue: React.FC = () => {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
-                className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
               >
-                {currentBeats.map((beat) => (
+                {currentBeats.map((b) => (
                   <BeatCard
-                    key={beat.id}
-                    beat={beat}
-                    isCurrent={currentBeat?.id === beat.id}
+                    key={b.id}
+                    id={b.id}
+                    name={b.name}
+                    artist={b.artist}
+                    genre={b.genre}
+                    bpm={b.bpm}
+                    keySig={b.key}
+                    tag={b.tag ?? undefined}
+                    isCurrent={track?.id === b.id}
                     isPlaying={isPlaying}
-                    onPlay={(b) =>
-                      currentBeat?.id === b.id ? togglePlay() : playBeat(b)
-                    }
-                    onFav={onFav}
-                    fav={favs.includes(beat.id)}
-                    onAddToCart={onAddToCart}
+                    onPlayPause={() => {
+                      // Si c'est déjà le morceau courant et qu'il joue, toggle via play(b)
+                      // (selon ton contexte, tu peux avoir toggle() — adapte si besoin)
+                      play(b, currentBeats); // on repousse la queue pour chaîner à partir de la page
+                    }}
+                    onAdd={() => {
+                      // TODO: ajout au panier / favoris
+                      console.log("add", b.id);
+                    }}
+                    onFav={() => {
+                      console.log("fav", b.id);
+                    }}
                   />
                 ))}
-                {currentBeats.length === 0 && (
-                  <div className="col-span-full rounded-2xl border border-white/10 bg-black/30 p-10 text-center text-sm text-gray-400">
-                    Aucun résultat ne correspond à vos filtres.
-                  </div>
-                )}
               </motion.div>
             ) : (
               <motion.div
                 key="table"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                className="overflow-hidden rounded-2xl border border-white/10"
               >
-                <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/30">
-                  <table className="w-full border-collapse text-left">
-                    <thead className="sticky top-0 z-10 border-b border-white/10 bg-black/60 backdrop-blur text-[12px] text-gray-400">
-                      <tr>
-                        <th className="px-4 py-3 w-10">#</th>
-                        <th className="px-2 py-3">Titre</th>
-                        <th className="px-2 py-3">Artiste</th>
-                        <th className="px-2 py-3">Genre</th>
-                        <th className="px-2 py-3">BPM</th>
-                        <th className="px-2 py-3">Key</th>
+                <table className="w-full text-sm">
+                  <thead className="bg-white/5 text-zinc-300">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Titre</th>
+                      <th className="px-4 py-3 text-left">Artiste</th>
+                      <th className="px-4 py-3">Genre</th>
+                      <th className="px-4 py-3">BPM</th>
+                      <th className="px-4 py-3">Key</th>
+                      <th className="px-4 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/10">
+                    {currentBeats.map((b) => (
+                      <tr key={b.id} className="hover:bg-white/5">
+                        <td className="px-4 py-3">{b.name}</td>
+                        <td className="px-4 py-3 text-zinc-300">{b.artist}</td>
+                        <td className="px-4 py-3 text-center">{b.genre}</td>
+                        <td className="px-4 py-3 text-center">{b.bpm}</td>
+                        <td className="px-4 py-3 text-center">{b.key}</td>
+                        <td className="px-4 py-3 text-right">
+                          <Chip onClick={() => onPlay(b)} className="!px-3">
+                            <PlayCircle size={16} className="mr-1" />{" "}
+                            {track?.id === b.id && isPlaying
+                              ? "Pause"
+                              : "Écouter"}
+                          </Chip>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {currentBeats.map((beat, i) => (
-                        <BeatRow
-                          key={beat.id}
-                          beat={beat}
-                          index={startIndex + i}
-                          onPlay={(b: Beat) =>
-                            currentBeat?.id === b.id
-                              ? togglePlay()
-                              : playBeat(b)
-                          }
-                          isPlaying={isPlaying}
-                          current={currentBeat}
-                        />
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </motion.div>
             )}
           </AnimatePresence>
 
           {/* Pagination */}
-          {filteredBeats.length > beatsPerPage && (
-            <div className="mt-6">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={(page: number) => {
-                  setCurrentPage(page);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              />
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              className="rounded-full border border-white/15 px-3 py-1.5 text-sm text-zinc-200 disabled:opacity-40 hover:bg-white/5"
+            >
+              ← Précédent
+            </button>
+            <div className="text-sm text-zinc-400">
+              Page <span className="text-white">{currentPage}</span> /{" "}
+              {totalPages}
             </div>
-          )}
-        </main>
-      </section>
-
-      {/* Player global + prev/next */}
-      <div className="fixed inset-x-0 bottom-14 z-50 flex justify-center pointer-events-none">
-        <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-white/10 bg-black/70 px-3 py-1.5 backdrop-blur">
-          <button
-            onClick={goPrev}
-            className="rounded-full p-1 hover:bg-white/10"
-            aria-label="Précédent"
-          >
-            <ChevronLeft size={18} />
-          </button>
-          <button
-            onClick={togglePlay}
-            className="rounded-full px-3 py-1 text-sm hover:bg-white/10"
-          >
-            {isPlaying ? "Pause" : "Lecture"}
-          </button>
-          <button
-            onClick={goNext}
-            className="rounded-full p-1 hover:bg-white/10"
-            aria-label="Suivant"
-          >
-            <ChevronRight size={18} />
-          </button>
-        </div>
+            <button
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              className="rounded-full border border-white/15 px-3 py-1.5 text-sm text-zinc-200 disabled:opacity-40 hover:bg-white/5"
+            >
+              Suivant →
+            </button>
+          </div>
+        </section>
       </div>
-
-      <AudioPlayer
-        beat={currentBeat}
-        isPlaying={isPlaying}
-        togglePlay={togglePlay}
-      />
     </div>
   );
-};
-
-export default Catalogue;
+}
