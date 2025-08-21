@@ -9,15 +9,30 @@ export default function GlobalPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [progress, setProgress] = useState(0);
 
+  // Charge une nouvelle source audio uniquement lorsque la piste change
   useEffect(() => {
     if (!audioRef.current || !current) return;
     audioRef.current.src = current.audio;
     if (isPlaying) {
+      // Lecture automatique si on est censé jouer
       audioRef.current.play();
     } else {
+      // Mise en pause sinon
       audioRef.current.pause();
     }
-  }, [current, isPlaying]);
+  }, [current]);
+
+  // Gère l'état lecture/pause sans réinitialiser la source
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.play();
+    } else {
+      audio.pause();
+    }
+  }, [isPlaying]);
 
   useEffect(() => {
     const audio = audioRef.current;
