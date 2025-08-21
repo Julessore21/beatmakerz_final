@@ -4,6 +4,7 @@ import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
 import { CartProvider } from "@/context/CartContext";
 import GlobalAudioPlayer from "@/components/GlobalAudioPlayer";
 import NavBar from "@/components/Navbar";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "Beatmakerz",
@@ -18,7 +19,11 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body>
+
         <CartProvider>
+
+        <AuthProvider>
+
           <AudioPlayerProvider>
             <header>
               <NavBar />
@@ -28,7 +33,7 @@ export default function RootLayout({
 
             <GlobalAudioPlayer />
           </AudioPlayerProvider>
-        </CartProvider>
+
       </body>
     </html>
   );
