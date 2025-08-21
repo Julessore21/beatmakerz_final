@@ -1,6 +1,7 @@
 import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
+import { CartProvider } from "@/context/CartContext";
 import GlobalAudioPlayer from "@/components/GlobalAudioPlayer";
 import NavBar from "@/components/Navbar";
 import { AuthProvider } from "@/context/AuthContext";
@@ -18,7 +19,11 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body>
+
+        <CartProvider>
+
         <AuthProvider>
+
           <AudioPlayerProvider>
             <header>
               <NavBar />
@@ -28,7 +33,7 @@ export default function RootLayout({
 
             <GlobalAudioPlayer />
           </AudioPlayerProvider>
-        </AuthProvider>
+
       </body>
     </html>
   );

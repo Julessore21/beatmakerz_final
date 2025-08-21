@@ -2,43 +2,20 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-
-type Item = {
-  id: number;
-  name: string;
-  price: number;
-};
+import { useCart } from "@/context/CartContext";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  items?: Item[];
-  totalPrice?: number;
-  totalItems?: number;
 }
 
-const defaultItems: Item[] = [
-  { id: 1, name: "Article A", price: 10 },
-  { id: 2, name: "Article B", price: 15 },
-  { id: 3, name: "Article C", price: 7.5 },
-];
-
-const CartSideBar = ({
-  isOpen,
-  onClose,
-  items = defaultItems,
-  totalPrice,
-}: Props) => {
+const CartSideBar = ({ isOpen, onClose }: Props) => {
   const router = useRouter();
+  const { items, totalPrice, totalItems } = useCart();
 
-  const computedTotalPrice =
-    typeof totalPrice === "number"
-      ? totalPrice
-      : items.reduce((acc, item) => acc + (Number(item.price) || 0), 0);
-
-  const totalArticles = items.length;
+  const computedTotalPrice = totalPrice;
+  const totalArticles = totalItems;
 
   const handleCloseAndNavigate = () => {
     onClose();
@@ -93,8 +70,10 @@ const CartSideBar = ({
                     key={item.id}
                     className="flex justify-between text-sm border-b border-gray-500 pb-2"
                   >
-                    <span>{item.name}</span>
-                    <span>{Number(item.price).toFixed(2)} €</span>
+                    <span>
+                      {item.name} x{item.quantity}
+                    </span>
+                    <span>{(item.price * item.quantity).toFixed(2)} €</span>
                   </div>
                 ))
               ) : (

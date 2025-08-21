@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa";
 import SearchBar from "./SearchBar";
 import CartSideBar from "./CartSideBar";
+import { useCart } from "@/context/CartContext";
 
 const AnimatedTwoBarsToggle = ({
   isOpen,
@@ -123,20 +124,7 @@ const NavBar = () => {
   const [showSearch, setShowSearch] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const [cartItems, setCartItems] = useState([
-    { id: 1, name: "Instrumentale 1", price: 9.99 },
-    { id: 2, name: "Instrumentale 2", price: 14.99 },
-    { id: 3, name: "Instrumentale 2", price: 14.99 },
-    { id: 4, name: "Instrumentale 2", price: 14.99 },
-    { id: 5, name: "Instrumentale 2", price: 14.99 },
-  ]);
-
-  const totalItems = cartItems.length;
-  const totalPrice = cartItems
-    .reduce((sum, item) => sum + item.price, 0)
-    .toFixed(2);
-
-  const rawTotalPrice = cartItems.reduce((sum, item) => sum + item.price, 0);
+  const { totalItems } = useCart();
 
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -333,9 +321,6 @@ const NavBar = () => {
       <CartSideBar
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        items={cartItems}
-        totalItems={totalItems}
-        totalPrice={rawTotalPrice}
       />
     </>
   );

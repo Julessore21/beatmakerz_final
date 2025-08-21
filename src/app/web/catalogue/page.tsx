@@ -7,6 +7,7 @@ import { Search, Grid3X3, Rows3, SlidersHorizontal } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { useAudio } from "@/context/AudioPlayerContext";
+import { useCart } from "@/context/CartContext";
 import BeatCard from "@/components/BeatCard";
 import BeatTableRow from "@/components/BeatTableRow";
 
@@ -24,6 +25,7 @@ export type Beat = {
   key: string;
   tag: Tag | null;
   audio: string;
+  price: number;
 };
 
 const TEST_AUDIO = "/audio/test.mp3";
@@ -81,6 +83,7 @@ const generateRandomBeats = (count: number): Beat[] => {
     key: KEYS[Math.floor(Math.random() * KEYS.length)],
     tag: QUICK_TAGS[Math.floor(Math.random() * QUICK_TAGS.length)] ?? null,
     audio: TEST_AUDIO,
+    price: parseFloat((9 + Math.random() * 20).toFixed(2)),
   }));
 };
 
@@ -121,6 +124,7 @@ export default function CataloguePage() {
   const searchParams = useSearchParams();
 
   const { play, toggle, isPlaying, track, setQueue } = useAudio();
+  const { addItem } = useCart();
 
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -448,7 +452,7 @@ export default function CataloguePage() {
                       isCurrent={track?.id === b.id}
                       isPlaying={isPlaying}
                       onPlayPause={() => onPlay(b)}
-                      onAdd={() => {}}
+                      onAdd={() => addItem({ id: b.id, name: b.name, price: b.price })}
                       onFav={() => {}}
                       onMore={() => {}}
                     />
@@ -486,7 +490,7 @@ export default function CataloguePage() {
                           isCurrent={track?.id === b.id}
                           isPlaying={isPlaying}
                           onPlayPause={() => onPlay(b)}
-                          onAdd={() => {}}
+                          onAdd={() => addItem({ id: b.id, name: b.name, price: b.price })}
                           onFav={() => {}}
                           onMore={() => {}}
                         />
