@@ -52,6 +52,16 @@ const KEYS = [
 const QUICK_TAGS: Tag[] = ["Tendance", "Nouveau", "Populaire"];
 const SORTS = ["Pertinence", "Nouveautés", "Populaire"] as const;
 
+// plages de BPM
+const BPM_RANGES = [
+  { label: "80 - 90", min: 80, max: 90 },
+  { label: "90 - 100", min: 90, max: 100 },
+  { label: "100 - 110", min: 100, max: 110 },
+  { label: "110 - 120", min: 110, max: 120 },
+  { label: "120 - 130", min: 120, max: 130 },
+  { label: "130+", min: 130, max: Infinity },
+];
+
 const generateRandomBeats = (count: number): Beat[] => {
   const artists = [
     "Metro Boomin",
@@ -118,6 +128,7 @@ export default function CataloguePage() {
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
+  const [selectedBpmRanges, setSelectedBpmRanges] = useState<string[]>([]);
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Pertinence");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
@@ -138,6 +149,7 @@ export default function CataloguePage() {
     const q = searchParams.get("q") ?? "";
     const g = searchParams.get("genres")?.split(",").filter(Boolean) ?? [];
     const k = searchParams.get("keys")?.split(",").filter(Boolean) ?? [];
+    const bpm = searchParams.get("bpms")?.split(",").filter(Boolean) ?? [];
     const tag = (searchParams.get("tag") as Tag) || null;
     const s =
       (searchParams.get("sort") as (typeof SORTS)[number]) || "Pertinence";
@@ -147,6 +159,7 @@ export default function CataloguePage() {
     setDebounced(q);
     setSelectedGenres(g);
     setSelectedKeys(k);
+    setSelectedBpmRanges(bpm);
     setSelectedTag(tag);
     setSort(s);
     setViewMode(v);
@@ -159,6 +172,7 @@ export default function CataloguePage() {
     if (debounced) p.set("q", debounced);
     if (selectedGenres.length) p.set("genres", selectedGenres.join(","));
     if (selectedKeys.length) p.set("keys", selectedKeys.join(","));
+    if (selectedBpmRanges.length) p.set("bpms", selectedBpmRanges.join(","));
     if (selectedTag) p.set("tag", selectedTag);
     p.set("sort", sort);
     p.set("view", viewMode);
@@ -171,6 +185,7 @@ export default function CataloguePage() {
     debounced,
     selectedGenres,
     selectedKeys,
+    selectedBpmRanges,
     selectedTag,
     sort,
     viewMode,
@@ -180,7 +195,15 @@ export default function CataloguePage() {
   /* reset page on filter change */
   useEffect(
     () => setCurrentPage(1),
-    [debounced, selectedGenres, selectedKeys, selectedTag, sort, viewMode]
+    [
+      debounced,
+      selectedGenres,
+      selectedKeys,
+      selectedBpmRanges,
+      selectedTag,
+      sort,
+      viewMode,
+    ]
   );
 
   /* filtering */
@@ -196,9 +219,25 @@ export default function CataloguePage() {
         : true;
       const mK = selectedKeys.length ? selectedKeys.includes(b.key) : true;
       const mT = selectedTag ? b.tag === selectedTag : true;
-      return mQ && mG && mK && mT;
+      const mB =
+        selectedBpmRanges.length > 0
+          ? BPM_RANGES.some(
+              (r) =>
+                selectedBpmRanges.includes(r.label) &&
+                b.bpm >= r.min &&
+                b.bpm < r.max
+            )
+          : true;
+      return mQ && mG && mK && mT && mB;
     });
-  }, [beats, debounced, selectedGenres, selectedKeys, selectedTag]);
+  }, [
+    beats,
+    debounced,
+    selectedGenres,
+    selectedKeys,
+    selectedTag,
+    selectedBpmRanges,
+  ]);
 
   /* sort */
   const sorted = useMemo(() => {
@@ -249,7 +288,7 @@ export default function CataloguePage() {
         <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-indigo-600/30 to-indigo-300/20 p-6 shadow-xl">
           <div className="text-2xl font-bold">🎵 Catalogue</div>
           <div className="mt-1 text-sm text-zinc-300">
-            500 résultats • 7 genres • vue {viewMode}
+            {sorted.length} résultats • {GENRES.length} genres • vue {viewMode}
           </div>
         </div>
 
@@ -362,6 +401,27 @@ export default function CataloguePage() {
                   ))}
                 </div>
               </div>
+
+              <div className="mt-6">
+                <SectionTitle>BPM</SectionTitle>
+                <div className="flex flex-wrap gap-2">
+                  {BPM_RANGES.map((r) => (
+                    <Chip
+                      key={r.label}
+                      active={selectedBpmRanges.includes(r.label)}
+                      onClick={() =>
+                        toggleInArray(
+                          r.label,
+                          selectedBpmRanges,
+                          setSelectedBpmRanges
+                        )
+                      }
+                    >
+                      {r.label}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
             </div>
           </aside>
 
@@ -387,11 +447,7 @@ export default function CataloguePage() {
                       tag={b.tag ?? undefined}
                       isCurrent={track?.id === b.id}
                       isPlaying={isPlaying}
-                      onPlayPause={() =>
-                        track?.id === b.id && isPlaying
-                          ? toggle()
-                          : play(b, currentBeats)
-                      }
+                      onPlayPause={() => onPlay(b)}
                       onAdd={() => {}}
                       onFav={() => {}}
                       onMore={() => {}}
@@ -446,22 +502,21 @@ export default function CataloguePage() {
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-200 disabled:opacity-40"
+                className="rounded-full bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 disabled:opacity-40"
               >
-                ← Précédent
+                Précédent
               </button>
               <div className="text-sm text-zinc-400">
-                Page <span className="text-white">{currentPage}</span> /{" "}
-                {totalPages}
+                Page {currentPage} sur {totalPages}
               </div>
               <button
                 disabled={currentPage === totalPages}
                 onClick={() =>
                   setCurrentPage((p) => Math.min(totalPages, p + 1))
                 }
-                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-zinc-200 disabled:opacity-40"
+                className="rounded-full bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 disabled:opacity-40"
               >
-                Suivant →
+                Suivant
               </button>
             </div>
           </section>
