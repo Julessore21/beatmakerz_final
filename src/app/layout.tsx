@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
 import GlobalAudioPlayer from "@/components/GlobalAudioPlayer";
 import NavBar from "@/components/Navbar";
+import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "Beatmakerz",
@@ -17,15 +18,17 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body>
-        <AudioPlayerProvider>
-          <header>
-            <NavBar />
-          </header>
+        <AuthProvider>
+          <AudioPlayerProvider>
+            <header>
+              <NavBar />
+            </header>
 
-          {children}
+            {children}
 
-          <GlobalAudioPlayer />
-        </AudioPlayerProvider>
+            <GlobalAudioPlayer />
+          </AudioPlayerProvider>
+        </AuthProvider>
       </body>
     </html>
   );

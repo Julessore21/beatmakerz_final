@@ -3,11 +3,13 @@
 import React, { useState, FormEvent, ChangeEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 const Profil: React.FC = () => {
   // Mode "Se connecter" / "S'inscrire"
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const router = useRouter();
+  const { login, signup } = useAuth();
 
   // États des formulaires
   const [loginData, setLoginData] = useState({ username: "", password: "" });
@@ -21,14 +23,22 @@ const Profil: React.FC = () => {
 
   const handleLoginSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // TODO: logique de connexion
-    router.push("/"); // Redirection vers la home
+    const success = login(loginData.username, loginData.password);
+    if (success) {
+      router.push("/");
+    } else {
+      alert("Identifiants invalides");
+    }
   };
 
   const handleSignupSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // TODO: logique d'inscription
-    router.push("/"); // Redirection vers la home
+    const success = signup(signupData.username, signupData.password);
+    if (success) {
+      router.push("/");
+    } else {
+      alert("Nom d'utilisateur déjà existant");
+    }
   };
 
   return (
