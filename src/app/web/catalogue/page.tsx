@@ -443,16 +443,17 @@ export default function CataloguePage() {
                   {currentBeats.map((b) => (
                     <BeatCard
                       key={b.id}
+                      id={b.id}
                       name={b.name}
                       artist={b.artist}
                       genre={b.genre}
                       bpm={b.bpm}
                       keySig={b.key}
+                      price={b.price}
                       tag={b.tag ?? undefined}
                       isCurrent={track?.id === b.id}
                       isPlaying={isPlaying}
                       onPlayPause={() => onPlay(b)}
-                      onAdd={() => addItem({ id: b.id, name: b.name, price: b.price })}
                       onFav={() => {}}
                       onMore={() => {}}
                     />
