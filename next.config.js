@@ -79,6 +79,11 @@ module.exports = {
         permanent: true,
       },
       {
+        source: "/account",
+        destination: "/web/account",
+        permanent: true,
+      },
+      {
         source: "/catalogue",
         destination: "/web/catalogue",
         permanent: true,

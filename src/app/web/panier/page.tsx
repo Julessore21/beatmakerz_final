@@ -3,41 +3,14 @@
 import React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useCart } from "@/context/CartContext";
 
-type Item = {
-  id: number | string;
-  name: string;
-  price: number;
-  quantity: number;
-};
-
-const defaultItems: Item[] = [
-  { id: 1, name: "Article A", price: 10, quantity: 2 },
-  { id: 2, name: "Article B", price: 15, quantity: 1 },
-  { id: 3, name: "Article C", price: 7.5, quantity: 3 },
-];
-
-const Panier: React.FC<{
-  items?: Item[];
-  totalPrice?: number;
-}> = ({ items = defaultItems, totalPrice }) => {
+const Panier: React.FC = () => {
   const router = useRouter();
+  const { items, totalItems, totalPrice } = useCart();
 
-  // Total calculé si non fourni
-  const computedTotalPrice: number =
-    typeof totalPrice === "number"
-      ? totalPrice
-      : items.reduce((acc, item) => {
-          const priceVal = Number(item.price) || 0;
-          const qtyVal = Number(item.quantity) || 0;
-          return acc + priceVal * qtyVal;
-        }, 0);
-
-  // Nombre total d'articles
-  const totalArticles = items.reduce(
-    (acc, item) => acc + (Number(item.quantity) || 0),
-    0
-  );
+  const computedTotalPrice: number = totalPrice;
+  const totalArticles = totalItems;
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-black via-[#1A1530] to-[#000000] text-white text-center p-8">
