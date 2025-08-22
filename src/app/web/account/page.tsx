@@ -5,7 +5,9 @@
 // Client component
 
 import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import {
   User as UserIcon,
   Music2,
@@ -22,7 +24,6 @@ import {
   ArrowRight,
   ChevronRight,
   Sparkles,
-  Zap,
   PlayCircle,
   Star,
   Info,
@@ -32,7 +33,7 @@ import {
 const cn = (...c: (string | false | null | undefined)[]) =>
   c.filter(Boolean).join(" ");
 
-const fadeIn = {
+const fadeIn: any = {
   hidden: { opacity: 0, y: 18 },
   show: (i = 1) => ({
     opacity: 1,
@@ -41,7 +42,7 @@ const fadeIn = {
   }),
 };
 
-const Card: React.FC<React.ComponentProps<"div"> & { hover?: boolean }> = ({
+const Card: React.FC<React.ComponentProps<typeof motion.div> & { hover?: boolean }> = ({
   className,
   hover = true,
   children,
@@ -118,10 +119,19 @@ const Toggle = ({
 
 // ---------- Main Page ----------
 export default function AccountPage() {
-  // Mocked data — replace with real user data
+  const router = useRouter();
+  const { user: currentUser } = useAuth();
+
+  React.useEffect(() => {
+    if (!currentUser) {
+      router.push("/web/profil");
+    }
+  }, [currentUser, router]);
+
+  // Mocked data with dynamic user info
   const user = {
-    username: "tompeyre1",
-    email: "tompeyre1@beatmakerz.com",
+    username: currentUser ?? "Utilisateur",
+    email: currentUser ? `${currentUser}@beatmakerz.com` : "user@beatmakerz.com",
     plan: {
       name: "Platinum",
       badge: <Crown className="h-4 w-4" />,
@@ -168,7 +178,7 @@ export default function AccountPage() {
         status: "Remboursé",
       },
     ],
-  } as const;
+  };
 
   return (
     <div className="relative min-h-[100svh] overflow-hidden bg-[#0A0A12] text-white">
@@ -203,6 +213,8 @@ export default function AccountPage() {
 
 // ---------- Sections ----------
 function Header({ user }: { user: any }) {
+  const router = useRouter();
+  const { logout } = useAuth();
   return (
     <div className="relative">
       <motion.div
@@ -240,13 +252,23 @@ function Header({ user }: { user: any }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <Button>
+          <Button onClick={() => router.push("/web/profil")}>
             <Settings className="h-4 w-4" /> Paramètres du profil
           </Button>
-          <Button variant="secondary">
+          <Button
+            variant="secondary"
+            onClick={() => alert("Fonctionnalité bientôt disponible")}
+          >
             <Heart className="h-4 w-4" /> Mes favoris
           </Button>
-          <Button variant="ghost" className="group">
+          <Button
+            variant="ghost"
+            className="group"
+            onClick={() => {
+              logout();
+              router.push("/web/profil");
+            }}
+          >
             <LogOut className="h-4 w-4" /> Se déconnecter
             <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Button>
@@ -298,30 +320,31 @@ function PlanCard({ plan }: { plan: any }) {
 }
 
 function QuickActions() {
+  const router = useRouter();
   const actions = [
     {
       icon: <ShoppingCart className="h-5 w-5" />,
       label: "Mon panier",
       sub: "Payer en 1 clic",
-      onClick: () => {},
+      onClick: () => router.push("/web/panier"),
     },
     {
       icon: <CreditCard className="h-5 w-5" />,
       label: "Moyens de paiement",
       sub: "CB, PayPal, SEPA",
-      onClick: () => {},
+      onClick: () => alert("Fonctionnalité bientôt disponible"),
     },
     {
       icon: <Music2 className="h-5 w-5" />,
       label: "Licences",
       sub: "Suivre mes licences",
-      onClick: () => {},
+      onClick: () => alert("Fonctionnalité bientôt disponible"),
     },
     {
       icon: <Download className="h-5 w-5" />,
       label: "Téléchargements",
       sub: "Historique complet",
-      onClick: () => {},
+      onClick: () => alert("Fonctionnalité bientôt disponible"),
     },
   ];
   return (
@@ -535,6 +558,25 @@ function SecurityPreferences() {
 }
 
 function DangerZone() {
+  const router = useRouter();
+  const { logout, user } = useAuth();
+
+  const handleExport = () => {
+    alert("Export de vos données...");
+  };
+
+  const handleDelete = () => {
+    if (confirm("Supprimer définitivement votre compte ?")) {
+      if (typeof window !== "undefined" && user) {
+        const users = JSON.parse(localStorage.getItem("users") || "{}");
+        delete users[user];
+        localStorage.setItem("users", JSON.stringify(users));
+      }
+      logout();
+      router.push("/web/profil");
+    }
+  };
+
   return (
     <Card className="border-rose-500/30">
       <div className="mb-3 flex items-center justify-between">
@@ -547,8 +589,10 @@ function DangerZone() {
           suppression. Ces actions sont définitives.
         </p>
         <div className="flex gap-3">
-          <Button variant="ghost">Exporter mes données</Button>
-          <Button variant="danger">
+          <Button variant="ghost" onClick={handleExport}>
+            Exporter mes données
+          </Button>
+          <Button variant="danger" onClick={handleDelete}>
             <LogOut className="h-4 w-4" /> Supprimer le compte
           </Button>
         </div>
