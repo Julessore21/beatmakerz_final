@@ -61,14 +61,14 @@ const CartSideBar = ({ isOpen, onClose }: Props) => {
               </svg>
             </button>
 
-            <h2 className="text-2xl font-bold mb-4">MON PANIER</h2>
+            <h2 className="text-2xl text-white font-bold mb-4">MON PANIER</h2>
 
-            <div className="space-y-2">
+            <div className="space-y-2 text-white">
               {items.length > 0 ? (
                 items.map((item) => (
                   <div
                     key={item.id}
-                    className="flex justify-between text-sm border-b border-gray-500 pb-2"
+                    className="flex justify-between text-white text-sm border-b border-gray-500 pb-2"
                   >
                     <span>
                       {item.name} x{item.quantity}
@@ -77,11 +77,13 @@ const CartSideBar = ({ isOpen, onClose }: Props) => {
                   </div>
                 ))
               ) : (
-                <p className="text-center text-lg">Votre panier est vide.</p>
+                <p className="text-center text-lg text-white">
+                  Votre panier est vide.
+                </p>
               )}
             </div>
 
-            <div className="mt-4 flex justify-between text-lg font-bold">
+            <div className="mt-4 flex justify-between text-white text-lg font-bold">
               <span>Articles : {totalArticles}</span>
               <span>Total : {computedTotalPrice.toFixed(2)} €</span>
             </div>

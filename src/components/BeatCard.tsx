@@ -96,7 +96,7 @@ export default function BeatCard({
           isCurrent={isCurrent}
           isPlaying={isPlaying}
           onPlayPause={onPlayPause}
-           onAdd={handleAdd}
+          onAdd={handleAdd}
           onFav={onFav}
           onMore={onMore}
         />
