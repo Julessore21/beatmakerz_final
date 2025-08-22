@@ -19,21 +19,19 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body>
-
         <CartProvider>
+          <AuthProvider>
+            <AudioPlayerProvider>
+              <header>
+                <NavBar />
+              </header>
 
-        <AuthProvider>
+              {children}
 
-          <AudioPlayerProvider>
-            <header>
-              <NavBar />
-            </header>
-
-            {children}
-
-            <GlobalAudioPlayer />
-          </AudioPlayerProvider>
-
+              <GlobalAudioPlayer />
+            </AudioPlayerProvider>
+          </AuthProvider>
+        </CartProvider>
       </body>
     </html>
   );
