@@ -286,7 +286,7 @@ export default function CataloguePage() {
         className="container mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8"
       >
         <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-indigo-600/30 to-indigo-300/20 p-6 shadow-xl">
-          <div className="text-2xl font-bold">🎵 Catalogue</div>
+          <div className="text-2xl font-bold">Catalogue</div>
           <div className="mt-1 text-sm text-zinc-300">
             {sorted.length} résultats • {GENRES.length} genres • vue {viewMode}
           </div>
