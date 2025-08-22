@@ -3,15 +3,18 @@
 import { motion } from "framer-motion";
 import { Music2, Sparkles } from "lucide-react";
 import ActionBar from "./ActionBar";
+import { useCart } from "@/context/CartContext";
 
 export type Tag = "Tendance" | "Nouveau" | "Populaire";
 
 export type BeatCardProps = {
+  id: number | string;
   name: string;
   artist: string;
   genre: string;
   bpm: number;
   keySig: string;
+  price: number;
   tag?: Tag;
   isCurrent: boolean;
   isPlaying: boolean;
@@ -25,11 +28,13 @@ const chip =
   "inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[0.65rem] text-zinc-400 align-middle";
 
 export default function BeatCard({
+  id,
   name,
   artist,
   genre,
   bpm,
   keySig,
+  price,
   tag,
   isCurrent,
   isPlaying,
@@ -38,6 +43,12 @@ export default function BeatCard({
   onFav,
   onMore,
 }: BeatCardProps) {
+  const { addItem } = useCart();
+
+  const handleAdd = () => {
+    addItem({ id, name, price });
+    onAdd?.();
+  };
   return (
     <motion.div
       layout
@@ -85,7 +96,7 @@ export default function BeatCard({
           isCurrent={isCurrent}
           isPlaying={isPlaying}
           onPlayPause={onPlayPause}
-          onAdd={onAdd}
+           onAdd={handleAdd}
           onFav={onFav}
           onMore={onMore}
         />
