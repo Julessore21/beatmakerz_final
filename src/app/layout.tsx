@@ -19,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body>
+      <body className="font-sans">
         <CartProvider>
           <AuthProvider>
             <AudioPlayerProvider>

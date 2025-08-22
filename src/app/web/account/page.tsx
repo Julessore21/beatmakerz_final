@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { motion } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -21,15 +22,50 @@ const AccountPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-black via-[#1A1530] to-[#000000] text-white p-4">
-      <h1 className="text-2xl mb-4">Bonjour {user}</h1>
-      <button
-        onClick={handleLogout}
-        className="bg-[#401a87] hover:bg-[#5e2ea4] transition-colors text-white font-semibold py-2 px-4 rounded-full"
+    <motion.div
+      className="page-section"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <motion.div
+        className="card w-full max-w-md p-8 text-center space-y-6"
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.1 }}
       >
-        Se déconnecter
-      </button>
-    </div>
+        <h1 className="text-2xl font-bold">Bonjour {user}</h1>
+        <p className="text-sm text-gray-300">
+          Gère ton compte et découvre tes options.
+        </p>
+        <div className="grid gap-4">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.push("/profil")}
+            className="btn-primary w-full"
+          >
+            Paramètres du profil
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.push("/panier")}
+            className="btn-primary w-full"
+          >
+            Mon panier
+          </motion.button>
+        </div>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={handleLogout}
+          className="btn-primary w-full"
+        >
+          Se déconnecter
+        </motion.button>
+      </motion.div>
+    </motion.div>
   );
 };
 
