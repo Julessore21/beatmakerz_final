@@ -8,7 +8,8 @@ import { AuthProvider } from "@/context/AuthContext";
 
 export const metadata: Metadata = {
   title: "Beatmakerz",
-  description: "...",
+  description:
+    "Plateforme française de vente d'instrumentales et de services pour artistes",
 };
 
 export default function RootLayout({
