@@ -42,9 +42,9 @@ const Profil: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-black via-[#1A1530] to-[#000000] p-4">
+    <div className="page-section">
       {/* Conteneur principal */}
-      <div className="w-full max-w-3xl flex flex-col md:flex-row bg-[#191926] border border-gray-700 rounded-2xl overflow-hidden shadow-xl">
+      <div className="card w-full max-w-3xl flex flex-col md:flex-row overflow-hidden">
         {/* Bloc gauche : Toggle + Formulaire */}
         <div className="md:w-1/2 p-8 flex flex-col justify-center">
           {/* Toggle */}
@@ -95,7 +95,7 @@ const Profil: React.FC = () => {
                       type="text"
                       value={loginData.username}
                       onChange={handleLoginChange}
-                      className="w-full bg-black text-white p-2 rounded-full border border-gray-600 focus:outline-none focus:border-gray-400 text-sm"
+                      className="input-field"
                       placeholder="Entrez votre nom d’utilisateur"
                       required
                     />
@@ -113,14 +113,14 @@ const Profil: React.FC = () => {
                       type="password"
                       value={loginData.password}
                       onChange={handleLoginChange}
-                      className="w-full bg-black text-white p-2 rounded-full border border-gray-600 focus:outline-none focus:border-gray-400"
+                      className="input-field"
                       placeholder="••••••••"
                       required
                     />
                   </div>
                   <button
                     type="submit"
-                    className="w-full bg-[#401a87] hover:bg-[#5e2ea4] transition-colors text-white font-semibold py-2 rounded-full"
+                    className="btn-primary w-full"
                   >
                     Connexion
                   </button>
@@ -151,7 +151,7 @@ const Profil: React.FC = () => {
                       type="text"
                       value={signupData.username}
                       onChange={handleSignupChange}
-                      className="w-full bg-black text-white p-2 rounded-full border border-gray-600 focus:outline-none focus:border-gray-400 text-sm"
+                      className="input-field"
                       placeholder="Choisissez un nom d’utilisateur"
                       required
                     />
@@ -169,14 +169,14 @@ const Profil: React.FC = () => {
                       type="password"
                       value={signupData.password}
                       onChange={handleSignupChange}
-                      className="w-full bg-black text-white p-2 rounded-full border border-gray-600 focus:outline-none focus:border-gray-400"
+                      className="input-field"
                       placeholder="••••••••"
                       required
                     />
                   </div>
                   <button
                     type="submit"
-                    className="w-full bg-[#401a87] hover:bg-[#5e2ea4] transition-colors text-white font-semibold py-2 rounded-full"
+                    className="btn-primary w-full"
                   >
                     Créer un compte
                   </button>
@@ -187,7 +187,7 @@ const Profil: React.FC = () => {
         </div>
 
         {/* Bloc droit : Image du logo */}
-        <div className="md:w-1/2 bg-[#191926] flex items-center justify-center p-4">
+        <div className="md:w-1/2 flex items-center justify-center p-4">
           <img
             src="/img/beatmakerzlogin.png"
             alt="beatmakerz logo"
