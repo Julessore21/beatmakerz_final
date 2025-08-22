@@ -13,6 +13,7 @@ import {
 import SearchBar from "./SearchBar";
 import CartSideBar from "./CartSideBar";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 const AnimatedTwoBarsToggle = ({
   isOpen,
@@ -125,6 +126,7 @@ const NavBar = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const { totalItems } = useCart();
+  const { user } = useAuth();
 
   const overlayRef = useRef<HTMLDivElement>(null);
 
@@ -175,7 +177,7 @@ const NavBar = () => {
 
           <div className="flex items-center space-x-2 ml-6">
             <Link
-              href="/profil"
+              href={user ? "/account" : "/profil"}
               className="p-1 rounded-full border border-white/20"
             >
               <img src="/img/profil.png" alt="Profil" className="h-3 w-3" />
