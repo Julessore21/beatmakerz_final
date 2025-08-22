@@ -12,7 +12,7 @@ export type BeatCardProps = {
   genre: string;
   bpm: number;
   keySig: string;
-  tag?: Tag | null;
+  tag?: Tag;
   isCurrent: boolean;
   isPlaying: boolean;
   onPlayPause: () => void;

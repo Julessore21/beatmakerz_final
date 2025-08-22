@@ -26,7 +26,9 @@ export default function RootLayout({
               <header>
                 <NavBar />
               </header>
+
               {children}
+
               <GlobalAudioPlayer />
             </AudioPlayerProvider>
           </AuthProvider>
