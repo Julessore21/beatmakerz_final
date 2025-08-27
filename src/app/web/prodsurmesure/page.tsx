@@ -20,7 +20,7 @@ const stepsData: Step[] = [
     progress: "0%",
     title: "Définis ton beat idéal",
     content:
-      "Partage l’ambiance, les inspirations et les éléments clés. Tu donnes la vision, on fait le reste.",
+      "Partage l'ambiance, les inspirations et les éléments clés. Tu donnes la vision, on fait le reste.",
   },
   {
     id: 2,
@@ -28,7 +28,7 @@ const stepsData: Step[] = [
     progress: "50%",
     title: "Développement & retours",
     content:
-      "Première version sous 24 h. Révisions illimitées jusqu’à obtenir exactement ce que tu veux.",
+      "Première version sous 24 h. Révisions illimitées jusqu'à obtenir exactement ce que tu veux.",
   },
   {
     id: 3,
@@ -36,7 +36,7 @@ const stepsData: Step[] = [
     progress: "100%",
     title: "Livraison finale",
     content:
-      "Export WAV propre (stems sur demande). Licence claire. Ta prod est prête à l’emploi.",
+      "Export WAV propre (stems sur demande). Licence claire. Ta prod est prête à l'emploi.",
   },
 ];
 
