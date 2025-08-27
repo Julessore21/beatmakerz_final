@@ -20,7 +20,7 @@ export default function GlobalPlayer() {
       // Mise en pause sinon
       audioRef.current.pause();
     }
-  }, [current]);
+  }, [current, isPlaying]);
 
   // Gère l'état lecture/pause sans réinitialiser la source
   useEffect(() => {

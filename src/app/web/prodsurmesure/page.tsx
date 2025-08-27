@@ -326,7 +326,7 @@ function StepCard({
   titleRef,
 }: {
   step: Step;
-  titleRef: React.RefObject<HTMLHeadingElement>;
+  titleRef: React.RefObject<HTMLHeadingElement | null>;
 }) {
   const percent = parseInt(step.progress, 10);
 
