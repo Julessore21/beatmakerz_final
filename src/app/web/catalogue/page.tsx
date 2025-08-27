@@ -1,15 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Grid3X3, Rows3, SlidersHorizontal } from "lucide-react";
-
 import { Input } from "@/components/ui/input";
 import { useAudio } from "@/context/AudioPlayerContext";
 import { useCart } from "@/context/CartContext";
 import BeatCard from "@/components/BeatCard";
 import BeatTableRow from "@/components/BeatTableRow";
+
+export const dynamic = "force-dynamic";
+
+export default function CataloguePage() {
+  return (
+    <Suspense fallback={null}>
+      <CatalogueContent />
+    </Suspense>
+  );
+}
 
 /* ------------------------------ types & data ------------------------------ */
 
@@ -119,7 +128,7 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 
 /* ---------------------------------- page --------------------------------- */
 
-export default function CataloguePage() {
+function CatalogueContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
