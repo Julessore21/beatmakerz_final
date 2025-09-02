@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Music2, Sparkles } from "lucide-react";
+import { Music2, Flame, Star, Crown } from "lucide-react";
 import ActionBar from "./ActionBar";
 import { useCart } from "@/context/CartContext";
 
@@ -22,6 +22,7 @@ export type BeatCardProps = {
   onAdd?: () => void;
   onFav?: () => void;
   onMore?: () => void;
+  showTag?: boolean;
 };
 
 const chip =
@@ -45,61 +46,84 @@ export default function BeatCard({
 }: BeatCardProps) {
   const { addItem } = useCart();
 
+  const bgForGenre = (g: string): string | null => {
+    const s = g.toLowerCase();
+    if (s.includes("trap")) return "/img/trap.png";
+    if (s.includes("r&b") || s.includes("rnb") || s.includes("rb")) return "/img/rnb.png";
+    if (s.includes("new wave")) return "/img/newwave.png";
+    if (s.includes("mélan") || s.includes("melan")) return "/img/melancolique.png";
+    return null;
+  };
+  const bgSrc = bgForGenre(genre);
+
   const handleAdd = () => {
     addItem({ id, name, price });
     onAdd?.();
+  };
+  const handleFav = () => {
+    onFav?.();
+    try {
+      const raw = localStorage.getItem("favs:data") || "{}";
+      const map = JSON.parse(raw);
+      map[id as number] = { id, name, artist, price };
+      localStorage.setItem("favs:data", JSON.stringify(map));
+    } catch {}
   };
   return (
     <motion.div
       layout
       whileHover={{ y: -2 }}
-      className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#241e33]/60 to-[#161522]/60 p-4 shadow-xl"
+      className="group relative mx-[-4px] overflow-hidden rounded-2xl border border-white/10 shadow-xl aspect-square"
     >
-      {/* glow décoratif */}
-      <div className="pointer-events-none absolute -right-16 -top-16 h-28 w-28 rounded-full bg-indigo-500/10 blur-2xl" />
-
-      {/* BADGE calé en haut à droite */}
-      {tag && (
-        <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[0.68rem] text-zinc-200">
-          <Sparkles className="h-3 w-3" />
-          {tag}
-        </span>
-      )}
-
-      {/* header */}
-      <div className="flex items-start gap-3 pr-16">
-        {/* pr pour ne pas passer sous le badge */}
-        <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-          <Music2 className="h-8 w-8 text-zinc-300" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-semibold">{name}</h3>
-          <div className="truncate text-xs text-zinc-400">{artist}</div>
-        </div>
-      </div>
-
-      {/* CATEGORIES → 1 seule ligne + fade droite */}
-      <div className="relative mt-2">
-        <div className="flex flex-nowrap gap-1.5 overflow-hidden whitespace-nowrap pr-6">
-          <span className={chip}>🎵 {genre}</span>
-          <span className={chip}>⏱ {bpm} BPM</span>
-          <span className={chip}>🎹 {keySig}</span>
-        </div>
-        {/* petit fade à droite pour indiquer qu'il y a plus */}
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-[rgba(22,21,34,0.9)] to-transparent" />
-      </div>
-
-      {/* actions minimalistes */}
-      <div className="mt-4">
-        <ActionBar
-          size="sm"
-          isCurrent={isCurrent}
-          isPlaying={isPlaying}
-          onPlayPause={onPlayPause}
-          onAdd={handleAdd}
-          onFav={onFav}
-          onMore={onMore}
+      {/* background image/gradient */}
+      {bgSrc ? (
+        <img
+          src={bgSrc}
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover blur-[2px] brightness-[.75] scale-105"
         />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-[#141416] to-[#0b0b12]" />
+      )}
+      <div className="absolute inset-0 bg-black/50" />
+
+      {/* overlay content */}
+      <div className="absolute inset-0 flex flex-col justify-between p-4">
+        <div className="flex items-start justify-end">
+          <div className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-xs text-white">
+            {price.toFixed(2)}€
+          </div>
+        </div>
+
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold">{name}</h3>
+          <div className="truncate text-[11px] text-zinc-300/90">{artist}</div>
+          <div className="mt-2 flex items-center justify-center gap-[6px]">
+            <span className="shrink-0 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-4 py-0.5 text-[9px] text-zinc-200 whitespace-nowrap">🎵 {genre}</span>
+            <span className="shrink-0 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-3 py-0.5 text-[9px] text-zinc-200 whitespace-nowrap">⏱ {bpm} BPM</span>
+            <span className="shrink-0 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-3 py-0.5 text-[9px] text-zinc-200 whitespace-nowrap">🎹 {keySig}</span>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <ActionBar
+              size="sm"
+              isCurrent={isCurrent}
+              isPlaying={isPlaying}
+              onPlayPause={onPlayPause}
+              onAdd={handleAdd}
+              onFav={handleFav}
+              onMore={onMore}
+            />
+            {tag && (typeof showTag === "undefined" ? true : showTag) && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[0.68rem] text-zinc-200">
+                {tag === "Tendance" && <Flame className="h-3 w-3 text-orange-400" />}
+                {tag === "Nouveau" && <Star className="h-3 w-3 text-yellow-300" />}
+                {tag === "Populaire" && <Crown className="h-3 w-3 text-amber-300" />}
+                {tag}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
     </motion.div>
   );

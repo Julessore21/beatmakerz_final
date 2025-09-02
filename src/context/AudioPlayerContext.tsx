@@ -65,11 +65,9 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [progress, setProgress] = useState(0);
 
-  const [volume, setVolume] = useState<number>(() => {
-    if (typeof window === "undefined") return 0.8;
-    const v = Number(localStorage.getItem("bm_volume"));
-    return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0.8;
-  });
+  // Volume initial constant côté serveur pour éviter un mismatch d'hydratation
+  // La valeur persistée est appliquée après le mount
+  const [volume, setVolume] = useState<number>(0.8);
 
   // Listeners de l'élément audio
   useEffect(() => {
@@ -109,7 +107,17 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [ensureAudio, queue, track]);
 
-  // Volume persistant
+  // Lecture de la valeur persistée au mount, puis sync à chaque changement
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const persisted = Number(localStorage.getItem("bm_volume"));
+      if (Number.isFinite(persisted)) {
+        const clamped = Math.min(1, Math.max(0, persisted));
+        setVolume(clamped);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const a = ensureAudio();
     if (!a) return;

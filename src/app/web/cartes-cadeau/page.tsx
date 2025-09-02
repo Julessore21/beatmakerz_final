@@ -72,7 +72,7 @@ const CartesCadeau: React.FC = () => {
   const [personalMessage, setPersonalMessage] = useState<string>("");
 
   // Position du slider
-  const sliderLeft = isPourMoi ? "4px" : "104px";
+  const sliderLeft = isPourMoi ? 4 : 126;
 
   // Prix affiché
   const getDisplayPrice = (plan: Plan): string => {
@@ -102,19 +102,41 @@ const CartesCadeau: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white px-4 pt-20 pb-12 flex flex-col items-center">
-      {/* Titre principal */}
-      <h1 className="text-center text-2xl md:text-3xl font-bold mb-2 mt-6">
-        CHOISIS TA CARTE CADEAU
-      </h1>
-      <p className="text-sm md:text-base text-neutral-400 mb-4 text-center">
-        Offre ou procure-toi une carte cadeau valable sur tout le site !
-      </p>
+    <div className="relative min-h-screen overflow-hidden bg-[#0A0A12] text-white px-4 pt-24 pb-16 flex flex-col items-center">
+      {/* Ambient background comme abonnements */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.6 }}
+          transition={{ duration: 1.2 }}
+          className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet-600/30 blur-3xl"
+        />
+        <motion.div
+          animate={{ x: [0, 20, -10, 0], y: [0, -10, 10, 0] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+          className="absolute right-[-10rem] top-10 h-[28rem] w-[28rem] rounded-full bg-violet-700/30 blur-[100px]"
+        />
+        <motion.div
+          animate={{ x: [0, -10, 15, 0], y: [0, 12, -8, 0] }}
+          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-[-12rem] left-20 h-[26rem] w-[26rem] rounded-full bg-violet-900/25 blur-[100px]"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.06),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.04),transparent_60%)]" />
+      </div>
+
+      {/* Header style abonnements */}
+      <div className="w-full max-w-5xl text-center">
+        <div className="rounded-3xl border border-white/10 bg-[#141416]/90 p-8 backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Choisis ta carte cadeau</h1>
+          <p className="mt-2 text-sm md:text-base text-neutral-400">Offre ou procure-toi une carte cadeau valable sur tout le site !</p>
+        </div>
+      </div>
 
       {/* Toggle */}
-      <div className="relative flex items-center justify-center w-[220px] h-12 border border-white rounded-full bg-transparent mb-10">
+      <div className="relative mt-8 flex items-center justify-center w-[260px] h-12 border border-white/10 rounded-full bg-[#141416]/90 overflow-hidden mb-10">
         <motion.div
           className="absolute top-1 bottom-1 w-1/2 rounded-full bg-[#401a87]"
+          initial={false}
           animate={{ left: sliderLeft }}
           transition={{ type: "spring", stiffness: 500, damping: 30 }}
         />
@@ -141,7 +163,7 @@ const CartesCadeau: React.FC = () => {
             <motion.div
               key={plan.id}
               onClick={() => setSelectedPlan(plan.id)}
-              className={`relative flex flex-col items-center text-center w-full md:w-[250px] h-[400px] bg-black cursor-pointer ${borderClass} border rounded-lg p-6 hover:shadow-xl hover:-translate-y-4 transition-transform transition-shadow duration-300`}
+              className={`relative flex flex-col items-center text-center w-full md:w-[250px] h-[400px] cursor-pointer ${borderClass} border rounded-2xl p-6 bg-[#141416]/90 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,.35)] hover:-translate-y-2 transition-transform duration-300`}
               whileTap={{ scale: 0.97 }}
             >
               {plan.label ? (
@@ -168,7 +190,7 @@ const CartesCadeau: React.FC = () => {
                   <div className="flex items-center justify-center">
                     <input
                       type="number"
-                      className="bg-black text-center text-4xl font-extrabold border-b border-gray-500 w-[100px] focus:outline-none focus:border-white"
+                      className="bg-transparent text-center text-4xl font-extrabold border-b border-white/40 w-[100px] focus:outline-none focus:border-white"
                       value={customValue}
                       onChange={onCustomValueChange}
                       onKeyDown={onCustomValueKeyDown}
@@ -189,7 +211,7 @@ const CartesCadeau: React.FC = () => {
                   e.stopPropagation();
                   handleAcheter(plan);
                 }}
-                className="mt-auto py-2 px-4 rounded-full border-2 font-semibold text-sm transition-colors border-neutral-600 text-neutral-200 hover:bg-[#401a87] hover:border-[#401a87] hover:text-white active:bg-[#401a87] active:border-[#401a87] active:text-white"
+                className="mt-auto py-2.5 px-5 rounded-full border font-semibold text-sm transition-colors border-[#401a87] text-white hover:bg-[#401a87]"
               >
                 Acheter
               </button>
@@ -204,8 +226,8 @@ const CartesCadeau: React.FC = () => {
 
       {/* Modal POUR OFFRIR */}
       {showModal && modalPlan && !isPourMoi && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50">
-          <div className="bg-black border border-white rounded-xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-50">
+          <div className="bg-[#111116] border border-white/10 rounded-2xl p-6 w-full max-w-md text-white">
             <h2 className="text-2xl font-bold mb-4 text-center">
               Récapitulatif de votre commande
             </h2>
@@ -227,7 +249,7 @@ const CartesCadeau: React.FC = () => {
                 setPersonalMessage(e.target.value)
               }
               placeholder="Ajouter un message personnalisé (optionnel)"
-              className="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white mb-4"
+              className="w-full p-2 bg-white/5 border border-white/10 rounded-md text-white mb-4"
               rows={4}
             />
 
@@ -237,14 +259,14 @@ const CartesCadeau: React.FC = () => {
                   alert("Commande confirmée !");
                   setShowModal(false);
                 }}
-                className="px-6 py-2 bg-[#2c1f57] border border-[#2c1f57] text-white rounded-full hover:bg-[#1d143a] transition-colors duration-300"
+                className="px-6 py-2 bg-white text-black rounded-full hover:bg-zinc-100 transition-colors duration-300"
               >
                 Confirmer
               </button>
 
               <button
                 onClick={() => setShowModal(false)}
-                className="px-6 py-2 bg-black border border-white text-white rounded-full hover:bg-gray-700 transition-colors duration-300"
+                className="px-6 py-2 border border-white/10 text-white rounded-full hover:bg-white/10 transition-colors duration-300"
               >
                 Annuler
               </button>

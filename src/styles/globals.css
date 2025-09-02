@@ -3,12 +3,19 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    background-color: #000; /* évite d'afficher le dégradé en overscroll */
+  }
   body {
     @apply min-h-screen bg-gradient-to-r from-black via-[#1A1530] to-black text-white antialiased;
   }
 }
 
 @layer components {
+  /* utilitaire pour désactiver le scroll anchoring (évite les sauts au scroll) */
+  .overflow-anchor-none {
+    overflow-anchor: none;
+  }
   .page-section {
     @apply min-h-screen flex flex-col items-center justify-center p-4;
   }
@@ -24,4 +31,72 @@
   .input-field {
     @apply w-full bg-black text-white p-2 rounded-full border border-gray-600 focus:outline-none focus:border-gray-400 text-sm;
   }
+}
+
+/* Style des inputs range pour la barre de volume/progress (violet) */
+input[type="range"].volume-purple {
+  accent-color: #7C5CFF;
+}
+
+/* Webkit (Chrome/Safari) - personnalisation plus visible */
+input[type="range"].volume-purple::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, #7C5CFF 0%, #9f8cff 100%);
+  height: 4px;
+  border-radius: 9999px;
+}
+input[type="range"].volume-purple::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 9999px;
+  margin-top: -5px; /* centrer sur la piste */
+  border: 2px solid rgba(255,255,255,0.4);
+}
+
+/* Firefox */
+input[type="range"].volume-purple::-moz-range-track {
+  background: linear-gradient(90deg, #7C5CFF 0%, #9f8cff 100%);
+  height: 4px;
+  border-radius: 9999px;
+}
+input[type="range"].volume-purple::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 9999px;
+  border: 2px solid rgba(255,255,255,0.4);
+}
+
+/* Tous les sliders du site en violet */
+input[type="range"] {
+  accent-color: #7C5CFF;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  background: linear-gradient(90deg, #7C5CFF 0%, #9f8cff 100%);
+  height: 4px;
+  border-radius: 9999px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 9999px;
+  margin-top: -5px;
+  border: 2px solid rgba(255,255,255,0.4);
+}
+input[type="range"]::-moz-range-track {
+  background: linear-gradient(90deg, #7C5CFF 0%, #9f8cff 100%);
+  height: 4px;
+  border-radius: 9999px;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 9999px;
+  border: 2px solid rgba(255,255,255,0.4);
 }

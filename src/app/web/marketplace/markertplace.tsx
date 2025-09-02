@@ -94,7 +94,7 @@ function generateBeatmakers(count = 24): Beatmaker[] {
     return {
       id: i + 1,
       name: bmName,
-      avatar: "/img/profil.png",
+      avatar: randomIn(["/img/melancolique.png", "/img/newwave.png", "/img/kick.png"]),
       city: "Paris",
       specialties: [randomIn(GENRES), randomIn(GENRES)],
       sales,
@@ -144,8 +144,27 @@ export default function BeatmakerMarketplace() {
   const pageSize = 16; // 4 x 4
 
   const { play, toggle, isPlaying, track, setQueue } = useAudio();
+  // favoris persistant (localStorage)
+  const [favs, setFavs] = useState<number[]>([]);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("favs") || "[]";
+      setFavs(JSON.parse(raw));
+    } catch {}
+  }, []);
+  const saveFavs = (arr: number[]) => {
+    setFavs(arr);
+    try { localStorage.setItem("favs", JSON.stringify(arr)); } catch {}
+  };
+  const toggleFav = (id: number) => {
+    saveFavs(favs.includes(id) ? favs.filter((x) => x !== id) : [...favs, id]);
+  };
 
-  const beatmakers = useMemo(() => generateBeatmakers(), []);
+  // Génération côté client uniquement pour éviter les erreurs d'hydratation
+  const [beatmakers, setBeatmakers] = useState<Beatmaker[]>([]);
+  useEffect(() => {
+    setBeatmakers(generateBeatmakers());
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -213,6 +232,16 @@ export default function BeatmakerMarketplace() {
     }));
     if (track?.id === b.id && isPlaying) toggle();
     else play(q.find((x) => x.id === b.id)!, q);
+  };
+
+  // Sauvegarde des métadonnées de beat pour favoris (pour le modal)
+  const saveBeatMeta = (b: BeatCore) => {
+    try {
+      const raw = localStorage.getItem("favs:data") || "{}";
+      const map = JSON.parse(raw);
+      map[b.id] = { id: b.id, name: b.name, artist: b.artist, price: b.price };
+      localStorage.setItem("favs:data", JSON.stringify(map));
+    } catch {}
   };
 
   const Chip = ({
@@ -364,18 +393,22 @@ export default function BeatmakerMarketplace() {
                       key={bm.id}
                       whileHover={{ y: -3, scale: 1.005 }}
                       transition={{ type: "spring", stiffness: 280, damping: 22 }}
-                      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#0f0f14]/70 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,.35)]"
+                      className="group relative overflow-hidden rounded-2xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,.35)] aspect-square"
                     >
-                      <div className="p-4">
+                      {/* background image plein cadre */}
+                      <img
+                        src={bm.avatar || "/img/profil.png"}
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover brightness-[.7] scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/70 to-black" />
+
+                      {/* overlay content */}
+                      <div className="absolute inset-0 flex flex-col p-4">
                         <div className="flex items-center gap-3">
-                          <img
-                            src={bm.avatar || "/img/profil.png"}
-                            alt="avatar"
-                            className="h-14 w-14 rounded-xl border border-white/10 object-cover"
-                          />
                           <div className="min-w-0">
-                            <div className="truncate text-[14px] font-semibold tracking-tight">{bm.name}</div>
-                            <div className="truncate text-[11px] text-zinc-400">{(bm.specialties || []).slice(0, 2).join(" • ")}</div>
+                            <div className="truncate text-[14px] font-semibold tracking-tight text-white">{bm.name}</div>
+                            <div className="truncate text-[11px] text-zinc-200/90">{(bm.specialties || []).slice(0, 2).join(" • ")}</div>
                           </div>
                           {bm.heat > 400 && (
                             <span className="ml-auto inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-[10px] text-white">
@@ -383,24 +416,28 @@ export default function BeatmakerMarketplace() {
                             </span>
                           )}
                         </div>
-                        <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] text-zinc-300">
-                          <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1"><div className="text-white text-[12px] font-semibold">{bm.sales}</div><div>Ventes</div></div>
-                          <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1"><div className="text-white text-[12px] font-semibold">{bm.beats.length}</div><div>Prods</div></div>
-                          <div className="rounded-lg border border-white/10 bg-white/5 px-2 py-1"><div className="text-white text-[12px] font-semibold">{bm.avgPrice.toFixed(0)}€</div><div>Prix</div></div>
-                        </div>
-                        <div className="mt-3 flex items-center gap-2">
-                          <button
-                            onClick={() => setOpenId(bm.id)}
-                            className="inline-flex flex-1 items-center justify-center rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/15"
-                          >
-                            Voir les prods
-                          </button>
-                          <button
-                            className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white hover:bg-white/10"
-                            onClick={() => setProfileId(bm.id)}
-                          >
-                            Profil
-                          </button>
+                        <div className="mt-auto">
+                          <div className="mb-2 flex justify-center">
+                            <div className="grid grid-cols-3 gap-3 text-center text-[10px] text-zinc-200 justify-items-center">
+                              <div className="rounded-lg border border-white/10 bg-white/10 px-4 py-1.5 min-w-[96px]"><div className="text-white text-[12px] font-semibold">{bm.sales}</div><div>Ventes</div></div>
+                              <div className="rounded-lg border border-white/10 bg-white/10 px-4 py-1.5 min-w-[96px]"><div className="text-white text-[12px] font-semibold">{bm.beats.length}</div><div>Prods</div></div>
+                              <div className="rounded-lg border border-white/10 bg-white/10 px-4 py-1.5 min-w-[96px]"><div className="text-white text-[12px] font-semibold">{bm.avgPrice.toFixed(0)}€</div><div>Prix Moyen</div></div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setOpenId(bm.id)}
+                              className="inline-flex flex-1 items-center justify-center rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/15"
+                            >
+                              Voir les prods
+                            </button>
+                            <button
+                              className="rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-sm text-white hover:bg-white/15"
+                              onClick={() => setProfileId(bm.id)}
+                            >
+                              Profil
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -514,6 +551,7 @@ export default function BeatmakerMarketplace() {
                     isCurrent={track?.id === b.id}
                     isPlaying={isPlaying}
                     onPlayPause={() => onPlay(b, opened.beats)}
+                    onFav={() => toggleFav(b.id)}
                   />
                 ))}
               </div>

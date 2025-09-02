@@ -58,11 +58,13 @@ const GlobalAudioPlayer: React.FC = () => {
     if (track) setDismissed(false);
   }, [track?.id]);
 
-  const shown = !!track && !dismissed && !collapsed;
+  const hasTrack = !!track;
+  const shown = hasTrack && !dismissed && !collapsed;
   const muted = volume <= 0.001;
 
   return (
     <>
+      {hasTrack && !dismissed && (
       <motion.div
         initial={false}
         animate={{ y: shown ? 0 : 100 }}
@@ -154,7 +156,7 @@ const GlobalAudioPlayer: React.FC = () => {
               step={0.01}
               value={volume}
               onChange={(e) => setVolume(parseFloat(e.target.value))}
-              className="w-full accent-[#7C5CFF]"
+              className="w-full volume-purple"
             />
           </div>
 
@@ -169,10 +171,11 @@ const GlobalAudioPlayer: React.FC = () => {
         </div>
       </div>
       </motion.div>
+      )}
 
       {/* Floating expand button when collapsed */}
       <AnimatePresence>
-        {track && !dismissed && collapsed && (
+        {hasTrack && !dismissed && collapsed && (
           <motion.button
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}

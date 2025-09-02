@@ -1,63 +1,59 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
+import { motion } from "framer-motion";
 
-export default function VendorOnboardingPage() {
+export default function OnboardingVendeur() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black text-white pt-24 pb-40">
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="container mx-auto max-w-4xl px-4 sm:px-6 lg:px-8"
-      >
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-indigo-600/30 to-indigo-300/20 p-6 shadow-xl">
-          <div className="text-2xl font-bold">Devenir vendeur</div>
-          <div className="mt-1 text-sm text-zinc-300">
-            Crée ton espace, ajoute tes prods et commence à vendre sur Beatmakerz.
-          </div>
-        </div>
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black text-white pt-24 pb-24">
+      <div className="container mx-auto max-w-3xl px-4 min-h-[calc(100vh-8rem)] flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]"
+        >
+          <h1 className="text-3xl font-bold tracking-tight">Devenir vendeur</h1>
+          <p className="mt-2 text-sm text-zinc-300">
+            Rejoins Beatmakerz Pro et commence à vendre tes instrumentales en quelques minutes.
+          </p>
 
-        <div className="mt-8 grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#241e33]/60 to-[#161522]/60 p-5">
-            <div className="text-sm font-semibold">1. Créer ton compte vendeur</div>
-            <p className="mt-2 text-sm text-zinc-300">
-              Renseigne ton nom d’artiste, ta photo et tes spécialités.
-            </p>
-            <Link href="#" className="mt-4 inline-block rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/20">
-              Continuer
-            </Link>
+          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 text-left">
+            {[
+              {
+                title: "Mise en ligne rapide",
+                text: "Ajoute tes prods en 2 clics, titres, tags et préécoute intégrée.",
+              },
+              {
+                title: "Paiements sécurisés",
+                text: "Encaissement automatique, historique des ventes et factures.",
+              },
+              {
+                title: "Stats détaillées",
+                text: "Vues, favoris, conversions et revenus par période.",
+              },
+            ].map((c) => (
+              <div
+                key={c.title}
+                className="rounded-2xl border border-white/10 bg-white/[0.04] p-4"
+              >
+                <div className="text-base font-semibold">{c.title}</div>
+                <div className="mt-1 text-sm text-zinc-300">{c.text}</div>
+              </div>
+            ))}
           </div>
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#241e33]/60 to-[#161522]/60 p-5">
-            <div className="text-sm font-semibold">2. Connecter le paiement</div>
-            <p className="mt-2 text-sm text-zinc-300">
-              Connecte ton compte pour recevoir tes revenus en toute sécurité.
-            </p>
-            <Link href="#" className="mt-4 inline-block rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/20">
-              Configurer
-            </Link>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#241e33]/60 to-[#161522]/60 p-5">
-            <div className="text-sm font-semibold">3. Mettre en ligne des prods</div>
-            <p className="mt-2 text-sm text-zinc-300">
-              Uploade tes instrumentales, fixe ton prix et publie.
-            </p>
-            <Link href="#" className="mt-4 inline-block rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/20">
-              Ajouter une prod
-            </Link>
-          </div>
-        </div>
 
-        <div className="mt-8 rounded-2xl border border-white/10 bg-black/40 p-5 text-sm text-zinc-300">
-          En t’inscrivant, tu acceptes nos
-          {" "}
-          <Link href="/web/cgu" className="underline hover:text-white">CGU</Link> et notre
-          {" "}
-          <Link href="/web/cgv" className="underline hover:text-white">CGV</Link>.
-        </div>
-      </motion.div>
+          <div className="mt-8">
+            <Link
+              href="/web/vendeur"
+              className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              Devenir vendeur
+            </Link>
+          </div>
+
+          <p className="mt-6 text-xs text-zinc-500">Aucun frais caché • Sans engagement • Assistance prioritaire</p>
+        </motion.div>
+      </div>
     </div>
   );
 }
-
-

@@ -10,7 +10,7 @@ export default function Home() {
   const isScrolling = useRef(false);
 
   const smoothScrollTo = useCallback(
-    (targetIndex: number, direction: number, duration = 3000) => {
+    (targetIndex: number, direction: number, duration = 1200) => {
       const targetSection = sections.current[targetIndex];
       const previousIndex = targetIndex - direction;
 
@@ -18,12 +18,12 @@ export default function Home() {
 
       if (previousIndex >= 0 && previousIndex < sections.current.length) {
         const previousSection = sections.current[previousIndex];
-        previousSection.style.transition = "opacity 0.8s ease-out";
-        previousSection.style.opacity = "0.3";
+        previousSection.style.transition = "opacity 0.4s ease-out";
+        previousSection.style.opacity = "0.6";
 
         setTimeout(() => {
           previousSection.style.opacity = "1";
-        }, 300);
+        }, 200);
       }
 
       targetSection.scrollIntoView({ behavior: "smooth" });
@@ -53,7 +53,7 @@ export default function Home() {
         sections.current.length - 1
       );
 
-      smoothScrollTo(nextIndex, direction, 1000);
+      smoothScrollTo(nextIndex, direction, 900);
     };
 
     window.addEventListener("wheel", handleScroll, { passive: false });
@@ -119,14 +119,14 @@ export default function Home() {
                 {title}
               </h1>
               <Link
-                href={href}
+                href={{ pathname: href as string }}
                 className="text-xs font-bold opacity-90 ml-2 hover:underline"
               >
                 {cta}
               </Link>
               <div className="transform translate-y-6">
                 <VisibleProgressCircle
-                  duration={5}
+                  duration={4}
                   onAnimationEnd={() => {
                     const currentIndex = sections.current.findIndex(
                       (section) => section.getBoundingClientRect().top >= -50
@@ -135,7 +135,7 @@ export default function Home() {
                       currentIndex + 1,
                       sections.current.length - 1
                     );
-                    smoothScrollTo(nextIndex, 1, 2000);
+                    smoothScrollTo(nextIndex, 1, 900);
                   }}
                   onClick={() => {
                     const currentIndex = sections.current.findIndex(
@@ -145,7 +145,7 @@ export default function Home() {
                       currentIndex + 1,
                       sections.current.length - 1
                     );
-                    smoothScrollTo(nextIndex, 1, 2000);
+                    smoothScrollTo(nextIndex, 1, 900);
                   }}
                 />
               </div>

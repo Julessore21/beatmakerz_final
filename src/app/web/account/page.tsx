@@ -27,6 +27,8 @@ import {
   PlayCircle,
   Star,
   Info,
+  X,
+  ShoppingCart as CartIcon,
 } from "lucide-react";
 
 // ---------- Reusable bits ----------
@@ -121,6 +123,7 @@ const Toggle = ({
 export default function AccountPage() {
   const router = useRouter();
   const { user: currentUser } = useAuth();
+  const [openFavs, setOpenFavs] = React.useState(false);
 
   React.useEffect(() => {
     if (!currentUser) {
@@ -187,7 +190,10 @@ export default function AccountPage() {
 
       <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-24 pt-16 sm:px-6 lg:px-8">
         {/* Header */}
-        <Header user={user} />
+        <Header user={user} onOpenFavs={() => setOpenFavs(true)} />
+
+        {/* Modal favoris */}
+        <FavsModal open={openFavs} onClose={() => setOpenFavs(false)} />
 
         {/* Content grid */}
         <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -212,9 +218,24 @@ export default function AccountPage() {
 }
 
 // ---------- Sections ----------
-function Header({ user }: { user: any }) {
+function Header({ user, onOpenFavs }: { user: any; onOpenFavs: () => void }) {
   const router = useRouter();
   const { logout } = useAuth();
+  const { user: currentUser } = useAuth();
+  const [isBeat, setIsBeat] = React.useState<boolean>(false);
+  const [profileImage, setProfileImage] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!currentUser) return;
+    try {
+      const flag = localStorage.getItem(`isBeatmaker:${currentUser}`) === "true";
+      setIsBeat(flag);
+      const raw = localStorage.getItem("beatmakerProfiles");
+      if (raw) {
+        const profiles = JSON.parse(raw);
+        setProfileImage(profiles?.[currentUser]?.image || null);
+      }
+    } catch {}
+  }, [currentUser]);
   return (
     <div className="relative">
       <motion.div
@@ -234,13 +255,24 @@ function Header({ user }: { user: any }) {
             className="relative"
           >
             <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-[2px]">
-              <div className="flex h-full w-full items-center justify-center rounded-2xl bg-[#0B0B14]">
-                <UserIcon className="h-8 w-8 opacity-80" />
+              <div className="flex h-full w-full items-center justify-center rounded-2xl bg-[#0B0B14] overflow-hidden">
+                {profileImage ? (
+                  <img src={profileImage} alt="avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <UserIcon className="h-8 w-8 opacity-80" />
+                )}
               </div>
             </div>
-            <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold">
-              PRO
-            </span>
+            {isBeat && (
+              <span className="absolute -bottom-2 -right-2">
+                <span className="peer block h-7 w-7 overflow-hidden rounded-full">
+                  <img src="/img/beatmakerz.png" alt="bmz" className="h-7 w-7 object-cover" />
+                </span>
+                <span className="pointer-events-none absolute -top-8 right-0 whitespace-nowrap rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-black opacity-0 transition-opacity peer-hover:opacity-100">
+                  beatmakerz
+                </span>
+              </span>
+            )}
           </motion.div>
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
@@ -255,10 +287,7 @@ function Header({ user }: { user: any }) {
           <Button onClick={() => router.push("/web/profil")}>
             <Settings className="h-4 w-4" /> Paramètres du profil
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => alert("Fonctionnalité bientôt disponible")}
-          >
+          <Button variant="secondary" onClick={onOpenFavs}>
             <Heart className="h-4 w-4" /> Mes favoris
           </Button>
           <Button
@@ -508,6 +537,70 @@ function OrdersTable({
         </table>
       </div>
     </Card>
+  );
+}
+
+// ---------- Modal Favoris ----------
+function FavsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const router = useRouter();
+  const [favs, setFavs] = React.useState<number[]>([]);
+  const [beatsMap, setBeatsMap] = React.useState<Record<number, any>>({});
+  React.useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = localStorage.getItem("favs") || "[]";
+      setFavs(JSON.parse(raw));
+      const rawMap = localStorage.getItem("favs:data") || "{}";
+      setBeatsMap(JSON.parse(rawMap));
+    } catch {}
+  }, [open]);
+
+  const removeFav = (id: number) => {
+    const arr = favs.filter((x) => x !== id);
+    setFavs(arr);
+    try { localStorage.setItem("favs", JSON.stringify(arr)); } catch {}
+  };
+
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}>
+      <motion.div
+        initial={{ scale: 0.96, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.98, opacity: 0 }}
+        transition={{ duration: 0.25 }}
+        className="relative w-[min(720px,94vw)] max-h-[80vh] overflow-y-auto rounded-2xl border border-white/10 bg-[#0f0f14]/90 p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold">Mes favoris</h3>
+          <button onClick={onClose} className="rounded-full border border-white/10 p-1 text-white/80 hover:bg-white/10"><X className="h-4 w-4"/></button>
+        </div>
+        {favs.length === 0 ? (
+          <p className="mt-6 text-sm text-zinc-400">Aucun favori pour l’instant.</p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {favs.map((id) => {
+              const b = beatsMap[id];
+              return (
+                <li key={id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 text-xs">#{id}</div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium">{b?.name || `Beat ${id}`}</div>
+                    <div className="truncate text-xs text-zinc-400">{b?.artist || "Beatmaker"} • {b?.price ? `${b.price}€` : "—"}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => { onClose(); router.push('/web/marketplace'); }} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs hover:bg-white/10">Écouter</button>
+                    <button onClick={() => alert('Achat (démo)')} className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-zinc-100"><CartIcon className="h-3 w-3"/> Acheter</button>
+                    <button onClick={() => removeFav(id)} className="rounded-full border border-white/10 bg-white/5 p-1 hover:bg-white/10" aria-label="Supprimer"><X className="h-4 w-4"/></button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </motion.div>
+    </div>
   );
 }
 

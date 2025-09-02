@@ -37,7 +37,7 @@ const Profil: React.FC = () => {
     if (success) {
       router.push("/");
     } else {
-      alert("Nom d'utilisateur déjà existant");
+      alert("Nom d\'utilisateur déjà existant");
     }
   };
 
@@ -64,7 +64,7 @@ const Profil: React.FC = () => {
               onClick={() => setIsLogin(false)}
               className="relative z-10 w-1/2 text-sm font-semibold text-center transition-colors text-white rounded-full"
             >
-              S'inscrire
+              S&apos;inscrire
             </button>
           </div>
 
@@ -135,7 +135,7 @@ const Profil: React.FC = () => {
                 transition={{ duration: 0.3 }}
               >
                 <h2 className="text-2xl font-bold text-white mb-6 text-center">
-                  S'INSCRIRE
+                  S&apos;INSCRIRE
                 </h2>
                 <form className="space-y-4" onSubmit={handleSignupSubmit}>
                   <div>

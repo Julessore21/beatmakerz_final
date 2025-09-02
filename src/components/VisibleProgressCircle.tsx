@@ -48,7 +48,7 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({
           r={radius}
           fill="none"
           stroke="currentColor"
-          strokeWidth="3"
+          strokeWidth="1"
           className="text-white/20"
         />
         <circle
@@ -57,7 +57,7 @@ const ProgressCircle: React.FC<ProgressCircleProps> = ({
           r={radius}
           fill="none"
           stroke="currentColor"
-          strokeWidth="3"
+          strokeWidth="1"
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}

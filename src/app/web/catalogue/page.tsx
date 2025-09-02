@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Grid3X3, Rows3, SlidersHorizontal } from "lucide-react";
+import { Search, Grid3X3, Rows3, SlidersHorizontal, Star, Crown, Flame, ChevronDown } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { useAudio } from "@/context/AudioPlayerContext";
@@ -28,16 +28,29 @@ export type Beat = {
   price: number;
 };
 
-const TEST_AUDIO = "/audio/test.mp3";
+// Utilise le même fichier test que la marketplace pour assurer la lecture sur les deux pages
+const TEST_AUDIO = 
+  "/audio/Woke up late, still rich from yesterday  (Remix) (Instrumental) (1).mp3";
 
 const GENRES = [
-  "Drill",
   "Trap",
-  "Lofi",
+  "Drill",
   "Boom Bap",
   "R&B",
+  "Lofi",
   "Soul",
   "West Coast",
+  "East Coast",
+  "New Wave",
+  "New Jazz",
+  "Afro",
+  "Afro Trap",
+  "Pop Urbain",
+  "Detroit",
+  "Jersey Club",
+  "Cloud Rap",
+  "Trap Soul",
+  "Dancehall",
 ] as const;
 const KEYS = [
   "Fm",
@@ -45,24 +58,50 @@ const KEYS = [
   "Gm",
   "Am",
   "Dm",
+  "Em",
+  "Bm",
   "Bb",
   "Eb",
   "Abm",
   "C#m",
   "F#m",
+  "G#m",
+  "D#m",
+  "Ebm",
+  "Bbm",
+  "A#m",
+  "Dbm",
 ] as const;
 const QUICK_TAGS: Tag[] = ["Tendance", "Nouveau", "Populaire"];
-const SORTS = ["Pertinence", "Nouveautés", "Populaire"] as const;
+const SORTS = [
+  "Prix ↑",
+  "Prix ↓",
+  "BPM ↑",
+  "BPM ↓",
+] as const;
+
+const COLLECTIONS: { key: string; label: string; icon: React.ReactNode; action: (ctx: {
+  setTag: (t: Tag | null) => void;
+}) => void }[] = [
+  {
+    key: "top",
+    label: "Top",
+    icon: <Crown className="h-4 w-4 text-amber-300" />,
+    action: ({ setTag }) => setTag("Populaire"),
+  },
+  {
+    key: "nouveaux",
+    label: "Nouveaux",
+    icon: <Star className="h-4 w-4 text-yellow-300" />,
+    action: ({ setTag }) => setTag("Nouveau"),
+  },
+  // trending supprimé selon demande
+];
 
 // plages de BPM
-const BPM_RANGES = [
-  { label: "80 - 90", min: 80, max: 90 },
-  { label: "90 - 100", min: 90, max: 100 },
-  { label: "100 - 110", min: 100, max: 110 },
-  { label: "110 - 120", min: 110, max: 120 },
-  { label: "120 - 130", min: 120, max: 130 },
-  { label: "130+", min: 130, max: Infinity },
-];
+// BPM slider bounds (style proche du formulaire prod sur mesure)
+const BPM_MIN = 60;
+const BPM_MAX = 200;
 
 const generateRandomBeats = (count: number): Beat[] => {
   const artists = [
@@ -83,7 +122,7 @@ const generateRandomBeats = (count: number): Beat[] => {
     key: KEYS[Math.floor(Math.random() * KEYS.length)],
     tag: QUICK_TAGS[Math.floor(Math.random() * QUICK_TAGS.length)] ?? null,
     audio: TEST_AUDIO,
-    price: parseFloat((9 + Math.random() * 20).toFixed(2)),
+    price: Math.random() > 0.5 ? 9.99 : 19.99,
   }));
 };
 
@@ -100,7 +139,7 @@ const Chip = ({
 }) => (
   <button
     onClick={onClick}
-    className={`inline-flex items-center rounded-full border px-3 py-1.5 text-sm transition-colors
+    className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] transition-colors
       ${
         active
           ? "border-indigo-500/70 bg-indigo-500 text-white"
@@ -119,7 +158,7 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 
 /* ---------------------------------- page --------------------------------- */
 
-export default function CataloguePage() {
+function CatalogueContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -132,14 +171,18 @@ export default function CataloguePage() {
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
-  const [selectedBpmRanges, setSelectedBpmRanges] = useState<string[]>([]);
-  const [sort, setSort] = useState<(typeof SORTS)[number]>("Pertinence");
+  const [bpmMin, setBpmMin] = useState<number>(BPM_MIN);
+  const [bpmInput, setBpmInput] = useState<string>(String(BPM_MIN));
+  const [sort, setSort] = useState<(typeof SORTS)[number]>("Prix ↑");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
 
-  const beats = useMemo(() => generateRandomBeats(96), []);
+  const [beats, setBeats] = useState<Beat[]>([]);
+  useEffect(() => {
+    setBeats(generateRandomBeats(96));
+  }, []);
 
   /* debounce query */
   useEffect(() => {
@@ -153,7 +196,7 @@ export default function CataloguePage() {
     const q = searchParams.get("q") ?? "";
     const g = searchParams.get("genres")?.split(",").filter(Boolean) ?? [];
     const k = searchParams.get("keys")?.split(",").filter(Boolean) ?? [];
-    const bpm = searchParams.get("bpms")?.split(",").filter(Boolean) ?? [];
+    const bpmMinUrl = parseInt(searchParams.get("bpmMin") || "", 10);
     const tag = (searchParams.get("tag") as Tag) || null;
     const s =
       (searchParams.get("sort") as (typeof SORTS)[number]) || "Pertinence";
@@ -163,7 +206,14 @@ export default function CataloguePage() {
     setDebounced(q);
     setSelectedGenres(g);
     setSelectedKeys(k);
-    setSelectedBpmRanges(bpm);
+    if (!Number.isNaN(bpmMinUrl)) {
+      const v = Math.max(BPM_MIN, Math.min(BPM_MAX, bpmMinUrl));
+      setBpmMin(v);
+      setBpmInput(String(v));
+    } else {
+      setBpmMin(BPM_MIN);
+      setBpmInput(String(BPM_MIN));
+    }
     setSelectedTag(tag);
     setSort(s);
     setViewMode(v);
@@ -176,7 +226,7 @@ export default function CataloguePage() {
     if (debounced) p.set("q", debounced);
     if (selectedGenres.length) p.set("genres", selectedGenres.join(","));
     if (selectedKeys.length) p.set("keys", selectedKeys.join(","));
-    if (selectedBpmRanges.length) p.set("bpms", selectedBpmRanges.join(","));
+    if (bpmMin !== BPM_MIN) p.set("bpmMin", String(bpmMin));
     if (selectedTag) p.set("tag", selectedTag);
     p.set("sort", sort);
     p.set("view", viewMode);
@@ -189,7 +239,7 @@ export default function CataloguePage() {
     debounced,
     selectedGenres,
     selectedKeys,
-    selectedBpmRanges,
+    bpmMin,
     selectedTag,
     sort,
     viewMode,
@@ -203,12 +253,19 @@ export default function CataloguePage() {
       debounced,
       selectedGenres,
       selectedKeys,
-      selectedBpmRanges,
+      bpmMin,
       selectedTag,
       sort,
       viewMode,
     ]
   );
+
+  // remonter en haut quand la page change (peu importe la direction)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [currentPage]);
 
   /* filtering */
   const filtered = useMemo(() => {
@@ -223,15 +280,7 @@ export default function CataloguePage() {
         : true;
       const mK = selectedKeys.length ? selectedKeys.includes(b.key) : true;
       const mT = selectedTag ? b.tag === selectedTag : true;
-      const mB =
-        selectedBpmRanges.length > 0
-          ? BPM_RANGES.some(
-              (r) =>
-                selectedBpmRanges.includes(r.label) &&
-                b.bpm >= r.min &&
-                b.bpm < r.max
-            )
-          : true;
+      const mB = b.bpm >= bpmMin;
       return mQ && mG && mK && mT && mB;
     });
   }, [
@@ -240,16 +289,20 @@ export default function CataloguePage() {
     selectedGenres,
     selectedKeys,
     selectedTag,
-    selectedBpmRanges,
+    bpmMin,
   ]);
 
   /* sort */
   const sorted = useMemo(() => {
     switch (sort) {
-      case "Nouveautés":
-        return [...filtered].reverse();
-      case "Populaire":
-        return [...filtered].sort((a, b) => (a.tag === "Populaire" ? -1 : 1));
+      case "Prix ↑":
+        return [...filtered].sort((a, b) => a.price - b.price);
+      case "Prix ↓":
+        return [...filtered].sort((a, b) => b.price - a.price);
+      case "BPM ↑":
+        return [...filtered].sort((a, b) => a.bpm - b.bpm);
+      case "BPM ↓":
+        return [...filtered].sort((a, b) => b.bpm - a.bpm);
       default:
         return filtered;
     }
@@ -282,76 +335,97 @@ export default function CataloguePage() {
   /* --------------------------------- render -------------------------------- */
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black text-white pt-24 pb-40">
+    <div className="relative min-h-screen overflow-hidden bg-[#0A0A12] text-white pt-24 pb-40">
+      {/* Ambient animated background (aligné avec account/abonnements) */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.6 }}
+          transition={{ duration: 1.2 }}
+          className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet-600/30 blur-3xl"
+        />
+        <motion.div
+          animate={{ x: [0, 20, -10, 0], y: [0, -10, 10, 0] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
+          className="absolute right-[-10rem] top-10 h-[28rem] w-[28rem] rounded-full bg-violet-700/30 blur-[100px]"
+        />
+        <motion.div
+          animate={{ x: [0, -10, 15, 0], y: [0, 12, -8, 0] }}
+          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-[-12rem] left-20 h-[26rem] w-[26rem] rounded-full bg-violet-900/25 blur-[100px]"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.06),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.04),transparent_60%)]" />
+      </div>
       {/* header */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         className="container mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8"
       >
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-indigo-600/30 to-indigo-300/20 p-6 shadow-xl">
-          <div className="text-2xl font-bold">Catalogue</div>
+        <div className="rounded-3xl border border-white/10 bg-[#141416]/90 p-6 backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]">
+          <div className="text-2xl font-bold tracking-tight">Catalogue</div>
           <div className="mt-1 text-sm text-zinc-300">
             {sorted.length} résultats • {GENRES.length} genres • vue {viewMode}
           </div>
         </div>
 
-        {/* tools */}
-        <div className="mt-6 rounded-2xl border border-white/10 bg-black/40 p-4">
+        {/* tools sticky */}
+        <div className="mt-6 sticky top-20 z-40 rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
           <div className="flex flex-wrap items-center gap-3">
             <div className="inline-flex items-center gap-2 text-sm text-zinc-400">
               <SlidersHorizontal className="h-4 w-4" />
               Filtres rapides
             </div>
-            <div className="flex flex-wrap gap-2">
-              {QUICK_TAGS.map((t) => (
-                <Chip
-                  key={t}
-                  active={selectedTag === t}
-                  onClick={() => setSelectedTag(selectedTag === t ? null : t)}
-                >
-                  {t}
-                </Chip>
-              ))}
+            {/* Badges icônes: Tendance, Nouveaux, Populaire */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedTag(selectedTag === "Tendance" ? null : "Tendance")}
+                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm ${selectedTag === "Tendance" ? "border-orange-400 bg-orange-400/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+              >
+                <Flame className="h-4 w-4 text-orange-400" /> Top
+              </button>
+              <button
+                onClick={() => setSelectedTag(selectedTag === "Nouveau" ? null : "Nouveau")}
+                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm ${selectedTag === "Nouveau" ? "border-yellow-300 bg-yellow-300/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+              >
+                <Star className="h-4 w-4 text-yellow-300" /> Nouveaux
+              </button>
+              <button
+                onClick={() => setSelectedTag(selectedTag === "Populaire" ? null : "Populaire")}
+                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm ${selectedTag === "Populaire" ? "border-amber-400 bg-amber-400/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+              >
+                <Crown className="h-4 w-4 text-amber-300" /> Populaire
+              </button>
             </div>
 
             <div className="ml-auto flex items-center gap-2">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm
-                  ${
-                    viewMode === "grid"
-                      ? "border-indigo-500 bg-indigo-500 text-white"
-                      : "border-white/10 bg-white/5 hover:bg-white/10"
-                  }`}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${viewMode === "grid" ? "border-indigo-500 text-white bg-indigo-500" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
               >
                 <Grid3X3 className="h-4 w-4" /> Grille
               </button>
               <button
                 onClick={() => setViewMode("table")}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm
-                  ${
-                    viewMode === "table"
-                      ? "border-indigo-500 bg-indigo-500 text-white"
-                      : "border-white/10 bg-white/5 hover:bg-white/10"
-                  }`}
+                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${viewMode === "table" ? "border-indigo-500 text-white bg-indigo-500" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
               >
                 <Rows3 className="h-4 w-4" /> Tableau
               </button>
 
-              <select
-                value={sort}
-                onChange={(e) =>
-                  setSort(e.target.value as (typeof SORTS)[number])
-                }
-                className="rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-sm outline-none"
-              >
-                {SORTS.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as (typeof SORTS)[number])}
+                  className="appearance-none rounded-full border border-white/10 bg-[#0e0e12]/80 px-6 pr-8 py-2 h-9 text-sm outline-none text-center leading-none"
+                >
+                  {SORTS.map((s) => (
+                    <option key={s} value={s} className="text-center">
+                      {s}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+              </div>
             </div>
           </div>
 
@@ -362,9 +436,11 @@ export default function CataloguePage() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Tape un artiste, un genre…"
-              className="w-full rounded-2xl border border-white/10 bg-black/60 pl-11 py-3"
+              className="w-full rounded-2xl border border-white/10 bg-[#0e0e12]/80 pl-11 py-3"
             />
           </div>
+
+          
         </div>
       </motion.div>
 
@@ -373,32 +449,50 @@ export default function CataloguePage() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* filters */}
           <aside className="lg:col-span-3">
-            <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#241e33]/50 to-[#161522]/50 p-4">
-              <SectionTitle>Genres</SectionTitle>
-              <div className="flex flex-wrap gap-2">
-                {GENRES.map((g) => (
-                  <Chip
-                    key={g}
-                    active={selectedGenres.includes(g)}
-                    onClick={() =>
-                      toggleInArray(g, selectedGenres, setSelectedGenres)
-                    }
-                  >
-                    {g}
-                  </Chip>
-                ))}
+            <div className="sticky top-24 space-y-4">
+              <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
+                <div className="flex items-center justify-between">
+                  <SectionTitle>Genres</SectionTitle>
+                  {selectedGenres.length > 0 && (
+                    <button
+                      className="text-xs text-zinc-400 hover:text-zinc-200"
+                      onClick={() => setSelectedGenres([])}
+                    >
+                      Effacer
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  {GENRES.map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => toggleInArray(g, selectedGenres, setSelectedGenres)}
+                      className={`h-8 rounded-xl border px-2 text-[11px] text-left ${selectedGenres.includes(g) ? "border-indigo-500 bg-indigo-500 text-white" : "border-white/10 bg-white/5 hover:bg-white/10 text-zinc-100"}`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="mt-6">
-                <SectionTitle>Tonalités</SectionTitle>
-                <div className="flex flex-wrap gap-2">
+              <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
+                <div className="flex items-center justify-between">
+                  <SectionTitle>Tonalités</SectionTitle>
+                  {selectedKeys.length > 0 && (
+                    <button
+                      className="text-xs text-zinc-400 hover:text-zinc-200"
+                      onClick={() => setSelectedKeys([])}
+                    >
+                      Effacer
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
                   {KEYS.map((k) => (
                     <Chip
                       key={k}
                       active={selectedKeys.includes(k)}
-                      onClick={() =>
-                        toggleInArray(k, selectedKeys, setSelectedKeys)
-                      }
+                      onClick={() => toggleInArray(k, selectedKeys, setSelectedKeys)}
                     >
                       {k}
                     </Chip>
@@ -406,31 +500,76 @@ export default function CataloguePage() {
                 </div>
               </div>
 
-              <div className="mt-6">
-                <SectionTitle>BPM</SectionTitle>
-                <div className="flex flex-wrap gap-2">
-                  {BPM_RANGES.map((r) => (
-                    <Chip
-                      key={r.label}
-                      active={selectedBpmRanges.includes(r.label)}
-                      onClick={() =>
-                        toggleInArray(
-                          r.label,
-                          selectedBpmRanges,
-                          setSelectedBpmRanges
-                        )
-                      }
+              <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
+                <div className="flex items-center justify-between">
+                  <SectionTitle>BPM (min)</SectionTitle>
+                  {bpmMin !== BPM_MIN && (
+                    <button
+                      className="text-xs text-zinc-400 hover:text-zinc-200"
+                      onClick={() => setBpmMin(BPM_MIN)}
                     >
-                      {r.label}
-                    </Chip>
-                  ))}
+                      Effacer
+                    </button>
+                  )}
+                </div>
+                <div className="mt-2 flex items-center gap-3">
+                  <input
+                    type="range"
+                    min={BPM_MIN}
+                    max={BPM_MAX}
+                    step={1}
+                    value={bpmMin}
+                    onChange={(e) => { const v = parseInt(e.target.value, 10); setBpmMin(v); setBpmInput(String(v)); }}
+                    className="w-full"
+                  />
+                  <input
+                    type="number"
+                    min={BPM_MIN}
+                    max={BPM_MAX}
+                    value={bpmInput}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      setBpmInput(raw);
+                      const v = parseInt(raw, 10);
+                      if (!Number.isNaN(v)) setBpmMin(Math.max(BPM_MIN, Math.min(BPM_MAX, v)));
+                    }}
+                    onBlur={() => { if (bpmInput === "" || Number.isNaN(parseInt(bpmInput,10))) { setBpmInput(String(BPM_MIN)); setBpmMin(BPM_MIN); } }}
+                    className="w-[56px] rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center text-xs text-white"
+                  />
                 </div>
               </div>
+
+              {(selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || selectedTag) ? (
+                <button
+                  onClick={() => { setSelectedGenres([]); setSelectedKeys([]); setBpmMin(BPM_MIN); setBpmInput(String(BPM_MIN)); setSelectedTag(null); setQuery(""); setDebounced(""); }}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
+                >
+                  Réinitialiser tous les filtres
+                </button>
+              ) : null}
             </div>
           </aside>
 
-          {/* list */}
+          {/* list + header de résultats */}
           <section className="lg:col-span-9">
+            <div className="mb-3 flex items-center justify-between text-sm text-zinc-400">
+              <span>{sorted.length} résultats</span>
+              <div className="inline-flex items-center gap-2">
+                <span className="hidden sm:inline">Vue</span>
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${viewMode === "grid" ? "border-white/20 bg-white/10" : "border-white/10"}`}
+                >
+                  <Grid3X3 className="h-3.5 w-3.5" /> Grille
+                </button>
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${viewMode === "table" ? "border-white/20 bg-white/10" : "border-white/10"}`}
+                >
+                  <Rows3 className="h-3.5 w-3.5" /> Tableau
+                </button>
+              </div>
+            </div>
             <AnimatePresence mode="popLayout">
               {viewMode === "grid" ? (
                 <motion.div
@@ -467,15 +606,16 @@ export default function CataloguePage() {
                   exit={{ opacity: 0, y: -8 }}
                   className="overflow-hidden rounded-2xl border border-white/10"
                 >
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm table-fixed">
                     <thead className="bg-white/5 text-zinc-300">
                       <tr>
-                        <th className="px-4 py-3 text-left">Titre</th>
-                        <th className="px-4 py-3 text-left">Artiste</th>
-                        <th className="px-4 py-3">Genre</th>
-                        <th className="px-4 py-3">BPM</th>
-                        <th className="px-4 py-3">Key</th>
-                        <th className="px-4 py-3"></th>
+                        <th className="px-4 py-3 text-left w-[40%]">Titre</th>
+                        <th className="px-4 py-3 w-[14%] text-center">Genre</th>
+                        <th className="px-4 py-3 w-[8%]">BPM</th>
+                        <th className="px-4 py-3 w-[8%]">Gamme</th>
+                        <th className="px-4 py-3 text-center w-[10%]">Prix</th>
+                        <th className="px-4 py-3 text-center w-[8%]">Tag</th>
+                        <th className="px-4 py-3 text-center w-[20%]"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/10">
@@ -488,6 +628,8 @@ export default function CataloguePage() {
                           genre={b.genre}
                           bpm={b.bpm}
                           keySig={b.key}
+                          price={b.price}
+                          tagIcon={selectedTag === "Tendance" ? "top" : selectedTag === "Nouveau" ? "new" : selectedTag === "Populaire" ? "popular" : null}
                           isCurrent={track?.id === b.id}
                           isPlaying={isPlaying}
                           onPlayPause={() => onPlay(b)}
@@ -506,7 +648,10 @@ export default function CataloguePage() {
             <div className="mt-6 flex items-center justify-center gap-3">
               <button
                 disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                onClick={() => {
+                  setCurrentPage((p) => Math.max(1, p - 1));
+                  if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="rounded-full bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 disabled:opacity-40"
               >
                 Précédent
@@ -516,9 +661,10 @@ export default function CataloguePage() {
               </div>
               <button
                 disabled={currentPage === totalPages}
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(totalPages, p + 1))
-                }
+                onClick={() => {
+                  setCurrentPage((p) => Math.min(totalPages, p + 1));
+                  if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="rounded-full bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 disabled:opacity-40"
               >
                 Suivant
@@ -528,5 +674,13 @@ export default function CataloguePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CataloguePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black text-white pt-24 px-4">Chargement…</div>}>
+      <CatalogueContent />
+    </Suspense>
   );
 }

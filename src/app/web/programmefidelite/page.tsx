@@ -133,7 +133,7 @@ export default function ProgrammeFidelite(): JSX.Element {
         {/* Panel invités */}
         <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-0 backdrop-blur overflow-hidden">
           <div className="px-6 pt-6">
-          <h2 className="text-lg font-semibold mb-4">Panel de Gestion d'Invités</h2>
+          <h2 className="text-lg font-semibold mb-4">Panel de Gestion d&apos;Invités</h2>
           </div>
           <div className="max-h-[360px] overflow-y-auto px-6 pb-6">
           <table className="w-full text-left text-sm text-zinc-200">

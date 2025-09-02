@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { ChevronDown } from "lucide-react";
 
 /* =========================== Types & Data =========================== */
 
@@ -73,7 +74,27 @@ export default function ProdSurMesure() {
     samplesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
-    <div className="min-h-[100svh] bg-black text-white">
+    <div className="relative min-h-[100svh] overflow-hidden bg-[#07070B] text-white">
+      {/* Ambient background sombre inspiré des cartes cadeau */}
+      <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.45 }}
+          transition={{ duration: 1.2 }}
+          className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet-700/25 blur-3xl"
+        />
+        <motion.div
+          animate={{ x: [0, 16, -8, 0], y: [0, -8, 8, 0] }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute right-[-10rem] top-10 h-[26rem] w-[26rem] rounded-full bg-violet-800/25 blur-[110px]"
+        />
+        <motion.div
+          animate={{ x: [0, -8, 12, 0], y: [0, 10, -6, 0] }}
+          transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-[-12rem] left-20 h-[24rem] w-[24rem] rounded-full bg-violet-950/25 blur-[110px]"
+        />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.04),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.03),transparent_60%)]" />
+      </div>
       {/* 1) HERO 100svh */}
       <HeroFull onCreate={scrollToSteps} onSeeSamples={scrollToSamples} />
 
@@ -104,33 +125,100 @@ function HeroFull({
   onCreate: () => void;
   onSeeSamples: () => void;
 }) {
+  const phrases = [
+    "Des prods sur‑mesure, première version livrée en 24 h",
+    "Lance ta carrière avec des prods taillées rien que pour toi",
+    "Tu formules, on produit : ta prod idéale prête en 48 h",
+  ];
+  const [idx, setIdx] = useState(0);
+  const [typed, setTyped] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const toTitleCase = useCallback((s: string) => {
+    return s
+      .split(" ")
+      .map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : w))
+      .join(" ");
+  }, []);
+
+  const displayPhrases = useMemo(() => phrases.map((p) => toTitleCase(p)), [phrases, toTitleCase]);
+  const full = displayPhrases[idx];
+  const longest = useMemo(
+    () => displayPhrases.reduce((a, b) => (a.length > b.length ? a : b), ""),
+    [displayPhrases]
+  );
+
+  useEffect(() => {
+    const doneTyping = typed === full;
+    const doneDeleting = typed === "";
+
+    const typingSpeed = 22; // un peu ralenti
+    const deletingSpeed = 16; // effacement rapide mais lisible
+    const visiblePauseMs = 5000; // 5 secondes d'affichage
+
+    let t: ReturnType<typeof setTimeout> | null = null;
+
+    if (!deleting && !doneTyping) {
+      t = setTimeout(() => setTyped(full.slice(0, typed.length + 1)), typingSpeed);
+    } else if (!deleting && doneTyping) {
+      t = setTimeout(() => setDeleting(true), visiblePauseMs);
+    } else if (deleting && !doneDeleting) {
+      t = setTimeout(() => setTyped(full.slice(0, Math.max(0, typed.length - 1))), deletingSpeed);
+    } else if (deleting && doneDeleting) {
+      setDeleting(false);
+      setIdx((i) => (i + 1) % displayPhrases.length);
+    }
+
+    return () => {
+      if (t) clearTimeout(t);
+    };
+  }, [typed, deleting, full, displayPhrases.length]);
+
+  const showCursor = deleting || typed !== full; // visible pendant frappe/effacement uniquement
+
   return (
     <section className="relative flex min-h-[100svh] items-center">
-      {/* le voile ne bloque plus les clics */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/20" />
       <div className="mx-auto max-w-5xl px-6 text-center">
         <motion.h1
           initial={{ opacity: 0, y: "0.5rem" }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-balance text-5xl md:text-6xl font-semibold tracking-tight"
+          transition={{ duration: 1 }}
+          className="text-balance text-5xl md:text-6xl font-semibold tracking-tight leading-[1.38] md:leading-[1.32] min-h-[3.8rem] md:min-h-[4.8rem]"
         >
-          Une prod sur-mesure, première version en 24 h.
+          <span className="relative inline-block align-top">
+            <span className="invisible select-none">{longest}</span>
+            <span className="absolute inset-0">
+              {typed}
+              {showCursor && (
+                <motion.span
+                  aria-hidden
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: [1, 0, 1] }}
+                  transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+                  className="ml-1 inline-block h-[1em] w-[2px] translate-y-[2px] bg-white align-middle"
+                />
+              )}
+            </span>
+          </span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.1, duration: 0.6 }}
+          transition={{ delay: 0.1, duration: 1 }}
           className="mt-4 text-xl text-zinc-300"
         >
-          Tu poses la vision, on livre le son. Révisions illimitées.
+          Ta vision • Notre expertise • Ta prod prête en 48 h • Révisions illimitées
         </motion.p>
 
         <ul className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-3 sm:grid-cols-3">
-          {["Qualité studio", "V1 sous 24 h", "Révisions illimitées"].map((t) => (
+          {[
+            "Qualité studio",
+            "Licence exclusive délivrée",
+            "Pistes par pistes",
+          ].map((t) => (
             <li
               key={t}
-              className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-200"
+              className="rounded-3xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-zinc-200"
             >
               {t}
             </li>
@@ -160,6 +248,20 @@ function HeroFull({
         <p className="mt-4 text-sm text-zinc-400">
           Paiement sécurisé · Licence commerciale claire · Support rapide
         </p>
+
+        {/* Indicateur de scroll (positionné en bas du hero) */}
+        <div className="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2">
+          <motion.button
+            aria-label="Descendre"
+            initial={{ y: 0, opacity: 1 }}
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            className="pointer-events-auto rounded-full border border-white/30 bg-transparent p-2 text-white cursor-pointer will-change-transform"
+            onClick={onCreate}
+          >
+            <ChevronDown className="h-4 w-4" />
+          </motion.button>
+        </div>
       </div>
     </section>
   );
@@ -182,7 +284,7 @@ const SamplesSection = React.forwardRef<HTMLElement, { items: Sample[] }>(
             initial={{ opacity: 0, y: "0.5rem" }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 1 }}
             className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur"
           >
             <div className="flex items-center justify-between">
@@ -219,28 +321,66 @@ const StepsSection = React.forwardRef<HTMLElement, {
   fill: number;
   onOpenBrief: () => void;
 }>(({ visible, onVisible, fill, onOpenBrief }, ref) => {
+  const contentRef = React.useRef<HTMLDivElement | null>(null);
+  const lastStepRef = React.useRef<HTMLDivElement | null>(null);
+  const [contentHeight, setContentHeight] = React.useState(0);
+  const [lastStepBottomRel, setLastStepBottomRel] = React.useState(0);
+
+  const recalcTrack = React.useCallback(() => {
+    if (!contentRef.current || !lastStepRef.current) return;
+    const c = contentRef.current.getBoundingClientRect();
+    const l = lastStepRef.current.getBoundingClientRect();
+    setContentHeight(c.height);
+    setLastStepBottomRel(Math.max(0, l.bottom - c.top));
+  }, []);
+
+  React.useEffect(() => {
+    recalcTrack();
+    // raf double pour garantir les mesures après animations/layout
+    requestAnimationFrame(() => recalcTrack());
+    const onResize = () => recalcTrack();
+    window.addEventListener("resize", onResize);
+    let ro: ResizeObserver | null = null;
+    if (contentRef.current && typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(recalcTrack);
+      ro.observe(contentRef.current);
+    }
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (ro) ro.disconnect();
+    };
+  }, [recalcTrack]);
+  const railTopPx = 40; // correspond à top-10
+  const trackHeight = Math.max(0, Math.min(contentHeight, lastStepBottomRel) - railTopPx);
   return (
-    <section ref={ref} id="steps" className="mx-auto max-w-4xl px-6 py-20">
+    <section ref={ref} id="steps" className="mx-auto max-w-3xl px-6 py-20 overflow-anchor-none">
       <header className="mb-10 text-center">
         <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Le processus en 3 étapes</h2>
         <p className="mt-3 text-zinc-300">Simple, rapide et clair.</p>
       </header>
 
-      <div className="grid grid-cols-[0.15fr_1fr] gap-6">
-        {/* rail */}
-        <div className="relative pointer-events-none">
-          <div className="absolute left-1/2 -translate-x-1/2 top-10 bottom-0 w-[0.125rem] rounded bg-white/10" />
+      <div className="grid grid-cols-[1px_80px_1fr] gap-0 items-stretch">
+        {/* rail (1px) + offset 20px avant le contenu */}
+        <div className="relative pointer-events-none" style={{ height: contentHeight }}>
+          <div
+            className="absolute left-0 w-px origin-left scale-x-[0.6] transform rounded bg-white/40"
+            style={{ top: railTopPx, height: trackHeight }}
+          />
           <motion.div
-            className="absolute left-1/2 -translate-x-1/2 top-10 w-[0.125rem] rounded bg-white/60"
+            className="absolute left-0 w-px origin-left scale-x-[0.6] transform rounded bg-white"
             initial={{ height: 0 }}
-            animate={{ height: `${visible.length ? Math.max(...visible.map((id) => fillMap[id] || 0)) : 0}%` }}
-            transition={{ duration: 0.45 }}
+            animate={{ height: trackHeight * ((visible.length ? Math.max(...visible.map((id) => fillMap[id] || 0)) : 0) / 100) }}
+            transition={{ duration: 1 }}
+            style={{ top: railTopPx }}
           />
         </div>
+        <div />
 
-        <div className="space-y-16 md:space-y-20">
-          {stepsData.map((s) => (
-            <StepRow key={s.id} step={s} onVisible={onVisible} />
+        <div ref={contentRef} className="space-y-16 md:space-y-20">
+          {stepsData.map((s, i) => (
+            <div key={s.id} ref={i === stepsData.length - 1 ? lastStepRef : undefined}>
+              <StepRow step={s} onVisible={onVisible} />
+            </div>
           ))}
 
           {/* CTA Ouvrir le formulaire (layer) */}
@@ -322,9 +462,7 @@ function StepRow({
 
       <div className="text-sm uppercase tracking-wide text-zinc-400">{step.stepName}</div>
 
-      <AnimatePresence mode="popLayout">
-        {inView && <StepCard step={step} titleRef={titleRef} />}
-      </AnimatePresence>
+      <StepCard step={step} titleRef={titleRef} inView={inView} />
     </div>
   );
 }
@@ -332,19 +470,25 @@ function StepRow({
 function StepCard({
   step,
   titleRef,
+  inView,
 }: {
   step: Step;
   titleRef: React.RefObject<HTMLHeadingElement | null>;
+  inView?: boolean;
 }) {
   const percent = parseInt(step.progress, 10);
+  // légère parallaxe selon le scroll de la page
+  const { scrollYProgress } = useScroll();
+  const translateY = useTransform(scrollYProgress, [0, 1], [0, -8]);
 
   return (
     <motion.div
       key={step.id}
       initial={{ opacity: 0, y: "0.5rem" }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: "0.5rem" }}
-      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      animate={{ opacity: inView ? 1 : 0.6 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+      style={{ y: translateY }}
       className="mt-3 rounded-2xl border border-white/10 bg-white/[0.035] shadow-[0_0.5rem_2rem_rgba(0,0,0,0.25)]"
     >
       <div className="p-6 md:p-8">
@@ -355,12 +499,12 @@ function StepCard({
 
         <div className="mt-6">
           <div className="flex items-center gap-3">
-            <div className="h-[0.375rem] w-full rounded-full bg-white/10">
+            <div className="h-[0.375rem] w-full rounded-full bg-white/10 overflow-hidden">
               <motion.div
                 className="h-full rounded-full bg-white/70"
                 initial={{ width: "0%" }}
-                animate={{ width: `${percent}%` }}
-                transition={{ duration: 0.6 }}
+                animate={{ width: inView ? `${percent}%` : "0%" }}
+                transition={{ duration: 1 }}
               />
             </div>
             <span className="text-sm font-medium text-zinc-200">{step.progress}</span>
@@ -721,7 +865,7 @@ function BriefModal({
                   {sending ? "Redirection…" : "Procéder au paiement"}
                 </button>
                 <p className="mt-2 text-center text-xs text-zinc-500">
-                  V1 sous 24 h · Deadline finale <span className="font-medium">fixe</span> (gérée par nos conditions et visible dans ton compte).
+                  Licence exclusive délivrée · Deadline finale <span className="font-medium">fixe</span> (gérée par nos conditions et visible dans ton compte).
                 </p>
 
                 <AnimatePresence>
