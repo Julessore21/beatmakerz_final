@@ -111,11 +111,11 @@ export default function Home() {
               <source src={`/videos/videotest${index}.mp4`} type="video/mp4" />
             </video>
             <div className="absolute top-0 left-0 w-full h-full bg-black opacity-50 z-0"></div>
-            <div className="absolute bottom-24 left-16 z-10 max-w-xl flex flex-col space-y-4 items-start">
+            <div className="absolute bottom-24 left-16 z-10 max-w-xl flex flex-col space-y-4 items-start max-sm:left-4 max-sm:bottom-20 max-sm:max-w-[88%]">
               <span className="uppercase text-sm font-semibold tracking-wider opacity-70 ml-1">
                 {subtitle}
               </span>
-              <h1 className="text-8xl font-bold leading-tight whitespace-nowrap">
+              <h1 className="text-8xl font-bold leading-tight whitespace-nowrap max-sm:text-5xl max-[380px]:text-4xl max-sm:whitespace-normal">
                 {title}
               </h1>
               <Link
@@ -124,7 +124,7 @@ export default function Home() {
               >
                 {cta}
               </Link>
-              <div className="transform translate-y-6">
+              <div className="transform translate-y-6 max-sm:translate-y-4">
                 <VisibleProgressCircle
                   duration={4}
                   onAnimationEnd={() => {

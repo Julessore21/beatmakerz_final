@@ -270,7 +270,7 @@ export default function BeatmakerMarketplace() {
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="container mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8"
+        className="container mx-auto max-w-screen-2xl px-4 xs:px-5 sm:px-6 lg:px-8"
       >
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-6 shadow-[0_10px_60px_rgba(0,0,0,.35)]">
           <div className="flex flex-wrap items-center gap-3">
@@ -449,9 +449,9 @@ export default function BeatmakerMarketplace() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="overflow-hidden rounded-2xl border border-white/10"
+                  className="overflow-x-auto sm:overflow-hidden rounded-2xl border border-white/10"
                 >
-                  <table className="w-full text-sm">
+                  <table className="w-full text-sm max-sm:min-w-[560px]">
                     <thead className="bg-white/5 text-zinc-300">
                       <tr>
                         <th className="px-4 py-3 text-left">Beatmaker</th>

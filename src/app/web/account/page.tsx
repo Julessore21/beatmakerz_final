@@ -44,12 +44,9 @@ const fadeIn: any = {
   }),
 };
 
-const Card: React.FC<React.ComponentProps<typeof motion.div> & { hover?: boolean }> = ({
-  className,
-  hover = true,
-  children,
-  ...props
-}) => (
+const Card: React.FC<
+  React.ComponentProps<typeof motion.div> & { hover?: boolean }
+> = ({ className, hover = true, children, ...props }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
@@ -134,7 +131,9 @@ export default function AccountPage() {
   // Mocked data with dynamic user info
   const user = {
     username: currentUser ?? "Utilisateur",
-    email: currentUser ? `${currentUser}@beatmakerz.com` : "user@beatmakerz.com",
+    email: currentUser
+      ? `${currentUser}@beatmakerz.com`
+      : "user@beatmakerz.com",
     plan: {
       name: "Platinum",
       badge: <Crown className="h-4 w-4" />,
@@ -188,7 +187,7 @@ export default function AccountPage() {
       {/* Ambient animated background */}
       <AnimatedAmbient />
 
-      <main className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-24 pt-16 sm:px-6 lg:px-8">
+      <main className="relative mt-8 z-10 mx-auto w-full max-w-7xl px-4 pb-24 pt-16 sm:px-6 lg:px-8">
         {/* Header */}
         <Header user={user} onOpenFavs={() => setOpenFavs(true)} />
 
@@ -227,7 +226,8 @@ function Header({ user, onOpenFavs }: { user: any; onOpenFavs: () => void }) {
   React.useEffect(() => {
     if (!currentUser) return;
     try {
-      const flag = localStorage.getItem(`isBeatmaker:${currentUser}`) === "true";
+      const flag =
+        localStorage.getItem(`isBeatmaker:${currentUser}`) === "true";
       setIsBeat(flag);
       const raw = localStorage.getItem("beatmakerProfiles");
       if (raw) {
@@ -257,7 +257,11 @@ function Header({ user, onOpenFavs }: { user: any; onOpenFavs: () => void }) {
             <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-[2px]">
               <div className="flex h-full w-full items-center justify-center rounded-2xl bg-[#0B0B14] overflow-hidden">
                 {profileImage ? (
-                  <img src={profileImage} alt="avatar" className="h-full w-full object-cover" />
+                  <img
+                    src={profileImage}
+                    alt="avatar"
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
                   <UserIcon className="h-8 w-8 opacity-80" />
                 )}
@@ -266,7 +270,11 @@ function Header({ user, onOpenFavs }: { user: any; onOpenFavs: () => void }) {
             {isBeat && (
               <span className="absolute -bottom-2 -right-2">
                 <span className="peer block h-7 w-7 overflow-hidden rounded-full">
-                  <img src="/img/beatmakerz.png" alt="bmz" className="h-7 w-7 object-cover" />
+                  <img
+                    src="/img/beatmakerz.png"
+                    alt="bmz"
+                    className="h-7 w-7 object-cover"
+                  />
                 </span>
                 <span className="pointer-events-none absolute -top-8 right-0 whitespace-nowrap rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-black opacity-0 transition-opacity peer-hover:opacity-100">
                   beatmakerz
@@ -283,7 +291,7 @@ function Header({ user, onOpenFavs }: { user: any; onOpenFavs: () => void }) {
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 max-sm:w-full max-sm:flex-col max-sm:items-stretch">
           <Button onClick={() => router.push("/web/profil")}>
             <Settings className="h-4 w-4" /> Paramètres du profil
           </Button>
@@ -310,7 +318,7 @@ function Header({ user, onOpenFavs }: { user: any; onOpenFavs: () => void }) {
 function PlanCard({ plan }: { plan: any }) {
   return (
     <Card className="bg-gradient-to-br from-white/7 to-transparent">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between max-sm:flex-col max-sm:items-start max-sm:gap-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600/90">
             <Crown className="h-5 w-5" />
@@ -381,7 +389,7 @@ function QuickActions() {
       <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-zinc-400">
         Raccourcis
       </h3>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 max-[380px]:grid-cols-1">
         {actions.map((a, i) => (
           <motion.button
             key={a.label}
@@ -413,19 +421,19 @@ function NotificationsCard() {
     <Card>
       <h3 className="mb-4 text-base font-semibold">Notifications</h3>
       <div className="space-y-4 text-sm">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start">
           <div className="flex items-center gap-2">
             <Bell className="h-4 w-4" /> Nouveaux drops
           </div>
           <Toggle checked={drops} onChange={setDrops} />
         </div>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start">
           <div className="flex items-center gap-2">
             <Heart className="h-4 w-4" /> Recos personnalisées
           </div>
           <Toggle checked={marketing} onChange={setMarketing} />
         </div>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-4 w-4" /> Alertes sécurité
           </div>
@@ -487,8 +495,8 @@ function OrdersTable({
           Voir tout <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
-      <div className="overflow-hidden rounded-xl border border-white/10">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto sm:overflow-hidden rounded-xl border border-white/10">
+        <table className="w-full text-sm max-sm:min-w-[600px]">
           <thead className="bg-white/5 text-zinc-300">
             <tr>
               <th className="px-4 py-3 text-left font-medium">Commande</th>
@@ -558,12 +566,17 @@ function FavsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const removeFav = (id: number) => {
     const arr = favs.filter((x) => x !== id);
     setFavs(arr);
-    try { localStorage.setItem("favs", JSON.stringify(arr)); } catch {}
+    try {
+      localStorage.setItem("favs", JSON.stringify(arr));
+    } catch {}
   };
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <motion.div
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -574,25 +587,61 @@ function FavsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
       >
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold">Mes favoris</h3>
-          <button onClick={onClose} className="rounded-full border border-white/10 p-1 text-white/80 hover:bg-white/10"><X className="h-4 w-4"/></button>
+          <button
+            onClick={onClose}
+            className="rounded-full border border-white/10 p-1 text-white/80 hover:bg-white/10"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
         {favs.length === 0 ? (
-          <p className="mt-6 text-sm text-zinc-400">Aucun favori pour l’instant.</p>
+          <p className="mt-6 text-sm text-zinc-400">
+            Aucun favori pour l’instant.
+          </p>
         ) : (
           <ul className="mt-4 space-y-3">
             {favs.map((id) => {
               const b = beatsMap[id];
               return (
-                <li key={id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 text-xs">#{id}</div>
+                <li
+                  key={id}
+                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 text-xs">
+                    #{id}
+                  </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{b?.name || `Beat ${id}`}</div>
-                    <div className="truncate text-xs text-zinc-400">{b?.artist || "Beatmaker"} • {b?.price ? `${b.price}€` : "—"}</div>
+                    <div className="truncate text-sm font-medium">
+                      {b?.name || `Beat ${id}`}
+                    </div>
+                    <div className="truncate text-xs text-zinc-400">
+                      {b?.artist || "Beatmaker"} •{" "}
+                      {b?.price ? `${b.price}€` : "—"}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => { onClose(); router.push('/web/marketplace'); }} className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs hover:bg-white/10">Écouter</button>
-                    <button onClick={() => alert('Achat (démo)')} className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-zinc-100"><CartIcon className="h-3 w-3"/> Acheter</button>
-                    <button onClick={() => removeFav(id)} className="rounded-full border border-white/10 bg-white/5 p-1 hover:bg-white/10" aria-label="Supprimer"><X className="h-4 w-4"/></button>
+                    <button
+                      onClick={() => {
+                        onClose();
+                        router.push("/web/marketplace");
+                      }}
+                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs hover:bg-white/10"
+                    >
+                      Écouter
+                    </button>
+                    <button
+                      onClick={() => alert("Achat (démo)")}
+                      className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-zinc-100"
+                    >
+                      <CartIcon className="h-3 w-3" /> Acheter
+                    </button>
+                    <button
+                      onClick={() => removeFav(id)}
+                      className="rounded-full border border-white/10 bg-white/5 p-1 hover:bg-white/10"
+                      aria-label="Supprimer"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
                   </div>
                 </li>
               );
@@ -681,7 +730,7 @@ function DangerZone() {
           Sauvegarde tes données et vérifie tes licences avant toute
           suppression. Ces actions sont définitives.
         </p>
-        <div className="flex gap-3">
+        <div className="flex gap-3 max-sm:w-full max-sm:flex-col">
           <Button variant="ghost" onClick={handleExport}>
             Exporter mes données
           </Button>

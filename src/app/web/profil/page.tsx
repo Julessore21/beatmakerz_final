@@ -37,7 +37,7 @@ const Profil: React.FC = () => {
     if (success) {
       router.push("/");
     } else {
-      alert("Nom d\'utilisateur déjà existant");
+      alert("Nom d'utilisateur déjà existant");
     }
   };
 
@@ -118,10 +118,7 @@ const Profil: React.FC = () => {
                       required
                     />
                   </div>
-                  <button
-                    type="submit"
-                    className="btn-primary w-full"
-                  >
+                  <button type="submit" className="btn-primary w-full">
                     Connexion
                   </button>
                 </form>
@@ -174,10 +171,7 @@ const Profil: React.FC = () => {
                       required
                     />
                   </div>
-                  <button
-                    type="submit"
-                    className="btn-primary w-full"
-                  >
+                  <button type="submit" className="btn-primary w-full">
                     Créer un compte
                   </button>
                 </form>

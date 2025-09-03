@@ -31,7 +31,7 @@ export default function ProgrammeFidelite(): JSX.Element {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black text-white flex flex-col">
-      <main className="flex-1 container mx-auto max-w-5xl px-4 py-10">
+      <main className="flex-1 container mx-auto max-w-5xl px-4 xs:px-5 py-10">
         <div className="mt-20 rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-center backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]">
           <h1 className="text-4xl font-bold tracking-tight">Programme de fidélité</h1>
           <p className="mt-1 text-sm text-zinc-400">Gagne des points en invitant tes amis et en achetant sur la plateforme</p>
@@ -94,7 +94,7 @@ export default function ProgrammeFidelite(): JSX.Element {
         </div>
 
         {/* Etapes */}
-        <section className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <section className="mt-6 grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-4">
           {[
             {
               step: "01",
@@ -135,8 +135,8 @@ export default function ProgrammeFidelite(): JSX.Element {
           <div className="px-6 pt-6">
           <h2 className="text-lg font-semibold mb-4">Panel de Gestion d&apos;Invités</h2>
           </div>
-          <div className="max-h-[360px] overflow-y-auto px-6 pb-6">
-          <table className="w-full text-left text-sm text-zinc-200">
+          <div className="max-h-[360px] overflow-y-auto px-6 pb-6 overflow-x-auto">
+          <table className="w-full text-left text-sm text-zinc-200 max-sm:min-w-[520px]">
             <thead className="uppercase text-zinc-400 border-b border-white/10">
               <tr>
                 <th className="py-2">ID</th>

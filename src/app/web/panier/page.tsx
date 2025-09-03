@@ -15,7 +15,7 @@ const Panier: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black text-white pt-28 pb-24">
-      <div className="container mx-auto max-w-4xl px-4">
+      <div className="container mx-auto max-w-4xl px-4 xs:px-5">
         <h1 className="text-center text-4xl font-bold tracking-tight">Mon panier</h1>
         <div className="mt-2 text-center text-sm text-zinc-400">{totalArticles} article{totalArticles>1?"s":""} • Total {computedTotalPrice.toFixed(2)} €</div>
 

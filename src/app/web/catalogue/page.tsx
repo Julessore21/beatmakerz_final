@@ -360,7 +360,7 @@ function CatalogueContent() {
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="container mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8"
+        className="container mx-auto max-w-screen-2xl px-4 xs:px-5 sm:px-6 lg:px-8"
       >
         <div className="rounded-3xl border border-white/10 bg-[#141416]/90 p-6 backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]">
           <div className="text-2xl font-bold tracking-tight">Catalogue</div>
@@ -445,7 +445,7 @@ function CatalogueContent() {
       </motion.div>
 
       {/* content */}
-      <div className="container mx-auto mt-8 max-w-screen-2xl px-4 sm:px-6 lg:px-8">
+      <div className="container mx-auto mt-8 max-w-screen-2xl px-4 xs:px-5 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* filters */}
           <aside className="lg:col-span-3">
@@ -604,9 +604,9 @@ function CatalogueContent() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="overflow-hidden rounded-2xl border border-white/10"
+                  className="overflow-x-auto sm:overflow-hidden rounded-2xl border border-white/10"
                 >
-                  <table className="w-full text-sm table-fixed">
+                  <table className="w-full text-sm table-fixed max-sm:min-w-[720px]">
                     <thead className="bg-white/5 text-zinc-300">
                       <tr>
                         <th className="px-4 py-3 text-left w-[40%]">Titre</th>

@@ -153,7 +153,7 @@ const NavBar = () => {
 
   return (
     <>
-      <nav className="fixed top-0 w-full z-50 bg-transparent text-white px-12 py-6 flex items-center justify-between">
+      <nav className="fixed top-0 w-full z-50 bg-transparent text-white px-12 py-6 flex items-center justify-between max-sm:px-4 max-sm:py-4 xs:px-4 xxs:px-3">
         {/* Toggle menu */}
         <div className="flex items-center m-2 space-x-2 cursor-pointer">
           <AnimatedTwoBarsToggle isOpen={isOpen} toggle={toggleMenu} />
@@ -168,7 +168,7 @@ const NavBar = () => {
           </Link>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div className="hidden md:flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <UnderlineLink href="/catalogue" text="CATALOGUE" />
             <UnderlineLink href="/abonnements" text="ABONNEMENTS" />
@@ -215,7 +215,7 @@ const NavBar = () => {
               <div className="absolute inset-0 bg-black/70 backdrop-blur-lg" />
               <div
                 ref={overlayRef}
-                className="absolute top-0 left-0 h-screen w-2/5 bg-black bg-opacity-60 backdrop-blur-xl text-white transform transition-transform duration-300 flex flex-col pt-16 space-y-8"
+                className="absolute top-0 left-0 h-screen w-2/5 bg-black bg-opacity-60 backdrop-blur-xl text-white transform transition-transform duration-300 flex flex-col pt-16 space-y-8 max-sm:w-full xs:w-4/5 sm:w-2/3 md:w-2/5"
               >
                 <div className="flex flex-col items-start ml-8 mt-1 pl-6 space-y-4">
                   {[
