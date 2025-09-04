@@ -4,6 +4,32 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["react-icons", "framer-motion"],
   },
+  async headers() {
+    const csp = [
+      "default-src 'self';",
+      "base-uri 'self';",
+      "frame-ancestors 'self';",
+      "img-src 'self' data: https:;",
+      "media-src 'self' data: https:;",
+      "font-src 'self' data: https:;",
+      "style-src 'self' 'unsafe-inline' https:;",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;",
+      "connect-src 'self' https:;",
+    ].join(" ");
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Permissions-Policy", value: "geolocation=(), microphone=(), camera=()" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+          { key: "Content-Security-Policy", value: csp },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       {

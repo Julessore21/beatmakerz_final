@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#7C5CFF"/>
+      <stop offset="100%" stop-color="#401a87"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0A0A12"/>
+  <g opacity="0.36">
+    <circle cx="200" cy="120" r="260" fill="#7C5CFF"/>
+    <circle cx="1000" cy="140" r="280" fill="#401a87"/>
+    <circle cx="240" cy="580" r="220" fill="#5b3bc4"/>
+  </g>
+  <rect x="40" y="40" width="1120" height="550" rx="28" fill="url(#g)" opacity="0.12"/>
+  <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="108" font-weight="900" fill="#ffffff">BEATMAKERZ</text>
+  <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="28" fill="#E5E7EB">Plateforme de beats & services pour artistes</text>
+</svg>
+
