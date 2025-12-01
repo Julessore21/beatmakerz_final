@@ -70,6 +70,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [volume, setVolume] = useState<number>(0.8);
 
   // Listeners de l'élément audio
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const a = ensureAudio();
     if (!a) return;
@@ -105,7 +106,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       a.removeEventListener("play", onPlay);
       a.removeEventListener("pause", onPause);
     };
-  }, [ensureAudio, queue, track, play]);
+  }, [ensureAudio, queue, track]);
 
   // Lecture de la valeur persistée au mount, puis sync à chaque changement
   useEffect(() => {
