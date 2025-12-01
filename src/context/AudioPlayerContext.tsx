@@ -12,7 +12,7 @@ import React, {
 
 /** Type commun pour un beat */
 export type Beat = {
-  id: number;
+  id: number | string;
   name: string; // titre
   artist: string;
   genre: string;

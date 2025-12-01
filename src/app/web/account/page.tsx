@@ -1,88 +1,58 @@
 "use client";
 
-// app/(web)/account/AccountClient.tsx
-// Beatmakerz — Account Page (React + Tailwind + Framer Motion + lucide-react)
-// Client component
-
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
+import { motion } from "framer-motion";
 import {
-  User as UserIcon,
-  Music2,
   ShoppingCart,
-  Settings,
-  ShieldCheck,
-  LogOut,
-  Crown,
   Heart,
   Download,
-  Bell,
-  CreditCard,
+  Crown,
   Mail,
-  ArrowRight,
-  ChevronRight,
-  Sparkles,
-  PlayCircle,
-  Star,
+  LogOut,
+  Music2,
   Info,
   X,
-  ShoppingCart as CartIcon,
+  ChevronRight,
+  PlayCircle,
+  Sparkles,
+  CreditCard,
+  User,
 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { fetchFavorites, fetchOrders, fetchSettings, toggleFavorite, updateSettings } from "@/lib/services/user-api";
 
-// ---------- Reusable bits ----------
-const cn = (...c: (string | false | null | undefined)[]) =>
-  c.filter(Boolean).join(" ");
+const cn = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
-const fadeIn: any = {
-  hidden: { opacity: 0, y: 18 },
-  show: (i = 1) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: 0.06 * i, duration: 0.5, ease: "easeOut" },
-  }),
-};
-
-const Card: React.FC<
-  React.ComponentProps<typeof motion.div> & { hover?: boolean }
-> = ({ className, hover = true, children, ...props }) => (
+const Card = React.forwardRef<HTMLDivElement, React.ComponentProps<typeof motion.div>>(({ className, children, ...props }, ref) => (
   <motion.div
-    initial={{ opacity: 0, y: 10 }}
+    ref={ref}
+    initial={{ opacity: 0, y: 6 }}
     animate={{ opacity: 1, y: 0 }}
-    whileHover={hover ? { y: -2 } : undefined}
-    className={cn(
-      // changements clés : overflow-hidden, transition-colors, hover:bg-…
-      "group relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl transition-colors",
-      "hover:bg-white/[0.08]",
-      "shadow-[0_0_0_1px_rgba(255,255,255,0.02)_inset,0_10px_30px_-10px_rgba(0,0,0,0.5)]",
-      className
-    )}
+    className={cn("w-full h-full rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl shadow-xl", className)}
     {...props}
   >
-    {/* ❌ on supprime l’overlay absolu qui causait le noir */}
     {children}
   </motion.div>
-);
+));
+Card.displayName = "Card";
 
 const Pill = ({ children }: { children: React.ReactNode }) => (
-  <span className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-zinc-300">
-    {children}
-  </span>
+  <span className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-zinc-300">{children}</span>
 );
 
-const Button: React.FC<
-  React.ComponentProps<"button"> & {
-    variant?: "primary" | "ghost" | "danger" | "secondary";
-  }
-> = ({ className, variant = "primary", children, ...props }) => (
+const Button: React.FC<React.ComponentProps<"button"> & { variant?: "primary" | "ghost" | "secondary" | "danger" }> = ({
+  className,
+  variant = "primary",
+  children,
+  ...props
+}) => (
   <button
     className={cn(
-      "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500/60",
+      "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all",
       variant === "primary" && "bg-indigo-600 hover:bg-indigo-500 text-white",
       variant === "secondary" && "bg-white/10 hover:bg-white/20 text-white",
-      variant === "ghost" &&
-        "bg-transparent hover:bg-white/10 text-zinc-200 border border-white/10",
+      variant === "ghost" && "bg-transparent hover:bg-white/10 text-zinc-200 border border-white/10",
       variant === "danger" && "bg-rose-600 hover:bg-rose-500 text-white",
       className
     )}
@@ -92,491 +62,502 @@ const Button: React.FC<
   </button>
 );
 
-const Toggle = ({
-  checked,
-  onChange,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) => (
-  <button
-    onClick={() => onChange(!checked)}
-    className={cn(
-      "relative inline-flex h-6 w-11 items-center rounded-full transition-colors",
-      checked ? "bg-indigo-600" : "bg-white/15"
-    )}
-    aria-pressed={checked}
-  >
-    <span
-      className={cn(
-        "inline-block h-5 w-5 transform rounded-full bg-white transition-transform",
-        checked ? "translate-x-5" : "translate-x-1"
-      )}
-    />
+const Toggle = ({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) => (
+  <button onClick={() => onChange(!checked)} className={cn("relative inline-flex h-6 w-11 items-center rounded-full transition-colors", checked ? "bg-indigo-600" : "bg-white/15")}>
+    <span className={cn("inline-block h-5 w-5 transform rounded-full bg-white transition-transform", checked ? "translate-x-5" : "translate-x-1")} />
   </button>
 );
 
-// ---------- Main Page ----------
+const formatId = (id?: string) => (id ? `${id.slice(0, 8)}...${id.slice(-4)}` : "--");
+const formatDate = (d?: string) => (d ? new Date(d).toLocaleDateString("fr-FR") : "");
+const formatPrice = (cents?: number, currency = "EUR") => (cents != null ? `${(cents / 100).toFixed(2)} ${currency}` : "--");
+
 export default function AccountPage() {
   const router = useRouter();
-  const { user: currentUser } = useAuth();
-  const [openFavs, setOpenFavs] = React.useState(false);
+  const { user: authUser, logout } = useAuth();
 
-  React.useEffect(() => {
-    if (!currentUser) {
-      router.push("/web/profil");
-    }
-  }, [currentUser, router]);
+  const [favorites, setFavorites] = useState<any[]>([]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [openFavs, setOpenFavs] = useState(false);
+  const [openModal, setOpenModal] = useState<null | "orders" | "downloads" | "notifications" | "security">(null);
 
-  // Mocked data with dynamic user info
-  const user = {
-    username: currentUser ?? "Utilisateur",
-    email: currentUser
-      ? `${currentUser}@beatmakerz.com`
-      : "user@beatmakerz.com",
-    plan: {
-      name: "Platinum",
-      badge: <Crown className="h-4 w-4" />,
-      renewsAt: "2025-10-01",
-      benefits: [
-        "Licence Premium",
-        "20 téléchargements/mois",
-        "Accès prioritaire aux drops",
-      ],
-    },
-    stats: [
-      {
-        label: "Beats achetés",
-        value: 12,
-        icon: <ShoppingCart className="h-4 w-4" />,
-      },
-      { label: "Favoris", value: 34, icon: <Heart className="h-4 w-4" /> },
-      {
-        label: "Téléchargements",
-        value: 48,
-        icon: <Download className="h-4 w-4" />,
-      },
+  const ordersRef = useRef<HTMLDivElement | null>(null);
+  const notificationsRef = useRef<HTMLDivElement | null>(null);
+  const securityRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!authUser) return;
+    setLoading(true);
+    Promise.all([fetchFavorites().catch(() => []), fetchOrders().catch(() => []), fetchSettings().catch(() => null)])
+      .then(([f, o, s]) => {
+        setFavorites(f || []);
+        setOrders(o || []);
+        setSettings(s);
+      })
+      .finally(() => setLoading(false));
+  }, [authUser]);
+
+  const isGuest = !authUser;
+  const displayName = typeof authUser === "string" ? authUser : authUser?.displayName || authUser?.email || "Invite";
+  const email = typeof authUser === "string" ? authUser : authUser?.email || "";
+
+  const stats = useMemo(
+    () => [
+      { label: "Beats achetes", value: orders?.length ?? 0, icon: <ShoppingCart className="h-4 w-4" /> },
+      { label: "Favoris", value: favorites?.length ?? 0, icon: <Heart className="h-4 w-4" /> },
+      { label: "Telechargements", value: (orders || []).reduce((acc, o) => acc + (o.items?.length || 0), 0), icon: <Download className="h-4 w-4" /> },
     ],
-    recentOrders: [
-      {
-        id: "#B-2034",
-        title: "Nocturne Drive",
-        date: "2025-08-19",
-        price: "29€",
-        status: "Livré",
-      },
-      {
-        id: "#B-2033",
-        title: "Neon Mirage",
-        date: "2025-08-16",
-        price: "49€",
-        status: "Livré",
-      },
-      {
-        id: "#B-2032",
-        title: "Waves 808",
-        date: "2025-08-10",
-        price: "19€",
-        status: "Remboursé",
-      },
-    ],
-  };
+    [orders, favorites]
+  );
+
+  const downloads = useMemo(
+    () =>
+      (orders || []).flatMap((o: any) =>
+        (o.items || []).map((it: any) => ({
+          id: it._id || it.id,
+          beatId: it.beatId,
+          beatTitle: it.beat?.title || it.title,
+          licenseTypeId: it.licenseTypeId,
+          orderId: o._id || o.id,
+          status: o.status,
+          date: o.createdAt,
+          expires: it.downloadExpiresAt,
+        }))
+      ),
+    [orders]
+  );
 
   return (
-    <div className="relative min-h-[100svh] overflow-hidden bg-[#0A0A12] text-white">
-      {/* Ambient animated background */}
+    <div className="relative min-h-[100svh] bg-[#0A0A12] text-white">
       <AnimatedAmbient />
+      <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-20 pt-28">
+        {isGuest ? (
+          <GuestView onLogin={() => router.push("/web/profil")} onSignup={() => router.push("/web/profil?mode=signup")} />
+        ) : (
+          <>
+            <Header currentUserName={displayName} currentUserEmail={email} onLogout={logout} />
 
-      <main className="relative mt-8 z-10 mx-auto w-full max-w-7xl px-4 pb-24 pt-16 sm:px-6 lg:px-8">
-        {/* Header */}
-        <Header user={user} onOpenFavs={() => setOpenFavs(true)} />
-
-        {/* Modal favoris */}
-        <FavsModal open={openFavs} onClose={() => setOpenFavs(false)} />
-
-        {/* Content grid */}
-        <div className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-12">
-          {/* Left rail */}
-          <div className="space-y-6 lg:col-span-4">
-            <PlanCard plan={user.plan} />
-            <QuickActions />
-            <NotificationsCard />
-          </div>
-
-          {/* Right content */}
-          <div className="space-y-6 lg:col-span-8">
-            <StatsRow stats={user.stats} />
-            <OrdersTable orders={user.recentOrders} />
-            <SecurityPreferences />
-            <DangerZone />
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
-
-// ---------- Sections ----------
-function Header({ user, onOpenFavs }: { user: any; onOpenFavs: () => void }) {
-  const router = useRouter();
-  const { logout } = useAuth();
-  const { user: currentUser } = useAuth();
-  const [isBeat, setIsBeat] = React.useState<boolean>(false);
-  const [profileImage, setProfileImage] = React.useState<string | null>(null);
-  React.useEffect(() => {
-    if (!currentUser) return;
-    try {
-      const flag =
-        localStorage.getItem(`isBeatmaker:${currentUser}`) === "true";
-      setIsBeat(flag);
-      const raw = localStorage.getItem("beatmakerProfiles");
-      if (raw) {
-        const profiles = JSON.parse(raw);
-        setProfileImage(profiles?.[currentUser]?.image || null);
-      }
-    } catch {}
-  }, [currentUser]);
-  return (
-    <div className="relative">
-      <motion.div
-        className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-indigo-500/20 via-fuchsia-500/10 to-cyan-500/20 blur-2xl"
-        aria-hidden
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1 }}
-      />
-
-      <Card className="relative z-10 flex flex-col items-start gap-6 bg-white/5 p-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 160, damping: 16 }}
-            className="relative"
-          >
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-[2px]">
-              <div className="flex h-full w-full items-center justify-center rounded-2xl bg-[#0B0B14] overflow-hidden">
-                {profileImage ? (
-                  <img
-                    src={profileImage}
-                    alt="avatar"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <UserIcon className="h-8 w-8 opacity-80" />
-                )}
-              </div>
-            </div>
-            {isBeat && (
-              <span className="absolute -bottom-2 -right-2">
-                <span className="peer block h-7 w-7 overflow-hidden rounded-full">
-                  <img
-                    src="/img/beatmakerz.png"
-                    alt="bmz"
-                    className="h-7 w-7 object-cover"
-                  />
-                </span>
-                <span className="pointer-events-none absolute -top-8 right-0 whitespace-nowrap rounded-full bg-white px-2 py-1 text-[10px] font-semibold text-black opacity-0 transition-opacity peer-hover:opacity-100">
-                  beatmakerz
-                </span>
-              </span>
-            )}
-          </motion.div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Bonjour {user.username}
-            </h1>
-            <p className="mt-1 flex items-center gap-2 text-sm text-zinc-400">
-              <Mail className="h-4 w-4" /> {user.email}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 max-sm:w-full max-sm:flex-col max-sm:items-stretch">
-          <Button onClick={() => router.push("/web/profil")}>
-            <Settings className="h-4 w-4" /> Paramètres du profil
-          </Button>
-          <Button variant="secondary" onClick={onOpenFavs}>
-            <Heart className="h-4 w-4" /> Mes favoris
-          </Button>
-          <Button
-            variant="ghost"
-            className="group"
-            onClick={() => {
-              logout();
-              router.push("/web/profil");
-            }}
-          >
-            <LogOut className="h-4 w-4" /> Se déconnecter
-            <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </Button>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-function PlanCard({ plan }: { plan: any }) {
-  return (
-    <Card className="bg-gradient-to-br from-white/7 to-transparent">
-      <div className="flex items-center justify-between max-sm:flex-col max-sm:items-start max-sm:gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600/90">
-            <Crown className="h-5 w-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold">Abonnement {plan.name}</h3>
-              <Pill>actif</Pill>
-            </div>
-            <p className="mt-1 text-sm text-zinc-400">
-              Renouvellement: {plan.renewsAt}
-            </p>
-          </div>
-        </div>
-        <Button className="gap-1">
-          Gérer <ArrowRight className="h-4 w-4" />
-        </Button>
-      </div>
-      <ul className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {plan.benefits.map((b: string, i: number) => (
-          <motion.li
-            key={i}
-            variants={fadeIn}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            custom={i}
-            className="flex items-center gap-2 text-sm text-zinc-300"
-          >
-            <Sparkles className="h-4 w-4 text-indigo-400" /> {b}
-          </motion.li>
-        ))}
-      </ul>
-    </Card>
-  );
-}
-
-function QuickActions() {
-  const router = useRouter();
-  const actions = [
-    {
-      icon: <ShoppingCart className="h-5 w-5" />,
-      label: "Mon panier",
-      sub: "Payer en 1 clic",
-      onClick: () => router.push("/web/panier"),
-    },
-    {
-      icon: <CreditCard className="h-5 w-5" />,
-      label: "Moyens de paiement",
-      sub: "CB, PayPal, SEPA",
-      onClick: () => alert("Fonctionnalité bientôt disponible"),
-    },
-    {
-      icon: <Music2 className="h-5 w-5" />,
-      label: "Licences",
-      sub: "Suivre mes licences",
-      onClick: () => alert("Fonctionnalité bientôt disponible"),
-    },
-    {
-      icon: <Download className="h-5 w-5" />,
-      label: "Téléchargements",
-      sub: "Historique complet",
-      onClick: () => alert("Fonctionnalité bientôt disponible"),
-    },
-  ];
-  return (
-    <Card>
-      <h3 className="mb-3 text-sm font-medium uppercase tracking-wider text-zinc-400">
-        Raccourcis
-      </h3>
-      <div className="grid grid-cols-2 gap-3 max-[380px]:grid-cols-1">
-        {actions.map((a, i) => (
-          <motion.button
-            key={a.label}
-            variants={fadeIn}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            custom={i}
-            className="flex flex-col items-start gap-1 rounded-xl border border-white/10 bg-white/5 p-3 text-left hover:bg-white/10"
-            onClick={a.onClick}
-          >
-            <div className="flex items-center gap-2 text-zinc-200">
-              {a.icon}
-              <span className="text-sm font-medium">{a.label}</span>
-            </div>
-            <span className="text-xs text-zinc-400">{a.sub}</span>
-          </motion.button>
-        ))}
-      </div>
-    </Card>
-  );
-}
-
-function NotificationsCard() {
-  const [marketing, setMarketing] = React.useState(true);
-  const [drops, setDrops] = React.useState(true);
-  const [security, setSecurity] = React.useState(true);
-  return (
-    <Card>
-      <h3 className="mb-4 text-base font-semibold">Notifications</h3>
-      <div className="space-y-4 text-sm">
-        <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start">
-          <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4" /> Nouveaux drops
-          </div>
-          <Toggle checked={drops} onChange={setDrops} />
-        </div>
-        <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start">
-          <div className="flex items-center gap-2">
-            <Heart className="h-4 w-4" /> Recos personnalisées
-          </div>
-          <Toggle checked={marketing} onChange={setMarketing} />
-        </div>
-        <div className="flex items-center justify-between gap-4 max-sm:flex-col max-sm:items-start">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4" /> Alertes sécurité
-          </div>
-          <Toggle checked={security} onChange={setSecurity} />
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-function StatsRow({
-  stats,
-}: {
-  stats: { label: string; value: number; icon: React.ReactNode }[];
-}) {
-  return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      {stats.map((s, i) => (
-        <Card key={s.label} className="p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-zinc-400">
-                {s.label}
-              </p>
-              <motion.p
-                initial={{ y: 8, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ type: "spring", stiffness: 140, damping: 16 }}
-                className="mt-1 text-2xl font-semibold"
-              >
-                {s.value}
-              </motion.p>
-            </div>
-            <div className="rounded-xl bg-white/10 p-2">{s.icon}</div>
-          </div>
-        </Card>
-      ))}
-    </div>
-  );
-}
-
-function OrdersTable({
-  orders,
-}: {
-  orders: {
-    id: string;
-    title: string;
-    date: string;
-    price: string;
-    status: string;
-  }[];
-}) {
-  return (
-    <Card>
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-base font-semibold">Achats récents</h3>
-        <Button variant="ghost" className="gap-1 text-zinc-300">
-          Voir tout <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-      <div className="overflow-x-auto sm:overflow-hidden rounded-xl border border-white/10">
-        <table className="w-full text-sm max-sm:min-w-[600px]">
-          <thead className="bg-white/5 text-zinc-300">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium">Commande</th>
-              <th className="px-4 py-3 text-left font-medium">Titre</th>
-              <th className="px-4 py-3 text-left font-medium">Date</th>
-              <th className="px-4 py-3 text-right font-medium">Prix</th>
-              <th className="px-4 py-3 text-right font-medium">Statut</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((o, i) => (
-              <motion.tr
-                key={o.id}
-                initial={{ opacity: 0, y: 8 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.03 }}
-                className={cn(
-                  "border-t border-white/10",
-                  i % 2 === 1 && "bg-white/[0.02]"
-                )}
-              >
-                <td className="px-4 py-3 font-medium">{o.id}</td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <PlayCircle className="h-4 w-4" /> {o.title}
+            <section className="mt-10">
+              <Card className="min-h-[260px]">
+                <div className="grid items-stretch gap-6 lg:grid-cols-[1.2fr_1.8fr]">
+                  <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-indigo-700/40 via-[#0f0f1a] to-black/70 p-6 lg:p-7 flex flex-col gap-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600/95">
+                          <Crown className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-lg font-semibold leading-tight">Abonnement Platinum</h3>
+                            <Pill>actif</Pill>
+                          </div>
+                          <p className="text-sm text-zinc-200">Renouvellement: 2025-10-01</p>
+                        </div>
+                      </div>
+                      <Button variant="secondary" className="shrink-0">
+                        Gerer <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                      <p className="text-xs uppercase tracking-wide text-zinc-400">Avantages</p>
+                      <ul className="mt-3 space-y-2 text-sm text-zinc-100">
+                        <li className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-indigo-300" /> Licence Premium
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-indigo-300" /> 20 telechargements/mois
+                        </li>
+                        <li className="flex items-center gap-2">
+                          <Sparkles className="h-4 w-4 text-indigo-300" /> Acces prioritaire aux drops
+                        </li>
+                      </ul>
+                    </div>
                   </div>
-                </td>
-                <td className="px-4 py-3 text-zinc-300">{o.date}</td>
-                <td className="px-4 py-3 text-right">{o.price}</td>
-                <td className="px-4 py-3 text-right">
-                  <span
-                    className={cn(
-                      "rounded-full px-2 py-0.5 text-xs",
-                      o.status === "Livré" &&
-                        "bg-emerald-500/20 text-emerald-300",
-                      o.status === "Remboursé" && "bg-rose-500/20 text-rose-300"
-                    )}
-                  >
-                    {o.status}
-                  </span>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
+
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-5 lg:p-6 flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-medium uppercase tracking-wider text-zinc-400">Raccourcis & Statistiques</h3>
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                      <Shortcut label="Mon panier" sub="Payer en 1 clic" icon={<ShoppingCart className="h-5 w-5" />} onClick={() => router.push("/web/panier")} />
+                      <Shortcut label="Commandes" sub="Historique" icon={<Music2 className="h-5 w-5" />} onClick={() => setOpenModal("orders")} />
+                      <Shortcut label="Paiements" sub="CB, PayPal" icon={<CreditCard className="h-5 w-5" />} onClick={() => alert("Bientot dispo")} />
+                    </div>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      {stats.map((s) => (
+                        <motion.button
+                          key={s.label}
+                          className={cn(
+                            "h-full rounded-xl border border-white/10 bg-white/5 p-3 text-left hover:border-indigo-300/40 flex flex-col justify-between min-h-[110px]",
+                            s.label === "Favoris" && "cursor-pointer"
+                          )}
+                          onClick={() => {
+                            if (s.label === "Favoris") setOpenFavs(true);
+                            if (s.label === "Beats achetes") setOpenModal("orders");
+                            if (s.label === "Telechargements") setOpenModal("downloads");
+                          }}
+                        >
+                          <p className="text-xs uppercase tracking-wider text-zinc-400">{s.label}</p>
+                          <p className="mt-2 flex items-center gap-2 text-xl font-semibold text-white">
+                            {s.value} <span className="rounded-lg bg-white/10 p-1">{s.icon}</span>
+                          </p>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            </section>
+
+            <section className="mt-10">
+              <Card ref={ordersRef}>
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-base font-semibold">Achats recents</h3>
+                  <Button variant="ghost" onClick={() => setOpenModal("orders")}>
+                    Voir tout <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="overflow-x-auto rounded-xl border border-white/10 bg-white/5">
+                  <table className="w-full text-sm">
+                    <thead className="bg-white/5 text-zinc-300">
+                      <tr>
+                        <th className="px-4 py-3 text-left font-medium">Commande</th>
+                        <th className="px-4 py-3 text-left font-medium">Titre</th>
+                        <th className="px-4 py-3 text-left font-medium">Date</th>
+                        <th className="px-4 py-3 text-right font-medium">Prix</th>
+                        <th className="px-4 py-3 text-right font-medium">Statut</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.map((o, i) => (
+                        <tr key={o._id || o.id || i} className="border-t border-white/10 align-top">
+                          <td className="px-4 py-3 font-medium">{formatId(o._id || o.id)}</td>
+                          <td className="px-4 py-3">
+                            <div className="space-y-1">
+                              {(o.items || []).map((it: any, idx: number) => {
+                                const title = it.beat?.title || it.title || it.beatId || "Beat";
+                                const license = it.licenseType?.code || it.licenseTypeId || "Licence";
+                                const dl = it.downloadUrl || it.url || it.presignedUrl || it.presignedKey || it.downloadGrant?.url;
+                                return (
+                                  <div key={it._id || it.id || idx} className="flex items-center gap-2 text-sm text-white/90">
+                                    <PlayCircle className="h-4 w-4 text-white/60" />
+                                    <span className="truncate font-semibold">{title}</span>
+                                    <span className="text-xs text-zinc-400">({license})</span>
+                                    {dl ? (
+                                      <a
+                                        href={dl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="ml-auto rounded-full border border-white/10 bg-white/10 px-2 py-1 text-xs hover:bg-white/20"
+                                      >
+                                        Télécharger
+                                      </a>
+                                    ) : (
+                                      <span className="ml-auto text-xs text-zinc-500">Pas de lien</span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-zinc-300">{formatDate(o.createdAt)}</td>
+                          <td className="px-4 py-3 text-right">{formatPrice(o.totalCents, o.currency)}</td>
+                          <td className="px-4 py-3 text-right">
+                            <span
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-xs",
+                                o.status === "paid" && "bg-emerald-500/20 text-emerald-300",
+                                o.status === "refunded" && "bg-rose-500/20 text-rose-300",
+                                o.status === "pending" && "bg-amber-500/20 text-amber-300"
+                              )}
+                            >
+                              {o.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </section>
+
+            <section className="mt-10 grid grid-cols-1 items-stretch gap-6 lg:grid-cols-3">
+              <Card ref={notificationsRef} className="lg:col-span-1">
+                <h3 className="mb-4 text-base font-semibold">Notifications</h3>
+                <div className="space-y-3 text-sm">
+                  <ToggleRow label="Nouveaux drops" checked={settings?.dropsOptIn ?? true} onChange={(v) => updateSettings({ dropsOptIn: v }).then(setSettings).catch(() => {})} />
+                  <ToggleRow label="Recommandations" checked={settings?.marketingOptIn ?? true} onChange={(v) => updateSettings({ marketingOptIn: v }).then(setSettings).catch(() => {})} />
+                  <ToggleRow label="Alertes securite" checked={settings?.securityOptIn ?? true} onChange={(v) => updateSettings({ securityOptIn: v }).then(setSettings).catch(() => {})} />
+                </div>
+              </Card>
+
+              <Card ref={securityRef} className="h-full lg:col-span-2">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-base font-semibold">Securite & preferences</h3>
+                  <Pill>recommande</Pill>
+                </div>
+                <div className="space-y-3 text-sm">
+                  <ToggleRow label="2FA active" checked={settings?.twoFAEnabled ?? true} onChange={(v) => updateSettings({ twoFAEnabled: v }).then(setSettings).catch(() => {})} />
+                  <ToggleRow label="Mode anonyme" checked={settings?.anonymousMode ?? false} onChange={(v) => updateSettings({ anonymousMode: v }).then(setSettings).catch(() => {})} />
+                  <div className="rounded-xl bg-white/5 p-3 text-zinc-300">
+                    <div className="mb-2 flex items-center gap-2 font-medium">
+                      <Info className="h-4 w-4" /> Conseils
+                    </div>
+                    Utilise des mots de passe uniques, active les notifications de connexion, et garde des codes de secours.
+                  </div>
+                </div>
+              </Card>
+            </section>
+
+            <section className="mt-10">
+              <Card className="border-rose-500/30">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-rose-200">Zone sensible</h3>
+                  <Pill>attention</Pill>
+                </div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="max-w-2xl text-sm text-zinc-300">Sauvegarde tes donnees et verifie tes licences avant toute suppression. Ces actions sont definitives.</p>
+                  <div className="flex gap-3 max-sm:flex-col">
+                    <Button variant="ghost" onClick={() => alert("Export de vos donnees...")}>
+                      Exporter mes donnees
+                    </Button>
+                    <Button variant="danger" onClick={() => alert("Suppression declenchee (a brancher)")}>
+                      <LogOut className="h-4 w-4" /> Supprimer le compte
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </section>
+
+            <FavsModal
+              open={openFavs}
+              onClose={() => setOpenFavs(false)}
+              favorites={favorites}
+              onRefresh={() => fetchFavorites().then(setFavorites).catch(() => {})}
+            />
+
+            <InfoModal
+              open={openModal === "orders"}
+              onClose={() => setOpenModal(null)}
+              title="Commandes & telechargements"
+              actionLabel="Voir mes commandes"
+              onAction={() => {
+                setOpenModal(null);
+                ordersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
+              <div className="mt-3 space-y-2">
+                {(orders || []).slice(0, 5).map((o) => (
+                  <div key={o._id || o.id} className="rounded-lg border border-white/10 bg-white/5 p-3">
+                    <div className="flex items-center justify-between text-sm font-semibold">
+                      <span>Commande {formatId(o._id || o.id)}</span>
+                      <span className="text-xs uppercase text-zinc-400">{o.status}</span>
+                    </div>
+                    <div className="mt-1 text-xs text-zinc-300">
+                      {formatDate(o.createdAt)} · {formatPrice(o.totalCents, o.currency)}
+                    </div>
+                    <div className="mt-2 space-y-1">
+                      {(o.items || []).map((it: any, idx: number) => {
+                        const title = it.beat?.title || it.title || it.beatId || "Beat";
+                        const license = it.licenseType?.code || it.licenseTypeId || "Licence";
+                        const dl = it.downloadUrl || it.url || it.presignedUrl || it.presignedKey || it.downloadGrant?.url;
+                        return (
+                          <div key={it._id || it.id || idx} className="flex items-center gap-2 text-xs text-white/90">
+                            <PlayCircle className="h-3 w-3 text-white/60" />
+                            <span className="truncate font-semibold">{title}</span>
+                            <span className="text-[11px] text-zinc-400">({license})</span>
+                            {dl ? (
+                              <a
+                                href={dl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="ml-auto rounded-full border border-white/10 bg-white/10 px-2 py-1 hover:bg-white/20"
+                              >
+                                Télécharger
+                              </a>
+                            ) : (
+                              <span className="ml-auto text-[11px] text-zinc-500">Pas de lien</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+                {(orders || []).length === 0 && <p className="text-sm text-zinc-400">Aucune commande pour le moment.</p>}
+              </div>
+            </InfoModal>
+
+            <InfoModal
+              open={openModal === "downloads"}
+              onClose={() => setOpenModal(null)}
+              title="Telechargements"
+              actionLabel="Aller a l'historique"
+              onAction={() => {
+                setOpenModal(null);
+                ordersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
+              <div className="mt-3 space-y-2">
+                {downloads.slice(0, 6).map((d) => {
+                  const dl = d.downloadUrl || d.url || d.presignedUrl || d.presignedKey || d.downloadGrant?.url;
+                  return (
+                    <div key={d.id || `${d.orderId}-${d.beatId}`} className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold">{d.beatTitle || `Beat ${formatId(d.beatId)}`}</span>
+                        <span className="text-xs uppercase text-zinc-400">{d.status}</span>
+                      </div>
+                      <div className="mt-1 text-xs text-zinc-300">Commande {formatId(d.orderId)}</div>
+                      <div className="mt-1 text-xs text-zinc-400">
+                        {formatDate(d.date)} {d.expires ? `· expire le ${formatDate(d.expires)}` : ""}
+                      </div>
+                      <div className="mt-2">
+                        {dl ? (
+                          <a
+                            href={dl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs hover:bg-white/20"
+                          >
+                            Télécharger
+                          </a>
+                        ) : (
+                          <span className="text-xs text-zinc-500">Lien non disponible</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+                {downloads.length === 0 && <p className="text-sm text-zinc-400">Aucun telechargement disponible.</p>}
+              </div>
+            </InfoModal>
+
+            <InfoModal
+              open={openModal === "notifications"}
+              onClose={() => setOpenModal(null)}
+              title="Notifications"
+              actionLabel="Gerer mes notifications"
+              onAction={() => {
+                setOpenModal(null);
+                notificationsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
+              Active ou desactive les drops, recommandations et alertes de securite.
+            </InfoModal>
+
+            <InfoModal
+              open={openModal === "security"}
+              onClose={() => setOpenModal(null)}
+              title="Securite & confidentialite"
+              actionLabel="Aller a la section securite"
+              onAction={() => {
+                setOpenModal(null);
+                securityRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >
+              Active la 2FA, ajuste le mode anonyme et securise tes appareils.
+            </InfoModal>
+          </>
+        )}
+      </main>
+
+      {loading && !isGuest && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 text-sm text-white">Chargement...</div>}
+    </div>
+  );
+}
+
+function GuestView({ onLogin, onSignup }: { onLogin: () => void; onSignup: () => void }) {
+  return (
+    <div className="min-h-[60vh] bg-[#0A0A12] text-white flex flex-col items-center justify-center">
+      <AnimatedAmbient />
+      <div className="relative z-10 max-w-md text-center space-y-3 px-4">
+        <h1 className="text-3xl font-bold">Espace compte</h1>
+        <p className="text-sm text-zinc-300">Connecte-toi pour acceder a ton tableau de bord, retrouver tes achats et tes favoris.</p>
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Button onClick={onLogin}>Se connecter</Button>
+          <Button variant="secondary" onClick={onSignup}>
+            Creer un compte
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Header({
+  currentUserName,
+  currentUserEmail,
+  onLogout,
+}: {
+  currentUserName: string;
+  currentUserEmail: string;
+  onLogout: () => Promise<void>;
+}) {
+  const router = useRouter();
+  return (
+    <Card className="flex flex-col items-start gap-4 bg-white/5 sm:flex-row sm:items-center sm:justify-between min-h-[120px]">
+      <div className="flex items-center gap-4">
+        <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-[2px]">
+          <div className="flex h-full w-full items-center justify-center rounded-2xl bg-[#0B0B14]">
+            <User className="h-8 w-8 opacity-80" />
+          </div>
+        </div>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Bonjour {currentUserName}</h1>
+          {currentUserEmail && (
+            <p className="mt-1 flex items-center gap-2 text-sm text-zinc-400">
+              <Mail className="h-4 w-4" /> {currentUserEmail}
+            </p>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          variant="ghost"
+          onClick={async () => {
+            await onLogout();
+            router.push("/web/profil");
+          }}
+        >
+          <LogOut className="h-4 w-4" /> Se deconnecter
+        </Button>
       </div>
     </Card>
   );
 }
 
-// ---------- Modal Favoris ----------
-function FavsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+function Shortcut({ label, sub, icon, onClick }: { label: string; sub: string; icon: React.ReactNode; onClick: () => void }) {
+  return (
+    <motion.button
+      whileHover={{ y: -2 }}
+      onClick={onClick}
+      className="flex h-full w-full flex-col items-start gap-1 rounded-xl border border-white/10 bg-white/5 p-4 text-left hover:bg-white/10 min-h-[120px]"
+    >
+      <div className="flex items-center gap-2 text-white">
+        {icon} <span className="text-sm font-medium">{label}</span>
+      </div>
+      <span className="text-xs text-zinc-400">{sub}</span>
+    </motion.button>
+  );
+}
+
+function ToggleRow({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3">
+      <span>{label}</span>
+      <Toggle checked={checked} onChange={onChange} />
+    </div>
+  );
+}
+
+function FavsModal({ open, onClose, favorites, onRefresh }: { open: boolean; onClose: () => void; favorites: any[]; onRefresh: () => void }) {
   const router = useRouter();
-  const [favs, setFavs] = React.useState<number[]>([]);
-  const [beatsMap, setBeatsMap] = React.useState<Record<number, any>>({});
-  React.useEffect(() => {
-    if (!open) return;
-    try {
-      const raw = localStorage.getItem("favs") || "[]";
-      setFavs(JSON.parse(raw));
-      const rawMap = localStorage.getItem("favs:data") || "{}";
-      setBeatsMap(JSON.parse(rawMap));
-    } catch {}
-  }, [open]);
-
-  const removeFav = (id: number) => {
-    const arr = favs.filter((x) => x !== id);
-    setFavs(arr);
-    try {
-      localStorage.setItem("favs", JSON.stringify(arr));
-    } catch {}
-  };
-
   if (!open) return null;
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}>
       <motion.div
         initial={{ scale: 0.96, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -587,37 +568,27 @@ function FavsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
       >
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold">Mes favoris</h3>
-          <button
-            onClick={onClose}
-            className="rounded-full border border-white/10 p-1 text-white/80 hover:bg-white/10"
-          >
+          <button onClick={onClose} className="rounded-full border border-white/10 p-1 text-white/80 hover:bg-white/10">
             <X className="h-4 w-4" />
           </button>
         </div>
-        {favs.length === 0 ? (
-          <p className="mt-6 text-sm text-zinc-400">
-            Aucun favori pour l’instant.
-          </p>
+        {favorites.length === 0 ? (
+          <p className="mt-6 text-sm text-zinc-400">Aucun favori pour l'instant.</p>
         ) : (
           <ul className="mt-4 space-y-3">
-            {favs.map((id) => {
-              const b = beatsMap[id];
+            {favorites.map((fav) => {
+              const id = fav.beatId;
+              const b = fav.beat;
+              const title = b?.title || `Beat ${formatId(id)}`;
+              const artist = b?.artist || b?.artistName || "Beatmaker";
               return (
-                <li
-                  key={id}
-                  className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3"
-                >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 text-xs">
-                    #{id}
+                <li key={fav.id || fav._id || id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 px-2 text-xs text-center truncate">
+                    {title}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">
-                      {b?.name || `Beat ${id}`}
-                    </div>
-                    <div className="truncate text-xs text-zinc-400">
-                      {b?.artist || "Beatmaker"} •{" "}
-                      {b?.price ? `${b.price}€` : "—"}
-                    </div>
+                    <div className="truncate text-sm font-semibold">{title}</div>
+                    <div className="truncate text-xs text-zinc-400">{artist}</div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -627,18 +598,20 @@ function FavsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
                       }}
                       className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs hover:bg-white/10"
                     >
-                      Écouter
+                      Ecouter
                     </button>
                     <button
-                      onClick={() => alert("Achat (démo)")}
+                      onClick={() => {
+                        onClose();
+                        router.push("/web/panier");
+                      }}
                       className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-zinc-100"
                     >
-                      <CartIcon className="h-3 w-3" /> Acheter
+                      <ShoppingCart className="h-3 w-3" /> Acheter
                     </button>
                     <button
-                      onClick={() => removeFav(id)}
+                      onClick={() => toggleFavorite(id).then(onRefresh).catch(() => {})}
                       className="rounded-full border border-white/10 bg-white/5 p-1 hover:bg-white/10"
-                      aria-label="Supprimer"
                     >
                       <X className="h-4 w-4" />
                     </button>
@@ -653,119 +626,57 @@ function FavsModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   );
 }
 
-function SecurityPreferences() {
-  const [twoFA, setTwoFA] = React.useState(true);
-  const [anonymous, setAnonymous] = React.useState(false);
+function InfoModal({
+  open,
+  onClose,
+  title,
+  children,
+  actionLabel,
+  onAction,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
+  if (!open) return null;
   return (
-    <Card>
-      <div className="mb-4 flex items-center justify-between">
-        <h3 className="text-base font-semibold">Sécurité & Préférences</h3>
-        <Pill>recommandé</Pill>
-      </div>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4" /> 2FA activée
-            </div>
-            <Toggle checked={twoFA} onChange={setTwoFA} />
-          </div>
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-white/5 p-3">
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4" /> Mode anonyme
-            </div>
-            <Toggle checked={anonymous} onChange={setAnonymous} />
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={onClose}>
+      <motion.div
+        initial={{ scale: 0.96, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.98, opacity: 0 }}
+        transition={{ duration: 0.25 }}
+        className="relative w-[min(560px,94vw)] rounded-2xl border border-white/10 bg-[#0f0f14]/90 p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold">{title}</h3>
+          <button onClick={onClose} className="rounded-full border border-white/10 p-1 text-white/80 hover:bg-white/10">
+            <X className="h-4 w-4" />
+          </button>
         </div>
-        <div className="space-y-3">
-          <div className="rounded-xl bg-white/5 p-3 text-sm text-zinc-300">
-            <div className="mb-2 flex items-center gap-2 font-medium">
-              <Info className="h-4 w-4" /> Conseils
-            </div>
-            Utilise des mots de passe uniques, active les notifications de
-            connexion, et configure un backup code pour éviter les blocages.
-          </div>
-          <div className="flex items-center gap-3">
-            <Button className="flex-1">
-              <ShieldCheck className="h-4 w-4" /> Gérer les appareils
-            </Button>
-            <Button variant="secondary" className="flex-1">
-              <Settings className="h-4 w-4" /> Préférences
+        <div className="mt-3 text-sm text-zinc-300">{children}</div>
+        {actionLabel && onAction && (
+          <div className="mt-4">
+            <Button variant="secondary" onClick={onAction}>
+              {actionLabel}
             </Button>
           </div>
-        </div>
-      </div>
-    </Card>
+        )}
+      </motion.div>
+    </div>
   );
 }
 
-function DangerZone() {
-  const router = useRouter();
-  const { logout, user } = useAuth();
-
-  const handleExport = () => {
-    alert("Export de vos données...");
-  };
-
-  const handleDelete = () => {
-    if (confirm("Supprimer définitivement votre compte ?")) {
-      if (typeof window !== "undefined" && user) {
-        const users = JSON.parse(localStorage.getItem("users") || "{}");
-        delete users[user];
-        localStorage.setItem("users", JSON.stringify(users));
-      }
-      logout();
-      router.push("/web/profil");
-    }
-  };
-
-  return (
-    <Card className="border-rose-500/30">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-base font-semibold text-rose-200">Zone sensible</h3>
-        <Pill>attention</Pill>
-      </div>
-      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-2xl text-sm text-zinc-300">
-          Sauvegarde tes données et vérifie tes licences avant toute
-          suppression. Ces actions sont définitives.
-        </p>
-        <div className="flex gap-3 max-sm:w-full max-sm:flex-col">
-          <Button variant="ghost" onClick={handleExport}>
-            Exporter mes données
-          </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            <LogOut className="h-4 w-4" /> Supprimer le compte
-          </Button>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-// ---------- Background ----------
 function AnimatedAmbient() {
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 -z-0 overflow-hidden"
-    >
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.6 }}
-        transition={{ duration: 1.2 }}
-        className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-indigo-600/30 blur-3xl"
-      />
-      <motion.div
-        animate={{ x: [0, 20, -10, 0], y: [0, -10, 10, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-        className="absolute right-[-10rem] top-10 h-[28rem] w-[28rem] rounded-full bg-fuchsia-600/25 blur-[100px]"
-      />
-      <motion.div
-        animate={{ x: [0, -10, 15, 0], y: [0, 12, -8, 0] }}
-        transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-        className="absolute bottom-[-12rem] left-20 h-[26rem] w-[26rem] rounded-full bg-cyan-500/25 blur-[100px]"
-      />
+    <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} transition={{ duration: 1.2 }} className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-indigo-600/30 blur-3xl" />
+      <motion.div animate={{ x: [0, 20, -10, 0], y: [0, -10, 10, 0] }} transition={{ duration: 18, repeat: Infinity, ease: "linear" }} className="absolute right-[-10rem] top-10 h-[28rem] w-[28rem] rounded-full bg-fuchsia-600/25 blur-[100px]" />
+      <motion.div animate={{ x: [0, -10, 15, 0], y: [0, 12, -8, 0] }} transition={{ duration: 22, repeat: Infinity, ease: "linear" }} className="absolute bottom-[-12rem] left-20 h-[26rem] w-[26rem] rounded-full bg-cyan-500/25 blur-[100px]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.06),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.04),transparent_60%)]" />
     </div>
   );

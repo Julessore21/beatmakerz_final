@@ -8,8 +8,11 @@ import { Search, Grid3X3, Rows3, SlidersHorizontal, Star, Crown, Flame, ChevronD
 import { Input } from "@/components/ui/input";
 import { useAudio } from "@/context/AudioPlayerContext";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 import BeatCard from "@/components/BeatCard";
 import BeatTableRow from "@/components/BeatTableRow";
+import { apiGet } from "@/lib/services/api-client";
+import { fetchFavorites, toggleFavorite as toggleFavoriteApi } from "@/lib/services/user-api";
 
 /* ------------------------------ types & data ------------------------------ */
 
@@ -17,7 +20,7 @@ type Tag = "Tendance" | "Nouveau" | "Populaire";
 type ViewMode = "grid" | "table";
 
 export type Beat = {
-  id: number;
+  id: number | string;
   name: string;
   artist: string;
   genre: string;
@@ -29,8 +32,7 @@ export type Beat = {
 };
 
 // Utilise le même fichier test que la marketplace pour assurer la lecture sur les deux pages
-const TEST_AUDIO = 
-  "/audio/Woke up late, still rich from yesterday  (Remix) (Instrumental) (1).mp3";
+const TEST_AUDIO = "/audio/Woke up late, still rich from yesterday  (Remix) (Instrumental) (1).mp3";
 
 const GENRES = [
   "Trap",
@@ -73,16 +75,14 @@ const KEYS = [
   "Dbm",
 ] as const;
 const QUICK_TAGS: Tag[] = ["Tendance", "Nouveau", "Populaire"];
-const SORTS = [
-  "Prix ↑",
-  "Prix ↓",
-  "BPM ↑",
-  "BPM ↓",
-] as const;
+const SORTS = ["Prix ↑", "Prix ↓", "BPM ↑", "BPM ↓"] as const;
 
-const COLLECTIONS: { key: string; label: string; icon: React.ReactNode; action: (ctx: {
-  setTag: (t: Tag | null) => void;
-}) => void }[] = [
+const COLLECTIONS: {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  action: (ctx: { setTag: (t: Tag | null) => void }) => void;
+}[] = [
   {
     key: "top",
     label: "Top",
@@ -99,20 +99,11 @@ const COLLECTIONS: { key: string; label: string; icon: React.ReactNode; action: 
 ];
 
 // plages de BPM
-// BPM slider bounds (style proche du formulaire prod sur mesure)
 const BPM_MIN = 60;
 const BPM_MAX = 200;
 
 const generateRandomBeats = (count: number): Beat[] => {
-  const artists = [
-    "Metro Boomin",
-    "Kendrick Lamar",
-    "Drake",
-    "J. Cole",
-    "Nas",
-    "Travis Scott",
-    "The Weeknd",
-  ];
+  const artists = ["Metro Boomin", "Kendrick Lamar", "Drake", "J. Cole", "Nas", "Travis Scott", "The Weeknd"];
   return Array.from({ length: count }, (_, i) => ({
     id: i + 1,
     name: `Beat ${i + 1}`,
@@ -128,22 +119,12 @@ const generateRandomBeats = (count: number): Beat[] => {
 
 /* -------------------------------- helpers -------------------------------- */
 
-const Chip = ({
-  active,
-  onClick,
-  children,
-}: {
-  active?: boolean;
-  onClick?: () => void;
-  children: React.ReactNode;
-}) => (
+const Chip = ({ active, onClick, children }: { active?: boolean; onClick?: () => void; children: React.ReactNode }) => (
   <button
     onClick={onClick}
     className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] transition-colors
       ${
-        active
-          ? "border-indigo-500/70 bg-indigo-500 text-white"
-          : "border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10"
+        active ? "border-indigo-500/70 bg-indigo-500 text-white" : "border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10"
       }`}
   >
     {children}
@@ -151,9 +132,7 @@ const Chip = ({
 );
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <div className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">
-    {children}
-  </div>
+  <div className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">{children}</div>
 );
 
 /* ---------------------------------- page --------------------------------- */
@@ -164,6 +143,7 @@ function CatalogueContent() {
 
   const { play, toggle, isPlaying, track, setQueue } = useAudio();
   const { addItem } = useCart();
+  const { user } = useAuth();
 
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
@@ -180,9 +160,41 @@ function CatalogueContent() {
   const pageSize = 12;
 
   const [beats, setBeats] = useState<Beat[]>([]);
+  const [favIds, setFavIds] = useState<string[]>([]);
   useEffect(() => {
-    setBeats(generateRandomBeats(96));
+    const load = async () => {
+      try {
+        const data = await apiGet<{ items: any[] }>("/beats");
+        const mapped =
+          data.items?.map((b, idx) => ({
+            id: b._id || b.id || `beat-${idx}`,
+            name: b.title || "Beat",
+            artist: b.artist?.name || "Beatmaker",
+            genre: b.genres?.[0] || "Beat",
+            bpm: b.bpm ?? 120,
+            key: b.key || "Am",
+            tag: null as Tag | null,
+            audio: b.assets?.find((a: any) => a.type === "preview")?.storageKey || TEST_AUDIO,
+            price: (b.priceOverrides?.[0]?.priceCents ?? b.priceCents ?? 1999) / 100,
+          })) || [];
+        setBeats(mapped);
+      } catch {
+        setBeats(generateRandomBeats(96));
+      }
+    };
+    load();
   }, []);
+
+  // hydrate favoris si connecté
+  useEffect(() => {
+    if (!user) {
+      setFavIds([]);
+      return;
+    }
+    fetchFavorites()
+      .then((items) => setFavIds(items.map((f) => f.beatId)))
+      .catch(() => setFavIds([]));
+  }, [user]);
 
   /* debounce query */
   useEffect(() => {
@@ -198,8 +210,7 @@ function CatalogueContent() {
     const k = searchParams.get("keys")?.split(",").filter(Boolean) ?? [];
     const bpmMinUrl = parseInt(searchParams.get("bpmMin") || "", 10);
     const tag = (searchParams.get("tag") as Tag) || null;
-    const s =
-      (searchParams.get("sort") as (typeof SORTS)[number]) || "Pertinence";
+    const s = (searchParams.get("sort") as (typeof SORTS)[number]) || "Pertinence";
     const v = (searchParams.get("view") as ViewMode) || "grid";
 
     setQuery(q);
@@ -207,9 +218,9 @@ function CatalogueContent() {
     setSelectedGenres(g);
     setSelectedKeys(k);
     if (!Number.isNaN(bpmMinUrl)) {
-      const v = Math.max(BPM_MIN, Math.min(BPM_MAX, bpmMinUrl));
-      setBpmMin(v);
-      setBpmInput(String(v));
+      const v2 = Math.max(BPM_MIN, Math.min(BPM_MAX, bpmMinUrl));
+      setBpmMin(v2);
+      setBpmInput(String(v2));
     } else {
       setBpmMin(BPM_MIN);
       setBpmInput(String(BPM_MIN));
@@ -235,30 +246,10 @@ function CatalogueContent() {
       lastQSRef.current = qs;
       router.replace(qs ? `?${qs}` : "?", { scroll: false });
     }
-  }, [
-    debounced,
-    selectedGenres,
-    selectedKeys,
-    bpmMin,
-    selectedTag,
-    sort,
-    viewMode,
-    router,
-  ]);
+  }, [debounced, selectedGenres, selectedKeys, bpmMin, selectedTag, sort, viewMode, router]);
 
   /* reset page on filter change */
-  useEffect(
-    () => setCurrentPage(1),
-    [
-      debounced,
-      selectedGenres,
-      selectedKeys,
-      bpmMin,
-      selectedTag,
-      sort,
-      viewMode,
-    ]
-  );
+  useEffect(() => setCurrentPage(1), [debounced, selectedGenres, selectedKeys, bpmMin, selectedTag, sort, viewMode]);
 
   // remonter en haut quand la page change (peu importe la direction)
   useEffect(() => {
@@ -275,22 +266,13 @@ function CatalogueContent() {
         b.name.toLowerCase().includes(debounced.toLowerCase()) ||
         b.artist.toLowerCase().includes(debounced.toLowerCase()) ||
         b.genre.toLowerCase().includes(debounced.toLowerCase());
-      const mG = selectedGenres.length
-        ? selectedGenres.includes(b.genre)
-        : true;
+      const mG = selectedGenres.length ? selectedGenres.includes(b.genre) : true;
       const mK = selectedKeys.length ? selectedKeys.includes(b.key) : true;
       const mT = selectedTag ? b.tag === selectedTag : true;
       const mB = b.bpm >= bpmMin;
       return mQ && mG && mK && mT && mB;
     });
-  }, [
-    beats,
-    debounced,
-    selectedGenres,
-    selectedKeys,
-    selectedTag,
-    bpmMin,
-  ]);
+  }, [beats, debounced, selectedGenres, selectedKeys, selectedTag, bpmMin]);
 
   /* sort */
   const sorted = useMemo(() => {
@@ -323,14 +305,14 @@ function CatalogueContent() {
     }
   }, [currentBeats, setQueue]);
 
-  const toggleInArray = (
-    val: string,
-    arr: string[],
-    set: (v: string[]) => void
-  ) => set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
+  const toggleInArray = (val: string, arr: string[], set: (v: string[]) => void) =>
+    set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
 
-  const onPlay = (b: Beat) =>
-    track?.id === b.id && isPlaying ? toggle() : play(b, currentBeats);
+  const onPlay = (b: Beat) => (track?.id === b.id && isPlaying ? toggle() : play(b, currentBeats));
+  const onToggleFav = async (beatId: string) => {
+    await toggleFavoriteApi(beatId);
+    setFavIds((prev) => (prev.includes(beatId) ? prev.filter((id) => id !== beatId) : [...prev, beatId]));
+  };
 
   /* --------------------------------- render -------------------------------- */
 
@@ -338,12 +320,7 @@ function CatalogueContent() {
     <div className="relative min-h-screen overflow-hidden bg-[#0A0A12] text-white pt-24 pb-40">
       {/* Ambient animated background (aligné avec account/abonnements) */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.6 }}
-          transition={{ duration: 1.2 }}
-          className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet-600/30 blur-3xl"
-        />
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} transition={{ duration: 1.2 }} className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet-600/30 blur-3xl" />
         <motion.div
           animate={{ x: [0, 20, -10, 0], y: [0, -10, 10, 0] }}
           transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
@@ -364,9 +341,7 @@ function CatalogueContent() {
       >
         <div className="rounded-3xl border border-white/10 bg-[#141416]/90 p-6 backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]">
           <div className="text-2xl font-bold tracking-tight">Catalogue</div>
-          <div className="mt-1 text-sm text-zinc-300">
-            {sorted.length} résultats • {GENRES.length} genres • vue {viewMode}
-          </div>
+          <div className="mt-1 text-sm text-zinc-300">{sorted.length} résultats • {GENRES.length} genres • vue {viewMode}</div>
         </div>
 
         {/* tools sticky */}
@@ -439,8 +414,6 @@ function CatalogueContent() {
               className="w-full rounded-2xl border border-white/10 bg-[#0e0e12]/80 pl-11 py-3"
             />
           </div>
-
-          
         </div>
       </motion.div>
 
@@ -454,10 +427,7 @@ function CatalogueContent() {
                 <div className="flex items-center justify-between">
                   <SectionTitle>Genres</SectionTitle>
                   {selectedGenres.length > 0 && (
-                    <button
-                      className="text-xs text-zinc-400 hover:text-zinc-200"
-                      onClick={() => setSelectedGenres([])}
-                    >
+                    <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setSelectedGenres([])}>
                       Effacer
                     </button>
                   )}
@@ -467,7 +437,9 @@ function CatalogueContent() {
                     <button
                       key={g}
                       onClick={() => toggleInArray(g, selectedGenres, setSelectedGenres)}
-                      className={`h-8 rounded-xl border px-2 text-[11px] text-left ${selectedGenres.includes(g) ? "border-indigo-500 bg-indigo-500 text-white" : "border-white/10 bg-white/5 hover:bg-white/10 text-zinc-100"}`}
+                      className={`h-8 rounded-xl border px-2 text-[11px] text-left ${
+                        selectedGenres.includes(g) ? "border-indigo-500 bg-indigo-500 text-white" : "border-white/10 bg-white/5 hover:bg-white/10 text-zinc-100"
+                      }`}
                     >
                       {g}
                     </button>
@@ -479,21 +451,14 @@ function CatalogueContent() {
                 <div className="flex items-center justify-between">
                   <SectionTitle>Tonalités</SectionTitle>
                   {selectedKeys.length > 0 && (
-                    <button
-                      className="text-xs text-zinc-400 hover:text-zinc-200"
-                      onClick={() => setSelectedKeys([])}
-                    >
+                    <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setSelectedKeys([])}>
                       Effacer
                     </button>
                   )}
                 </div>
                 <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
                   {KEYS.map((k) => (
-                    <Chip
-                      key={k}
-                      active={selectedKeys.includes(k)}
-                      onClick={() => toggleInArray(k, selectedKeys, setSelectedKeys)}
-                    >
+                    <Chip key={k} active={selectedKeys.includes(k)} onClick={() => toggleInArray(k, selectedKeys, setSelectedKeys)}>
                       {k}
                     </Chip>
                   ))}
@@ -504,10 +469,7 @@ function CatalogueContent() {
                 <div className="flex items-center justify-between">
                   <SectionTitle>BPM (min)</SectionTitle>
                   {bpmMin !== BPM_MIN && (
-                    <button
-                      className="text-xs text-zinc-400 hover:text-zinc-200"
-                      onClick={() => setBpmMin(BPM_MIN)}
-                    >
+                    <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setBpmMin(BPM_MIN)}>
                       Effacer
                     </button>
                   )}
@@ -519,7 +481,11 @@ function CatalogueContent() {
                     max={BPM_MAX}
                     step={1}
                     value={bpmMin}
-                    onChange={(e) => { const v = parseInt(e.target.value, 10); setBpmMin(v); setBpmInput(String(v)); }}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      setBpmMin(v);
+                      setBpmInput(String(v));
+                    }}
                     className="w-full"
                   />
                   <input
@@ -533,15 +499,28 @@ function CatalogueContent() {
                       const v = parseInt(raw, 10);
                       if (!Number.isNaN(v)) setBpmMin(Math.max(BPM_MIN, Math.min(BPM_MAX, v)));
                     }}
-                    onBlur={() => { if (bpmInput === "" || Number.isNaN(parseInt(bpmInput,10))) { setBpmInput(String(BPM_MIN)); setBpmMin(BPM_MIN); } }}
+                    onBlur={() => {
+                      if (bpmInput === "" || Number.isNaN(parseInt(bpmInput, 10))) {
+                        setBpmInput(String(BPM_MIN));
+                        setBpmMin(BPM_MIN);
+                      }
+                    }}
                     className="w-[56px] rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center text-xs text-white"
                   />
                 </div>
               </div>
 
-              {(selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || selectedTag) ? (
+              {selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || selectedTag ? (
                 <button
-                  onClick={() => { setSelectedGenres([]); setSelectedKeys([]); setBpmMin(BPM_MIN); setBpmInput(String(BPM_MIN)); setSelectedTag(null); setQuery(""); setDebounced(""); }}
+                  onClick={() => {
+                    setSelectedGenres([]);
+                    setSelectedKeys([]);
+                    setBpmMin(BPM_MIN);
+                    setBpmInput(String(BPM_MIN));
+                    setSelectedTag(null);
+                    setQuery("");
+                    setDebounced("");
+                  }}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
                 >
                   Réinitialiser tous les filtres
@@ -593,7 +572,8 @@ function CatalogueContent() {
                       isCurrent={track?.id === b.id}
                       isPlaying={isPlaying}
                       onPlayPause={() => onPlay(b)}
-                      onFav={() => {}}
+                      isFav={favIds.includes(String(b.id))}
+                      onFav={() => onToggleFav(String(b.id))}
                       onMore={() => {}}
                     />
                   ))}
@@ -628,16 +608,16 @@ function CatalogueContent() {
                           genre={b.genre}
                           bpm={b.bpm}
                           keySig={b.key}
-                          price={b.price}
-                          tagIcon={selectedTag === "Tendance" ? "top" : selectedTag === "Nouveau" ? "new" : selectedTag === "Populaire" ? "popular" : null}
-                          isCurrent={track?.id === b.id}
-                          isPlaying={isPlaying}
-                          onPlayPause={() => onPlay(b)}
-                          onAdd={() => addItem({ id: b.id, name: b.name, price: b.price })}
-                          onFav={() => {}}
-                          onMore={() => {}}
-                        />
-                      ))}
+                      price={b.price}
+                      tagIcon={b.tag === "Tendance" ? "top" : b.tag === "Nouveau" ? "new" : b.tag === "Populaire" ? "popular" : null}
+                      isCurrent={track?.id === b.id}
+                      isPlaying={isPlaying}
+                      onPlayPause={() => onPlay(b)}
+                      onAdd={() => addItem({ id: b.id, name: b.name, price: b.price })}
+                      onFav={() => onToggleFav(String(b.id))}
+                      onMore={() => {}}
+                    />
+                  ))}
                     </tbody>
                   </table>
                 </motion.div>
@@ -650,7 +630,7 @@ function CatalogueContent() {
                 disabled={currentPage === 1}
                 onClick={() => {
                   setCurrentPage((p) => Math.max(1, p - 1));
-                  if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 className="rounded-full bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 disabled:opacity-40"
               >
@@ -663,7 +643,7 @@ function CatalogueContent() {
                 disabled={currentPage === totalPages}
                 onClick={() => {
                   setCurrentPage((p) => Math.min(totalPages, p + 1));
-                  if (typeof window !== 'undefined') window.scrollTo({ top: 0, behavior: 'smooth' });
+                  if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
                 className="rounded-full bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 disabled:opacity-40"
               >

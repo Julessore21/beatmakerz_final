@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, {
   createContext,
@@ -6,12 +6,18 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import {
+  login as loginService,
+  signup as signupService,
+  logout as logoutService,
+  getCurrentUser,
+} from "@/lib/services/auth-service";
 
 interface AuthContextType {
   user: string | null;
-  login: (username: string, password: string) => boolean;
-  signup: (username: string, password: string) => boolean;
-  logout: () => void;
+  login: (username: string, password: string) => Promise<boolean>;
+  signup: (username: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,39 +26,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<string | null>(null);
 
   useEffect(() => {
-    const storedUser = typeof window !== "undefined" ? localStorage.getItem("currentUser") : null;
-    if (storedUser) {
-      setUser(storedUser);
-    }
+    (async () => {
+      const storedUser = await getCurrentUser();
+      if (storedUser) {
+        setUser(storedUser);
+      }
+    })();
   }, []);
 
-  const login = (username: string, password: string) => {
-    if (typeof window === "undefined") return false;
-    const users = JSON.parse(localStorage.getItem("users") || "{}");
-    if (users[username] && users[username] === password) {
-      localStorage.setItem("currentUser", username);
-      setUser(username);
-      return true;
+  const login = async (username: string, password: string) => {
+    const success = await loginService(username, password);
+    if (success) {
+      const refreshedUser = await getCurrentUser();
+      setUser(refreshedUser);
     }
-    return false;
+    return success;
   };
 
-  const signup = (username: string, password: string) => {
-    if (typeof window === "undefined") return false;
-    const users = JSON.parse(localStorage.getItem("users") || "{}");
-    if (users[username]) {
-      return false;
+  const signup = async (username: string, password: string) => {
+    const success = await signupService(username, password);
+    if (success) {
+      const refreshedUser = await getCurrentUser();
+      setUser(refreshedUser);
     }
-    users[username] = password;
-    localStorage.setItem("users", JSON.stringify(users));
-    localStorage.setItem("currentUser", username);
-    setUser(username);
-    return true;
+    return success;
   };
 
-  const logout = () => {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem("currentUser");
+  const logout = async () => {
+    await logoutService();
     setUser(null);
   };
 
@@ -70,4 +71,3 @@ export const useAuth = () => {
   }
   return ctx;
 };
-

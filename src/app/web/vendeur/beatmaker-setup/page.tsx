@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
@@ -16,35 +16,38 @@ export default function BeatmakerSetup() {
   const [bio, setBio] = useState("");
   const [image, setImage] = useState<string | null>(null);
 
-  const handleAuth = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAuth = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (mode === "link") {
-      // pour cette démo: si déjà connecté, on considère que le compte est lié
       if (user) {
         try {
-          localStorage.setItem(`isBeatmaker:${user}`, "true");
-        } catch {}
-        alert("Ton compte existant est maintenant configuré comme beatmaker.");
+          localStorage.setItem("isBeatmaker:" + user, "true");
+        } catch {
+          // ignore
+        }
+        alert("Ton compte est maintenant configure comme beatmaker.");
         return;
       }
-      const ok = login(username, password);
+      const ok = await login(username, password);
       if (ok) {
         try {
-          localStorage.setItem(`isBeatmaker:${username}`, "true");
-        } catch {}
+          localStorage.setItem("isBeatmaker:" + username.trim(), "true");
+        } catch {
+          // ignore
+        }
       }
-      alert(ok ? "Compte lié avec succès." : "Identifiants invalides.");
+      alert(ok ? "Compte lie avec succes." : "Identifiants invalides.");
     } else {
-      const ok = signup(username, password);
-      alert(ok ? "Compte créé et connecté." : "Utilisateur déjà existant.");
+      const ok = await signup(username, password);
+      alert(ok ? "Compte cree et connecte." : "Utilisateur deja existant.");
     }
   };
 
-  const handleProfile = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleProfile = (event: React.FormEvent) => {
+    event.preventDefault();
     const keyUser = user || username;
     if (!keyUser) {
-      alert("Connecte-toi ou crée un compte d'abord.");
+      alert("Connecte-toi ou cree un compte d'abord.");
       return;
     }
     try {
@@ -52,24 +55,34 @@ export default function BeatmakerSetup() {
       const profiles = JSON.parse(raw);
       profiles[keyUser] = { artistName, tag, bio, image };
       localStorage.setItem("beatmakerProfiles", JSON.stringify(profiles));
-      localStorage.setItem(`isBeatmaker:${keyUser}`, "true");
-      alert("Profil beatmaker enregistré.");
+      localStorage.setItem("isBeatmaker:" + keyUser, "true");
+      alert("Profil beatmaker enregistre.");
     } catch {
-      alert("Impossible d'enregistrer localement (démo).");
+      alert("Impossible d'enregistrer localement (mode demo).");
     }
   };
 
+  const modeButton = (current: "create" | "link", label: string) => (
+    <button
+      type="button"
+      onClick={() => setMode(current)}
+      className={`rounded-full px-3 py-1 ${mode === current ? "bg-white text-black" : "text-white"}`}
+    >
+      {label}
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black text-white pt-24 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black pt-24 pb-24 text-white">
       <div className="container mx-auto max-w-3xl px-4">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]"
+          className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 shadow-[0_10px_60px_rgba(0,0,0,.35)] backdrop-blur-xl"
         >
           <div className="text-center">
             <h1 className="text-3xl font-bold tracking-tight">Configuration Beatmaker</h1>
-            <p className="mt-2 text-sm text-zinc-300">Crée un profil dédié ou lie ton compte existant.</p>
+            <p className="mt-2 text-sm text-zinc-300">Cree un profil dedie ou lie ton compte existant.</p>
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -77,14 +90,8 @@ export default function BeatmakerSetup() {
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold">Compte</h2>
                 <div className="rounded-full border border-white/10 bg-white/5 p-1 text-xs">
-                  <button
-                    className={`px-3 py-1 rounded-full ${mode==="create"?"bg-white text-black":"text-white"}`}
-                    onClick={() => setMode("create")}
-                  >Créer</button>
-                  <button
-                    className={`px-3 py-1 rounded-full ${mode==="link"?"bg-white text-black":"text-white"}`}
-                    onClick={() => setMode("link")}
-                  >Lier</button>
+                  {modeButton("create", "Creer")}
+                  {modeButton("link", "Lier")}
                 </div>
               </div>
 
@@ -93,7 +100,7 @@ export default function BeatmakerSetup() {
                   <>
                     <input
                       value={username}
-                      onChange={(e)=>setUsername(e.target.value)}
+                      onChange={(event) => setUsername(event.target.value)}
                       placeholder="Email ou pseudo"
                       className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 placeholder:text-zinc-500"
                       required
@@ -101,7 +108,7 @@ export default function BeatmakerSetup() {
                     <input
                       type="password"
                       value={password}
-                      onChange={(e)=>setPassword(e.target.value)}
+                      onChange={(event) => setPassword(event.target.value)}
                       placeholder="Mot de passe"
                       className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 placeholder:text-zinc-500"
                       required
@@ -109,8 +116,11 @@ export default function BeatmakerSetup() {
                   </>
                 )}
 
-                <button type="submit" className="w-full rounded-xl bg-white px-5 py-3 font-semibold text-black hover:bg-zinc-100">
-                  {mode === "link" ? (user?"Lier mon compte":"Se connecter & lier") : "Créer mon compte"}
+                <button
+                  type="submit"
+                  className="w-full rounded-xl bg-white px-5 py-3 font-semibold text-black hover:bg-zinc-100"
+                >
+                  {mode === "link" ? (user ? "Lier mon compte" : "Se connecter et lier") : "Creer mon compte"}
                 </button>
               </form>
             </section>
@@ -120,15 +130,15 @@ export default function BeatmakerSetup() {
               <form onSubmit={handleProfile} className="mt-4 space-y-3">
                 <input
                   value={artistName}
-                  onChange={(e)=>setArtistName(e.target.value)}
+                  onChange={(event) => setArtistName(event.target.value)}
                   placeholder="Pseudo de beatmaker"
                   className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 placeholder:text-zinc-500"
                   required
                 />
                 <input
                   value={tag}
-                  onChange={(e)=>setTag(e.target.value)}
-                  placeholder="Tag/Producteur (ex: prod. by …)"
+                  onChange={(event) => setTag(event.target.value)}
+                  placeholder="Signature (ex: prod. by ...)"
                   className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 placeholder:text-zinc-500"
                 />
                 <div className="flex items-center gap-3">
@@ -136,35 +146,42 @@ export default function BeatmakerSetup() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e)=>{
-                      const f = e.target.files?.[0];
-                      if (!f) return;
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
                       const reader = new FileReader();
-                      reader.onload = () => setImage(String(reader.result||""));
-                      reader.readAsDataURL(f);
+                      reader.onload = () => setImage(String(reader.result || ""));
+                      reader.readAsDataURL(file);
                     }}
                     className="text-sm"
                   />
                 </div>
                 {image && (
                   <div className="mt-1">
-                    <img src={image} alt="aperçu" className="h-20 w-20 rounded-xl object-cover" />
+                    <img src={image} alt="apercu" className="h-20 w-20 rounded-xl object-cover" />
                   </div>
                 )}
                 <textarea
                   value={bio}
-                  onChange={(e)=>setBio(e.target.value)}
+                  onChange={(event) => setBio(event.target.value)}
                   placeholder="Bio courte, inspirations, styles"
                   rows={4}
                   className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 placeholder:text-zinc-500"
                 />
-                <button type="submit" className="w-full rounded-xl bg-white px-5 py-3 font-semibold text-black hover:bg-zinc-100">Enregistrer</button>
+                <button
+                  type="submit"
+                  className="w-full rounded-xl bg-white px-5 py-3 font-semibold text-black hover:bg-zinc-100"
+                >
+                  Enregistrer
+                </button>
               </form>
             </section>
           </div>
 
           <div className="mt-6 flex items-center justify-between text-sm text-zinc-400">
-            <Link href="/web/vendeur" className="hover:underline">Retour</Link>
+            <Link href="/web/vendeur" className="hover:underline">
+              Retour
+            </Link>
             <span>Assistance prioritaire 24/7</span>
           </div>
         </motion.div>
@@ -172,5 +189,3 @@ export default function BeatmakerSetup() {
     </div>
   );
 }
-
-

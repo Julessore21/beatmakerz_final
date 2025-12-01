@@ -5,6 +5,7 @@ const nextConfig = {
     optimizePackageImports: ["react-icons", "framer-motion"],
   },
   async headers() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     const csp = [
       "default-src 'self';",
       "base-uri 'self';",
@@ -14,7 +15,7 @@ const nextConfig = {
       "font-src 'self' data: https:;",
       "style-src 'self' 'unsafe-inline' https:;",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;",
-      "connect-src 'self' https:;",
+      `connect-src 'self' ${apiUrl} https:;`,
     ].join(" ");
     return [
       {
