@@ -56,7 +56,7 @@ const GlobalAudioPlayer: React.FC = () => {
   // Quand le morceau change, on ré-affiche si précédemment fermé
   React.useEffect(() => {
     if (track) setDismissed(false);
-  }, [track?.id]);
+  }, [track]);
 
   const hasTrack = !!track;
   const shown = hasTrack && !dismissed && !collapsed;

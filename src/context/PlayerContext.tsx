@@ -112,7 +112,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       a.removeEventListener("play", onPlay);
       a.removeEventListener("pause", onPause);
     };
-  }, [ensureAudio, current, queue]);
+  }, [ensureAudio, current, queue, play]);
 
   // persister le volume
   useEffect(() => {

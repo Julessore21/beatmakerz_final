@@ -105,7 +105,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       a.removeEventListener("play", onPlay);
       a.removeEventListener("pause", onPause);
     };
-  }, [ensureAudio, queue, track]);
+  }, [ensureAudio, queue, track, play]);
 
   // Lecture de la valeur persistée au mount, puis sync à chaque changement
   useEffect(() => {
