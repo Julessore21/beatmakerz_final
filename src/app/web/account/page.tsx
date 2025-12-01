@@ -395,7 +395,7 @@ export default function AccountPage() {
               open={openModal === "downloads"}
               onClose={() => setOpenModal(null)}
               title="Telechargements"
-              actionLabel="Aller a l'historique"
+              actionLabel="Aller a l&#39;historique"
               onAction={() => {
                 setOpenModal(null);
                 ordersRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -573,7 +573,7 @@ function FavsModal({ open, onClose, favorites, onRefresh }: { open: boolean; onC
           </button>
         </div>
         {favorites.length === 0 ? (
-          <p className="mt-6 text-sm text-zinc-400">Aucun favori pour l'instant.</p>
+          <p className="mt-6 text-sm text-zinc-400">Aucun favori pour l&#39;instant.</p>
         ) : (
           <ul className="mt-4 space-y-3">
             {favorites.map((fav) => {

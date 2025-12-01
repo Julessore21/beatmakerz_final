@@ -228,7 +228,7 @@ function CatalogueContent() {
     setSelectedTag(tag);
     setSort(s);
     setViewMode(v);
-  }, []); // mount only
+  }, [searchParams]); // mount only
 
   /* sync URL */
   const lastQSRef = useRef("");

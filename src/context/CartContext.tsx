@@ -82,8 +82,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Initial local state (visiteur) + fetch async
   useEffect(() => {
-    // Initial local state (visiteur)
     const local = loadFromLocal();
     if (local.length) setItems(local);
     fetchCart()
@@ -91,6 +91,8 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         /* ignore */
       })
       .finally(() => setHydrated(true));
+    // fetchCart intentionally not in deps to avoid refetch loop
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const addItem = (item: Omit<CartItem, "quantity">) => {
