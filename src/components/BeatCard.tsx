@@ -1,4 +1,5 @@
-﻿"use client";
+"use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { motion } from "framer-motion";
 import { Music2, Flame, Star, Crown } from "lucide-react";
@@ -130,16 +131,16 @@ export default function BeatCard({
           </div>
 
           <div className="mt-4 flex items-center justify-between gap-3">
-          <ActionBar
-            size="sm"
-            isCurrent={isCurrent}
-            isPlaying={isPlaying}
-            onPlayPause={onPlayPause}
-            onAdd={handleAdd}
-            onFav={handleFav}
-            isFav={fav}
-            onMore={onMore}
-          />
+            <ActionBar
+              size="sm"
+              isCurrent={isCurrent}
+              isPlaying={isPlaying}
+              onPlayPause={onPlayPause}
+              onAdd={handleAdd}
+              onFav={handleFav}
+              isFav={fav}
+              onMore={onMore}
+            />
             {tag && showTag && (
               <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[0.68rem] text-zinc-200">
                 {tag === "Tendance" && <Flame className="h-3 w-3 text-orange-400" />}
