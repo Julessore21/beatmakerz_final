@@ -74,6 +74,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   });
 
   // listeners de l'audio
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const a = ensureAudio();
     if (!a) return;
@@ -112,7 +113,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       a.removeEventListener("play", onPlay);
       a.removeEventListener("pause", onPause);
     };
-  }, [ensureAudio, current, queue, play]);
+  }, [ensureAudio, current, queue]);
 
   // persister le volume
   useEffect(() => {
