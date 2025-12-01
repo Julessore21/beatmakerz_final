@@ -100,8 +100,9 @@ export default function AccountPage() {
   }, [authUser]);
 
   const isGuest = !authUser;
-  const displayName = typeof authUser === "string" ? authUser : authUser?.displayName || authUser?.email || "Invite";
-  const email = typeof authUser === "string" ? authUser : authUser?.email || "";
+  const u: any = authUser;
+  const displayName = typeof authUser === "string" ? authUser : u?.displayName || u?.email || "Invite";
+  const email = typeof authUser === "string" ? authUser : u?.email || "";
 
   const stats = useMemo(
     () => [
