@@ -73,59 +73,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     return Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0.8;
   });
 
-  // listeners de l'audio
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const a = ensureAudio();
-    if (!a) return;
-
-    const onLoaded = () => setDuration(a.duration || 0);
-    const onTime = () => {
-      setCurrentTime(a.currentTime || 0);
-      setProgress(a.duration ? a.currentTime / a.duration : 0);
-    };
-    const onEnded = () => {
-      setIsPlaying(false);
-      // auto-next si possible
-      setTimeout(() => {
-        setProgress(0);
-        if (!current) return;
-        const idx = queue.findIndex((b) => b.id === current.id);
-        if (idx >= 0 && idx < queue.length - 1) {
-          const nxt = queue[idx + 1];
-          play(nxt);
-        }
-      }, 0);
-    };
-    const onPlay = () => setIsPlaying(true);
-    const onPause = () => setIsPlaying(false);
-
-    a.addEventListener("loadedmetadata", onLoaded);
-    a.addEventListener("timeupdate", onTime);
-    a.addEventListener("ended", onEnded);
-    a.addEventListener("play", onPlay);
-    a.addEventListener("pause", onPause);
-
-    return () => {
-      a.removeEventListener("loadedmetadata", onLoaded);
-      a.removeEventListener("timeupdate", onTime);
-      a.removeEventListener("ended", onEnded);
-      a.removeEventListener("play", onPlay);
-      a.removeEventListener("pause", onPause);
-    };
-  }, [ensureAudio, current, queue]);
-
-  // persister le volume
-  useEffect(() => {
-    const a = ensureAudio();
-    if (!a) return;
-    a.volume = volume;
-    if (typeof window !== "undefined") {
-      localStorage.setItem("bm_volume", String(volume));
-    }
-  }, [volume, ensureAudio]);
-
-  // actions
   const play = useCallback(
     (beat: Beat, newQueue?: Beat[]) => {
       const a = ensureAudio();
@@ -186,6 +133,58 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     },
     [duration, ensureAudio]
   );
+
+  // listeners de l'audio
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const a = ensureAudio();
+    if (!a) return;
+
+    const onLoaded = () => setDuration(a.duration || 0);
+    const onTime = () => {
+      setCurrentTime(a.currentTime || 0);
+      setProgress(a.duration ? a.currentTime / a.duration : 0);
+    };
+    const onEnded = () => {
+      setIsPlaying(false);
+      // auto-next si possible
+      setTimeout(() => {
+        setProgress(0);
+        if (!current) return;
+        const idx = queue.findIndex((b) => b.id === current.id);
+        if (idx >= 0 && idx < queue.length - 1) {
+          const nxt = queue[idx + 1];
+          play(nxt);
+        }
+      }, 0);
+    };
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+
+    a.addEventListener("loadedmetadata", onLoaded);
+    a.addEventListener("timeupdate", onTime);
+    a.addEventListener("ended", onEnded);
+    a.addEventListener("play", onPlay);
+    a.addEventListener("pause", onPause);
+
+    return () => {
+      a.removeEventListener("loadedmetadata", onLoaded);
+      a.removeEventListener("timeupdate", onTime);
+      a.removeEventListener("ended", onEnded);
+      a.removeEventListener("play", onPlay);
+      a.removeEventListener("pause", onPause);
+    };
+  }, [ensureAudio, current, queue, play]);
+
+  // persister le volume
+  useEffect(() => {
+    const a = ensureAudio();
+    if (!a) return;
+    a.volume = volume;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("bm_volume", String(volume));
+    }
+  }, [volume, ensureAudio]);
 
   const value: PlayerContextValue = useMemo(
     () => ({

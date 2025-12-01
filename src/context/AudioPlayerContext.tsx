@@ -69,7 +69,24 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   // La valeur persistée est appliquée après le mount
   const [volume, setVolume] = useState<number>(0.8);
 
+  // Actions principales
+  const play = useCallback(
+    (b: Beat, q?: Beat[]) => {
+      const a = ensureAudio();
+      if (!a) return;
+      if (q) setQueue(q);
+      if (!track || track.id !== b.id) {
+        a.src = b.audio;
+        setTrack(b);
+      }
+      a.play().catch(() => void 0);
+      setIsPlaying(true);
+    },
+    [track, ensureAudio]
+  );
+
   // Listeners de l'élément audio
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const a = ensureAudio();
     if (!a) return;
@@ -126,22 +143,6 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("bm_volume", String(volume));
     }
   }, [volume, ensureAudio]);
-
-  // Actions principales
-  const play = useCallback(
-    (b: Beat, q?: Beat[]) => {
-      const a = ensureAudio();
-      if (!a) return;
-      if (q) setQueue(q);
-      if (!track || track.id !== b.id) {
-        a.src = b.audio;
-        setTrack(b);
-      }
-      a.play().catch(() => void 0);
-      setIsPlaying(true);
-    },
-    [track, ensureAudio]
-  );
 
   const pause = useCallback(() => {
     const a = ensureAudio();
