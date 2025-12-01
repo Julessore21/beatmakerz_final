@@ -78,7 +78,7 @@ export default function CheckoutPage() {
           <button onClick={() => router.push("/web/panier")} className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
             <ArrowLeft className="h-4 w-4" /> Retour au panier
           </button>
-          {user ? <span className="text-sm text-zinc-400">Connecté en tant que {typeof user === "string" ? user : user?.email}</span> : null}
+          {user ? <span className="text-sm text-zinc-400">Connecté en tant que {typeof user === "string" ? user : (user as any)?.email}</span> : null}
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
