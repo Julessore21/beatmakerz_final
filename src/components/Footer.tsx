@@ -4,8 +4,8 @@ import { FaInstagram, FaTiktok, FaYoutube, FaXTwitter } from "react-icons/fa6";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="w-full mt-16 sm:mt-20 text-white/90 bg-[#0a0a12] border-t border-white/10">
-      <div className="container mx-auto max-w-screen-2xl px-6 lg:px-8 pt-10 pb-12 max-sm:px-4">
+    <footer className="w-full mt-16 sm:mt-20 text-white/90 border-t border-white/10 bg-transparent">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 pt-12 pb-14">
         {/* Top brand row */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
