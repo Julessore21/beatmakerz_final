@@ -2,9 +2,11 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import Footer from "@/components/Footer";
 
 export default function CGU() {
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black text-white pt-24 pb-24">
       <div className="container mx-auto max-w-4xl px-4">
         <motion.div
@@ -34,6 +36,8 @@ export default function CGU() {
         </div>
       </div>
     </div>
+    <Footer />
+    </>
   );
 }
 

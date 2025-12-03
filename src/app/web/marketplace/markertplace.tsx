@@ -7,6 +7,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Flame, Grid3X3, Rows3, Search, Star, Store, Users } from "lucide-react";
 import BeatCard from "@/components/BeatCard";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
+import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { useAudio } from "@/context/AudioPlayerContext";
 import { useAuth } from "@/context/AuthContext";
@@ -592,6 +593,7 @@ export default function BeatmakerMarketplace() {
           router.push("/web/profil?mode=login");
         }}
       />
+      <Footer />
     </div>
   );
 }

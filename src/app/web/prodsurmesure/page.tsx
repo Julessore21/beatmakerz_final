@@ -4,6 +4,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import Footer from "@/components/Footer";
 import { ChevronDown } from "lucide-react";
 
 /* =========================== Types & Data =========================== */
@@ -49,7 +50,7 @@ type Sample = { id: string; title: string; tag: string; src: string };
 
 /* =========================== Page =========================== */
 
-export default function ProdSurMesure() {
+function ProdSurMesure() {
   const stepsRef = useRef<HTMLElement | null>(null);
   const samplesRef = useRef<HTMLElement | null>(null);
   const [openBrief, setOpenBrief] = useState(false);
@@ -115,6 +116,15 @@ export default function ProdSurMesure() {
       {/* 4) MODAL FORMULAIRE (layer) */}
       <BriefModal open={openBrief} onClose={() => setOpenBrief(false)} />
     </div>
+  );
+}
+
+export default function ProdSurMesurePage() {
+  return (
+    <>
+      <ProdSurMesure />
+      <Footer />
+    </>
   );
 }
 
