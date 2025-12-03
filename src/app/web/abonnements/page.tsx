@@ -164,7 +164,7 @@ function Abonnements() {
   }, [sessionIdParam]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0A0A12] text-white px-4 pt-24 pb-16 flex flex-col items-center">
+    <div className="relative min-h-screen overflow-hidden text-white px-4 pt-24 pb-20 flex flex-col items-center">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
         <motion.div
           initial={{ opacity: 0 }}
@@ -184,7 +184,7 @@ function Abonnements() {
         />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.06),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.04),transparent_60%)]" />
       </div>
-      <div className="w-full max-w-5xl text-center">
+      <div className="w-full max-w-5xl text-center mx-auto">
         <div className="rounded-3xl border border-white/10 bg-[#141416]/90 p-8 backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
             Choisis l&#39;abonnement Infini adapte a tes besoins
@@ -247,7 +247,7 @@ function Abonnements() {
         </div>
       )}
 
-      <div className="mt-8 max-w-6xl w-full grid grid-cols-1 md:grid-cols-[repeat(3,250px)] gap-[24px] justify-center">
+      <div className="mt-8 max-w-6xl w-full grid grid-cols-1 md:grid-cols-[repeat(3,250px)] gap-[24px] justify-center mx-auto">
         {PLAN_DEFINITIONS.map((plan, idx) => {
           const monthlyPrice = parsePrice(plan.monthly);
           const yearlyPrice = parsePrice(plan.yearly);
