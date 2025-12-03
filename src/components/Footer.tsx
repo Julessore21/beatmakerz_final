@@ -10,55 +10,31 @@ const Footer: React.FC = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <div className="text-2xl font-bold tracking-widest">BEATMAKERZ</div>
-            <div className="mt-1 text-xs text-zinc-400 leading-relaxed">
-              Plateforme française pour artistes & beatmakers
-            </div>
+            <div className="mt-1 text-xs text-zinc-400 leading-relaxed">Plateforme francaise pour artistes & beatmakers</div>
           </div>
           <div className="mt-1 sm:mt-0 flex items-center gap-2.5 text-zinc-300 shrink-0">
-            <a
-              href="https://www.instagram.com/beatmakerz_pro/"
-              target="_blank"
-              aria-label="Instagram"
-              className="rounded-full border border-white/10 p-2 hover:bg-white/10"
-            >
+            <a href="https://www.instagram.com/beatmakerz_pro/" target="_blank" aria-label="Instagram" className="rounded-full border border-white/10 p-2 hover:bg-white/10">
               <FaInstagram size={15} />
             </a>
-            <a
-              href="https://www.tiktok.com/@beatmakerz.pro"
-              target="_blank"
-              aria-label="TikTok"
-              className="rounded-full border border-white/10 p-2 hover:bg-white/10"
-            >
+            <a href="https://www.tiktok.com/@beatmakerz.pro" target="_blank" aria-label="TikTok" className="rounded-full border border-white/10 p-2 hover:bg-white/10">
               <FaTiktok size={15} />
             </a>
-            <a
-              href="https://www.youtube.com/@BEATMAKERZ-PRO"
-              target="_blank"
-              aria-label="YouTube"
-              className="rounded-full border border-white/10 p-2 hover:bg-white/10"
-            >
+            <a href="https://www.youtube.com/@BEATMAKERZ-PRO" target="_blank" aria-label="YouTube" className="rounded-full border border-white/10 p-2 hover:bg-white/10">
               <FaYoutube size={15} />
             </a>
-            <a
-              href="https://x.com"
-              target="_blank"
-              aria-label="X"
-              className="rounded-full border border-white/10 p-2 hover:bg-white/10"
-            >
+            <a href="https://x.com" target="_blank" aria-label="X" className="rounded-full border border-white/10 p-2 hover:bg-white/10">
               <FaXTwitter size={15} />
             </a>
           </div>
         </div>
 
-        {/* separator (gap réduit) */}
+        {/* separator */}
         <div className="mt-4 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-        {/* Columns (gap vertical réduit) */}
+        {/* Columns */}
         <div className="mt-5 grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 text-sm leading-6">
           <div>
-            <div className="text-[11px] uppercase tracking-wider text-zinc-400">
-              Découvrir
-            </div>
+            <div className="text-[11px] uppercase tracking-wider text-zinc-400">Decouvrir</div>
             <div className="mt-2 flex flex-col gap-1.5">
               <Link href="/web/catalogue" className="hover:text-white">
                 Catalogue
@@ -75,9 +51,7 @@ const Footer: React.FC = () => {
             </div>
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wider text-zinc-400">
-              Support
-            </div>
+            <div className="text-[11px] uppercase tracking-wider text-zinc-400">Support</div>
             <div className="mt-2 flex flex-col gap-1.5">
               <Link href="/web/faq" className="hover:text-white">
                 FAQ
@@ -91,9 +65,7 @@ const Footer: React.FC = () => {
             </div>
           </div>
           <div>
-            <div className="text-[11px] uppercase tracking-wider text-zinc-400">
-              Légal
-            </div>
+            <div className="text-[11px] uppercase tracking-wider text-zinc-400">Legal</div>
             <div className="mt-2 flex flex-col gap-1.5">
               <Link href="/web/cgv" className="hover:text-white">
                 CGV
@@ -102,17 +74,18 @@ const Footer: React.FC = () => {
                 CGU
               </Link>
               <Link href="/web/mentions" className="hover:text-white">
-                Mentions légales
+                Mentions legales
+              </Link>
+              <Link href="/web/retractation" className="hover:text-white">
+                Retractation
               </Link>
               <Link href="/web/politique" className="hover:text-white">
-                Confidentialité
+                Confidentialite
               </Link>
             </div>
           </div>
           <div className="hidden lg:block">
-            <div className="text-[11px] uppercase tracking-wider text-zinc-400">
-              Ressources
-            </div>
+            <div className="text-[11px] uppercase tracking-wider text-zinc-400">Ressources</div>
             <div className="mt-2 flex flex-col gap-1.5">
               <a href="#" className="hover:text-white">
                 Affiliation
@@ -120,15 +93,13 @@ const Footer: React.FC = () => {
             </div>
           </div>
           <div className="hidden lg:block">
-            <div className="text-[11px] uppercase tracking-wider text-zinc-400">
-              Produits
-            </div>
+            <div className="text-[11px] uppercase tracking-wider text-zinc-400">Produits</div>
             <div className="mt-2 flex flex-col gap-1.5">
               <a href="#" className="hover:text-white">
                 Cartes cadeau
               </a>
               <Link href="/web/prodsurmesure" className="hover:text-white">
-                Prod personnalisée
+                Prod personnalisee
               </Link>
             </div>
           </div>
@@ -137,9 +108,7 @@ const Footer: React.FC = () => {
         {/* bottom bar */}
         <div className="mt-10 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         <div className="py-6 flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-zinc-400">
-          <div className="text-center sm:text-left">
-            © {new Date().getFullYear()} Beatmakerz. Tous droits réservés.
-          </div>
+          <div className="text-center sm:text-left">© {new Date().getFullYear()} Beatmakerz. Tous droits reserves.</div>
           <div className="mt-3 sm:mt-0 flex items-center gap-3">
             <span className="h-[1px] w-6 bg-white/20" />
             <a href="/web/politique" className="hover:text-white">
