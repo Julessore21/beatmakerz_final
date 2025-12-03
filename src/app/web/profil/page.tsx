@@ -88,25 +88,29 @@ const Profil: React.FC = () => {
 
   return (
     <div className="page-section">
-      <div className="card w-full max-w-3xl flex flex-col md:flex-row overflow-hidden">
+      <div className="card w-full max-w-3xl flex flex-col md:flex-row overflow-hidden bg-[#0b0d19] border border-white/10 shadow-2xl">
         <div className="md:w-1/2 p-8 flex flex-col justify-center">
-          <div className="mx-auto relative flex items-center justify-center w-[220px] h-12 border border-white rounded-full bg-transparent mb-10">
+          <div className="mx-auto relative flex items-center justify-center w-[240px] h-12 border border-white/20 rounded-full bg-black/30 backdrop-blur-sm mb-10 overflow-hidden">
             <motion.div
-              className="absolute top-1 bottom-1 w-1/2 rounded-full bg-[#401a87]"
-              animate={{ left: isLogin ? "5px" : "104px" }}
+              className="absolute top-1 bottom-1 w-1/2 rounded-full bg-gradient-to-r from-[#6d3ff5] to-[#b74bff] shadow-[0_0_20px_#6d3ff580]"
+              animate={{ left: isLogin ? "5px" : "115px" }}
               transition={{ type: "spring", stiffness: 500, damping: 30 }}
             />
             <button
               type="button"
               onClick={() => setIsLogin(true)}
-              className="relative z-10 w-1/2 text-sm font-semibold text-center transition-colors text-white rounded-full"
+              className={`relative z-10 w-1/2 text-sm font-semibold text-center transition-colors text-white rounded-full ${
+                isLogin ? "" : "text-white/60"
+              }`}
             >
               Se connecter
             </button>
             <button
               type="button"
               onClick={() => setIsLogin(false)}
-              className="relative z-10 w-1/2 text-sm font-semibold text-center transition-colors text-white rounded-full"
+              className={`relative z-10 w-1/2 text-sm font-semibold text-center transition-colors text-white rounded-full ${
+                !isLogin ? "" : "text-white/60"
+              }`}
             >
               S&apos;inscrire
             </button>
@@ -158,7 +162,10 @@ const Profil: React.FC = () => {
                     {loginErrors.password && <p className="text-xs text-red-500 mt-1">{loginErrors.password}</p>}
                   </div>
                   {loginErrors.general && <p className="text-xs text-red-500">{loginErrors.general}</p>}
-                  <button type="submit" className="btn-primary w-full">
+                  <button
+                    type="submit"
+                    className="w-full rounded-full bg-gradient-to-r from-[#6d3ff5] to-[#b74bff] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[#6d3ff540] transition hover:shadow-[#b74bff60]"
+                  >
                     Connexion
                   </button>
                 </form>
@@ -208,7 +215,10 @@ const Profil: React.FC = () => {
                     {signupErrors.password && <p className="text-xs text-red-500 mt-1">{signupErrors.password}</p>}
                   </div>
                   {signupErrors.general && <p className="text-xs text-red-500">{signupErrors.general}</p>}
-                  <button type="submit" className="btn-primary w-full">
+                  <button
+                    type="submit"
+                    className="w-full rounded-full bg-gradient-to-r from-[#6d3ff5] to-[#b74bff] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[#6d3ff540] transition hover:shadow-[#b74bff60]"
+                  >
                     Creer un compte
                   </button>
                 </form>
