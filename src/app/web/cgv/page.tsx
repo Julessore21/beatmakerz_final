@@ -35,6 +35,7 @@ export default function CGV() {
           ))}
         </div>
       </div>
+      </div>
       <Footer />
     </>
   );
