@@ -7,7 +7,7 @@
     background-color: #000; /* évite d'afficher le dégradé en overscroll */
   }
   body {
-    @apply min-h-screen bg-gradient-to-r from-black via-[#1A1530] to-black text-white antialiased;
+    @apply min-h-screen bg-gradient-to-r from-[#080810] via-[#0a0a12] to-[#080810] text-white antialiased;
   }
 }
 

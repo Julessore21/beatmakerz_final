@@ -244,8 +244,8 @@ const NavBar = () => {
                     {[
                       ["/tarification", "TARIFICATION"],
                       ["/faq", "FAQ"],
-                      ["/droit", "DROIT DE RÉTRACTATION"],
-                      ["/politique", "POLITIQUE DE CONFIDENTIALITÉ"],
+                      ["/retractation", "DROIT DE RETRACTATION"],
+                      ["/politique", "POLITIQUE DE CONFIDENTIALITE"],
                     ].map(([href, text]) => (
                       <UnderlineLink
                         key={href}
