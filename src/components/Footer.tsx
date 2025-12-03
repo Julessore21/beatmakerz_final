@@ -1,128 +1,112 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import Link from "next/link";
 import { FaInstagram, FaTiktok, FaYoutube, FaXTwitter } from "react-icons/fa6";
 
-const Footer: React.FC = () => {
+const LEGAL_LINKS: { label: string; href: string }[] = [
+  { label: "Mentions légales", href: "/web/mentions" },
+  { label: "CGV", href: "/web/cgv" },
+  { label: "CGU", href: "/web/cgu" },
+  { label: "Politique de confidentialité", href: "/web/politique" },
+  { label: "Cookies", href: "/web/politique#cookies" },
+  { label: "Propriété intellectuelle", href: "/web/mentions#propriete-intellectuelle" },
+];
+
+export default function Footer() {
+  const [lang, setLang] = useState<"FR" | "EN">("FR");
+
   return (
-    <footer className="w-full mt-16 sm:mt-20 text-white/90 border-t border-white/10 bg-gradient-to-r from-[#080810] via-[#0a0a12] to-[#080810]">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-10 pt-12 pb-14">
-        {/* Top brand row */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <div className="text-2xl font-bold tracking-widest">BEATMAKERZ</div>
-            <div className="mt-1 text-xs text-zinc-400 leading-relaxed">Plateforme francaise pour artistes & beatmakers</div>
+    <footer className="w-full border-t border-white/10 bg-gradient-to-r from-[#080810] via-[#0a0a12] to-[#080810] text-white/90">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-10">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-lg font-semibold tracking-wide text-white">BEATMAKERZ</div>
+            <div className="mt-1 text-xs text-zinc-400">Plateforme française pour artistes & beatmakers</div>
           </div>
-          <div className="mt-1 sm:mt-0 flex items-center gap-2.5 text-zinc-300 shrink-0">
-            <a href="https://www.instagram.com/beatmakerz_pro/" target="_blank" aria-label="Instagram" className="rounded-full border border-white/10 p-2 hover:bg-white/10">
-              <FaInstagram size={15} />
-            </a>
-            <a href="https://www.tiktok.com/@beatmakerz.pro" target="_blank" aria-label="TikTok" className="rounded-full border border-white/10 p-2 hover:bg-white/10">
-              <FaTiktok size={15} />
-            </a>
-            <a href="https://www.youtube.com/@BEATMAKERZ-PRO" target="_blank" aria-label="YouTube" className="rounded-full border border-white/10 p-2 hover:bg-white/10">
-              <FaYoutube size={15} />
-            </a>
-            <a href="https://x.com" target="_blank" aria-label="X" className="rounded-full border border-white/10 p-2 hover:bg-white/10">
-              <FaXTwitter size={15} />
-            </a>
+          <div className="flex items-center gap-3 text-white/80">
+            <SocialLink href="https://www.instagram.com/beatmakerz_pro/" label="Instagram">
+              <FaInstagram />
+            </SocialLink>
+            <SocialLink href="https://www.tiktok.com/@beatmakerz.pro" label="TikTok">
+              <FaTiktok />
+            </SocialLink>
+            <SocialLink href="https://www.youtube.com/@BEATMAKERZ-PRO" label="YouTube">
+              <FaYoutube />
+            </SocialLink>
+            <SocialLink href="https://x.com" label="X">
+              <FaXTwitter />
+            </SocialLink>
+            <LangSwitch lang={lang} setLang={setLang} />
           </div>
         </div>
 
-        {/* separator */}
-        <div className="mt-4 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="mt-6 h-px w-full bg-white/10" />
 
-        {/* Columns */}
-        <div className="mt-5 grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 text-sm leading-6">
-          <div>
-            <div className="text-[11px] uppercase tracking-wider text-zinc-400">Decouvrir</div>
-            <div className="mt-2 flex flex-col gap-1.5">
-              <Link href="/web/catalogue" className="hover:text-white">
-                Catalogue
-              </Link>
-              <Link href="/web/abonnements" className="hover:text-white">
-                Abonnements
-              </Link>
-              <Link href="/web/marketplace" className="hover:text-white">
-                Marketplace
-              </Link>
-              <Link href="/web/prodsurmesure" className="hover:text-white">
-                Prod sur mesure
-              </Link>
-            </div>
-          </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-wider text-zinc-400">Support</div>
-            <div className="mt-2 flex flex-col gap-1.5">
-              <Link href="/web/faq" className="hover:text-white">
-                FAQ
-              </Link>
-              <Link href="/web/contact" className="hover:text-white">
-                Contact
-              </Link>
-              <Link href="/web/tarification" className="hover:text-white">
-                Tarification
-              </Link>
-            </div>
-          </div>
-          <div>
-            <div className="text-[11px] uppercase tracking-wider text-zinc-400">Legal</div>
-            <div className="mt-2 flex flex-col gap-1.5">
-              <Link href="/web/cgv" className="hover:text-white">
-                CGV
-              </Link>
-              <Link href="/web/cgu" className="hover:text-white">
-                CGU
-              </Link>
-              <Link href="/web/mentions" className="hover:text-white">
-                Mentions legales
-              </Link>
-              <Link href="/web/retractation" className="hover:text-white">
-                Retractation
-              </Link>
-              <Link href="/web/politique" className="hover:text-white">
-                Confidentialite
-              </Link>
-            </div>
-          </div>
-          <div className="hidden lg:block">
-            <div className="text-[11px] uppercase tracking-wider text-zinc-400">Ressources</div>
-            <div className="mt-2 flex flex-col gap-1.5">
-              <a href="#" className="hover:text-white">
-                Affiliation
-              </a>
-            </div>
-          </div>
-          <div className="hidden lg:block">
-            <div className="text-[11px] uppercase tracking-wider text-zinc-400">Produits</div>
-            <div className="mt-2 flex flex-col gap-1.5">
-              <a href="#" className="hover:text-white">
-                Cartes cadeau
-              </a>
-              <Link href="/web/prodsurmesure" className="hover:text-white">
-                Prod personnalisee
-              </Link>
-            </div>
+        <div className="mt-6 grid grid-cols-1 gap-4 text-sm text-zinc-300">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {LEGAL_LINKS.map((item, idx) => (
+              <React.Fragment key={item.href}>
+                <Link className="hover:text-white transition-colors" href={item.href}>
+                  {item.label}
+                </Link>
+                {idx < LEGAL_LINKS.length - 1 ? <span className="text-white/30">•</span> : null}
+              </React.Fragment>
+            ))}
           </div>
         </div>
 
-        {/* bottom bar */}
-        <div className="mt-10 h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-        <div className="py-6 flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-zinc-400">
-          <div className="text-center sm:text-left">© {new Date().getFullYear()} Beatmakerz. Tous droits reserves.</div>
-          <div className="mt-3 sm:mt-0 flex items-center gap-3">
+        <div className="mt-6 h-px w-full bg-white/10" />
+
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-zinc-400">
+          <span>© {new Date().getFullYear()} Beatmakerz. Tous droits réservés.</span>
+          <div className="mt-2 sm:mt-0 flex items-center gap-3">
             <span className="h-[1px] w-6 bg-white/20" />
-            <a href="/web/politique" className="hover:text-white">
+            <Link href="/web/politique#cookies" className="hover:text-white">
               Cookies
-            </a>
+            </Link>
             <span className="h-[1px] w-6 bg-white/20" />
-            <a href="/web/contact" className="hover:text-white">
+            <Link href="/web/contact" className="hover:text-white">
               Support
-            </a>
+            </Link>
           </div>
         </div>
       </div>
     </footer>
   );
-};
+}
 
-export default Footer;
+function SocialLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={label}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/80 transition hover:bg-white/10 hover:text-white"
+    >
+      {children}
+    </a>
+  );
+}
+
+function LangSwitch({ lang, setLang }: { lang: "FR" | "EN"; setLang: (l: "FR" | "EN") => void }) {
+  return (
+    <div className="flex items-center rounded-full border border-white/10 bg-white/5 text-xs overflow-hidden">
+      {(["FR", "EN"] as const).map((code) => {
+        const active = lang === code;
+        return (
+          <button
+            key={code}
+            type="button"
+            onClick={() => setLang(code)}
+            className={`px-3 py-1 transition ${active ? "bg-white text-black font-semibold" : "text-white/80 hover:bg-white/10"}`}
+            aria-pressed={active}
+          >
+            {code}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
