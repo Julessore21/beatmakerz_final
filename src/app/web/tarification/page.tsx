@@ -21,7 +21,7 @@ export default function Tarification() {
           <div className="mt-8 space-y-6">
             <Section
               title="Tarifs des instrumentales"
-              items={["Instrumentale à l'unité : 9,99€", "Instrumentale sur mesure : 59,99€", "Instrumentales via l'abonnement : incluses"]}
+              items={["Instrumentale à l&apos;unité : 9,99€", "Instrumentale sur mesure : 59,99€", "Instrumentales via l&apos;abonnement : incluses"]}
               description="Une sélection d'instrumentales de haute qualité, prêtes à utiliser ou personnalisables."
             />
 
@@ -29,21 +29,21 @@ export default function Tarification() {
               name="Infini"
               price="19,99€ / mois"
               annual="209,99€ / an"
-              benefits={["3 prods par mois + 1 offerte", "Téléchargement instantané", "20€ d'économie par mois"]}
+              benefits={["3 prods par mois + 1 offerte", "Téléchargement instantané", "20€ d&apos;économie par mois"]}
             />
 
             <SubscriptionSection
               name="Infini +"
               price="39,99€ / mois"
               annual="409,99€ / an"
-              benefits={["8 prods par mois + 2 offertes", "Téléchargement instantané", "Support prioritaire", "15% sur les prods sur mesure", "60€ d'économie par mois"]}
+              benefits={["8 prods par mois + 2 offertes", "Téléchargement instantané", "Support prioritaire", "15% sur les prods sur mesure", "60€ d&apos;économie par mois"]}
             />
 
             <SubscriptionSection
               name="Infini X"
               price="59,99€ / mois"
               annual="599,99€ / an"
-              benefits={["12 prods par mois + 3 offertes", "Téléchargement instantané", "Support prioritaire", "30% sur les prods sur mesure", "90€ d'économie par mois"]}
+              benefits={["12 prods par mois + 3 offertes", "Téléchargement instantané", "Support prioritaire", "30% sur les prods sur mesure", "90€ d&apos;économie par mois"]}
             />
           </div>
         </div>
@@ -100,7 +100,7 @@ function SubscriptionSection({
       <ul className="mt-1 list-disc list-inside text-sm text-zinc-300 space-y-1">
         <li>Facturation mensuelle ou annuelle.</li>
         <li>Résiliation possible à tout moment pour le terme en cours.</li>
-        <li>Avantages actifs jusqu'à la fin de la période en cours après résiliation.</li>
+        <li>Avantages actifs jusqu&apos;à la fin de la période en cours après résiliation.</li>
       </ul>
     </section>
   );
