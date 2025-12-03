@@ -2,7 +2,6 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import Footer from "@/components/Footer";
 
 export default function CGV() {
   return (
@@ -34,9 +33,8 @@ export default function CGV() {
             </section>
           ))}
         </div>
+        </div>
       </div>
-      </div>
-      <Footer />
     </>
   );
 }

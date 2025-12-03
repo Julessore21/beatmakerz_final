@@ -4,7 +4,6 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import Footer from "@/components/Footer";
 import { ChevronDown } from "lucide-react";
 
 /* =========================== Types & Data =========================== */
@@ -121,10 +120,7 @@ function ProdSurMesure() {
 
 export default function ProdSurMesurePage() {
   return (
-    <>
-      <ProdSurMesure />
-      <Footer />
-    </>
+    <ProdSurMesure />
   );
 }
 

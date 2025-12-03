@@ -12,7 +12,6 @@ import { useAuth } from "@/context/AuthContext";
 import BeatCard from "@/components/BeatCard";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
 import BeatTableRow from "@/components/BeatTableRow";
-import Footer from "@/components/Footer";
 import { apiGet } from "@/lib/services/api-client";
 import { fetchFavorites, toggleFavorite as toggleFavoriteApi } from "@/lib/services/user-api";
 
@@ -678,7 +677,6 @@ export default function CataloguePage() {
       <Suspense fallback={<div className="min-h-screen bg-black text-white pt-24 px-4">Chargement…</div>}>
         <CatalogueContent />
       </Suspense>
-      <Footer />
     </>
   );
 }

@@ -5,6 +5,7 @@ import { CartProvider } from "@/context/CartContext";
 import GlobalAudioPlayer from "@/components/GlobalAudioPlayer";
 import NavBar from "@/components/Navbar";
 import { AuthProvider } from "@/context/AuthContext";
+import Footer from "@/components/Footer";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -68,16 +69,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className="font-sans">
+      <body className="font-sans flex min-h-screen flex-col bg-transparent">
         <CartProvider>
           <AuthProvider>
             <AudioPlayerProvider>
               <header>
                 <NavBar />
               </header>
-
-              {children}
-
+              <main className="flex-1 w-full">
+                {children}
+              </main>
+              <Footer />
               <GlobalAudioPlayer />
             </AudioPlayerProvider>
           </AuthProvider>

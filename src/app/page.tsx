@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useCallback } from "react";
 import VisibleProgressCircle from "@/components/VisibleProgressCircle";
-import Footer from "@/components/Footer";
 import Link from "next/link";
 
 export default function Home() {
@@ -154,17 +153,6 @@ export default function Home() {
         );
       })}
 
-      <section
-        ref={(el) => {
-          if (el && !sections.current.includes(el)) {
-            sections.current.push(el);
-          }
-        }}
-        id="5"
-        className="relative w-full h-[33vh] overflow-hidden transition-opacity duration-500"
-      >
-        <Footer />
-      </section>
     </div>
   );
 }

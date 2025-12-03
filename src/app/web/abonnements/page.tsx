@@ -3,7 +3,6 @@
 import React, { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import Footer from "@/components/Footer";
 
 type BillingCycle = "monthly" | "yearly";
 
@@ -165,7 +164,6 @@ function Abonnements() {
   }, [sessionIdParam]);
 
   return (
-    <>
     <div className="relative min-h-screen overflow-hidden bg-[#0A0A12] text-white px-4 pt-24 pb-16 flex flex-col items-center">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
         <motion.div
@@ -353,8 +351,6 @@ function Abonnements() {
         en savoir plus sur la tarification
       </div>
     </div>
-    <Footer />
-    </>
   );
 }
 

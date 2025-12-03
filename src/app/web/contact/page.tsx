@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, ChangeEvent, FormEvent } from "react";
-import Footer from "@/components/Footer";
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState<{
@@ -29,7 +28,6 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <>
     <div className="relative min-h-screen bg-black text-white overflow-hidden">
       {/* halos subtils en arrière-plan */}
       <div className="pointer-events-none absolute -top-32 -left-32 h-[480px] w-[480px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(120,119,198,0.12),transparent_60%)] blur-2xl" />
@@ -124,8 +122,6 @@ const Contact: React.FC = () => {
         </form>
       </div>
     </div>
-    <Footer />
-    </>
   );
 };
 
