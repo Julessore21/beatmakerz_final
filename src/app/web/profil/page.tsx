@@ -90,7 +90,7 @@ const Profil: React.FC = () => {
     <div className="page-section">
       <div className="card w-full max-w-3xl flex flex-col md:flex-row overflow-hidden bg-[#0b0d19] border border-white/10 shadow-2xl">
         <div className="md:w-1/2 p-8 flex flex-col justify-center">
-          <div className="mx-auto relative flex items-center justify-center w-[240px] h-12 border border-white/20 rounded-full bg-black/30 backdrop-blur-sm mb-10 overflow-hidden">
+          <div className="mx-auto relative flex items-center justify-center w-[240px] h-12 border border-black/70 rounded-full bg-[#0c0c14] backdrop-blur-sm mb-10 overflow-hidden shadow-[0_0_0_1px_rgba(0,0,0,0.3)]">
             <motion.div
               className="absolute top-1 bottom-1 w-1/2 rounded-full bg-gradient-to-r from-[#6d3ff5] to-[#b74bff] shadow-[0_0_20px_#6d3ff580]"
               animate={{ left: isLogin ? "5px" : "115px" }}
