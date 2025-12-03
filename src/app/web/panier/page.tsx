@@ -7,6 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { Minus, Plus, Trash2, ShieldCheck, CreditCard, PackageSearch, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { apiPost } from "@/lib/services/api-client";
+import AuthRequiredModal from "@/components/AuthRequiredModal";
 
 const SummaryRow = ({ label, value, bold = false }: { label: string; value: string; bold?: boolean }) => (
   <div className="flex items-center justify-between text-sm text-zinc-200">
@@ -21,6 +22,7 @@ const Panier: React.FC = () => {
   const { items, totalItems, totalPrice, addItem, removeItem, decrementItem } = useCart();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const computedTotalPrice: number = totalPrice;
   const totalArticles = totalItems;
@@ -33,8 +35,7 @@ const Panier: React.FC = () => {
 
   const handleCheckout = async () => {
     if (!user) {
-      setStatus("error");
-      setMessage("Connecte-toi pour valider ta commande.");
+      setShowAuthModal(true);
       return;
     }
     if (!hasItems) {
@@ -203,6 +204,15 @@ const Panier: React.FC = () => {
           </aside>
         </div>
       </div>
+      <AuthRequiredModal
+        open={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLogin={() => {
+          setShowAuthModal(false);
+          router.push("/web/profil?mode=login");
+        }}
+        message="Cette action necessite d'etre connecte pour finaliser ton achat."
+      />
     </div>
   );
 };

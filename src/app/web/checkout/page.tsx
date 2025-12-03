@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { apiGet, apiPost } from "@/lib/services/api-client";
 import { useAuth } from "@/context/AuthContext";
 import { ShoppingCart, CreditCard, Loader2, ArrowLeft } from "lucide-react";
+import AuthRequiredModal from "@/components/AuthRequiredModal";
 
 type CartItem = {
   _id?: string;
@@ -30,6 +31,7 @@ export default function CheckoutPage() {
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -53,6 +55,10 @@ export default function CheckoutPage() {
   }, [cart]);
 
   const handleCheckout = async () => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -138,6 +144,15 @@ export default function CheckoutPage() {
           </div>
         </div>
       </main>
+      <AuthRequiredModal
+        open={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLogin={() => {
+          setShowAuthModal(false);
+          router.push("/web/profil?mode=login");
+        }}
+        message="Connecte-toi pour finaliser ton paiement."
+      />
     </div>
   );
 }

@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { Flame, Grid3X3, Rows3, Search, Star, Store, Users } from "lucide-react";
 import BeatCard from "@/components/BeatCard";
+import AuthRequiredModal from "@/components/AuthRequiredModal";
 import { Input } from "@/components/ui/input";
 import { useAudio } from "@/context/AudioPlayerContext";
 import { useAuth } from "@/context/AuthContext";
@@ -307,6 +309,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
 }
 
 export default function BeatmakerMarketplace() {
+  const router = useRouter();
   const [mode, setMode] = useState<Mode>("consulter");
   const [view, setView] = useState<ViewMode>("grid");
   const [query, setQuery] = useState("");
@@ -315,6 +318,7 @@ export default function BeatmakerMarketplace() {
   const [onlyTop, setOnlyTop] = useState(false);
   const [page, setPage] = useState(1);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [beats, setBeats] = useState<Beat[]>([]);
   const { play, toggle, track, isPlaying } = useAudio();
   const { user } = useAuth();
@@ -400,7 +404,7 @@ export default function BeatmakerMarketplace() {
 
   const handleToggleFavorite = async (beatId: string) => {
     if (!user) {
-      alert("Connecte-toi pour ajouter des favoris.");
+      setShowAuthModal(true);
       return;
     }
     try {
@@ -580,6 +584,14 @@ export default function BeatmakerMarketplace() {
           <Pagination page={page} totalPages={totalPages} onChange={handlePageChange} />
         </>
       )}
+      <AuthRequiredModal
+        open={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLogin={() => {
+          setShowAuthModal(false);
+          router.push("/web/profil?mode=login");
+        }}
+      />
     </div>
   );
 }

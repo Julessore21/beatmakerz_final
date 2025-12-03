@@ -10,6 +10,7 @@ import { useAudio } from "@/context/AudioPlayerContext";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import BeatCard from "@/components/BeatCard";
+import AuthRequiredModal from "@/components/AuthRequiredModal";
 import BeatTableRow from "@/components/BeatTableRow";
 import { apiGet } from "@/lib/services/api-client";
 import { fetchFavorites, toggleFavorite as toggleFavoriteApi } from "@/lib/services/user-api";
@@ -155,6 +156,7 @@ function CatalogueContent() {
   const [bpmInput, setBpmInput] = useState<string>(String(BPM_MIN));
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Prix ↑");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 12;
@@ -310,6 +312,10 @@ function CatalogueContent() {
 
   const onPlay = (b: Beat) => (track?.id === b.id && isPlaying ? toggle() : play(b, currentBeats));
   const onToggleFav = async (beatId: string) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
     await toggleFavoriteApi(beatId);
     setFavIds((prev) => (prev.includes(beatId) ? prev.filter((id) => id !== beatId) : [...prev, beatId]));
   };
@@ -653,6 +659,14 @@ function CatalogueContent() {
           </section>
         </div>
       </div>
+      <AuthRequiredModal
+        open={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onLogin={() => {
+          setShowAuthModal(false);
+          router.push("/web/profil?mode=login");
+        }}
+      />
     </div>
   );
 }
