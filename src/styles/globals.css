@@ -4,15 +4,26 @@
 
 @layer base {
   html {
-    background-color: #000; /* évite d'afficher le dégradé en overscroll */
+    background-color: #090912;
   }
   body {
-    @apply min-h-screen bg-gradient-to-r from-[#080810] via-[#0a0a12] to-[#080810] text-white antialiased;
+    min-height: 100vh;
+    color: white;
+    background-color: #090912;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(120, 63, 255, 0.18), transparent 34%),
+      radial-gradient(circle at 85% 22%, rgba(120, 63, 255, 0.14), transparent 32%),
+      radial-gradient(circle at 25% 82%, rgba(80, 40, 180, 0.12), transparent 30%),
+      linear-gradient(180deg, #0b0b14 0%, #08080f 40%, #08080e 100%);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
 }
 
 @layer components {
-  /* utilitaire pour désactiver le scroll anchoring (évite les sauts au scroll) */
+  /* utilitaire pour dǸsactiver le scroll anchoring (Ǹvite les sauts au scroll) */
   .overflow-anchor-none {
     overflow-anchor: none;
   }
