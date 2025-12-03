@@ -76,16 +76,14 @@ export default function BeatCard({
   const handleFav = async () => {
     const next = !fav;
     setFav(next);
-    if (!user) {
-      alert("Connecte-toi pour ajouter aux favoris");
-      setFav(!next);
-      return;
-    }
     try {
       if (onFav) {
         await onFav();
-      } else {
+      } else if (user) {
         await toggleFavorite(String(id));
+      } else {
+        setFav(!next);
+        return;
       }
     } catch {
       setFav(!next);
