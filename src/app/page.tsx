@@ -154,8 +154,25 @@ export default function Home() {
         );
       })}
 
-      <section className="relative w-full overflow-hidden pt-16 pb-10">
-        <Footer />
+      <section
+        ref={(el) => {
+          if (el && !sections.current.includes(el)) {
+            sections.current.push(el);
+          }
+        }}
+        className="relative w-full h-screen overflow-hidden bg-[#090912]"
+      >
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
+          <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet-600/25 blur-3xl" />
+          <div className="absolute right-[-12rem] top-10 h-[26rem] w-[26rem] rounded-full bg-violet-700/20 blur-[110px]" />
+          <div className="absolute bottom-[-10rem] left-16 h-[26rem] w-[26rem] rounded-full bg-indigo-900/20 blur-[110px]" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.05),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.04),transparent_60%)]" />
+        </div>
+        <div className="relative z-10 flex h-full w-full items-end justify-center pb-8 sm:pb-12">
+          <div className="w-full">
+            <Footer />
+          </div>
+        </div>
       </section>
     </div>
   );
