@@ -3,6 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import VisibleProgressCircle from "@/components/VisibleProgressCircle";
 import Link from "next/link";
+import Footer from "@/components/Footer";
 
 export default function Home() {
   const sections = useRef<HTMLElement[]>([]);
@@ -153,6 +154,9 @@ export default function Home() {
         );
       })}
 
+      <section className="relative w-full overflow-hidden pt-16 pb-10">
+        <Footer />
+      </section>
     </div>
   );
 }

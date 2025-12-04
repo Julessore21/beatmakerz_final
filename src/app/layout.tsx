@@ -5,7 +5,7 @@ import { CartProvider } from "@/context/CartContext";
 import GlobalAudioPlayer from "@/components/GlobalAudioPlayer";
 import NavBar from "@/components/Navbar";
 import { AuthProvider } from "@/context/AuthContext";
-import Footer from "@/components/Footer";
+import FooterWrapper from "@/components/FooterWrapper";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -79,7 +79,7 @@ export default function RootLayout({
               <main className="flex-1 w-full">
                 {children}
               </main>
-              <Footer />
+              <FooterWrapper />
               <GlobalAudioPlayer />
             </AudioPlayerProvider>
           </AuthProvider>
