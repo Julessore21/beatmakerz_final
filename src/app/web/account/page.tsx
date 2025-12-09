@@ -20,7 +20,7 @@ import {
   User,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { fetchFavorites, fetchOrders, fetchSettings, toggleFavorite, updateSettings } from "@/lib/services/user-api";
+import { fetchFavorites, fetchOrders, fetchSettings, toggleFavorite, updateSettings, type UserSettings } from "@/lib/services/user-api";
 
 const cn = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
@@ -82,6 +82,8 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [openFavs, setOpenFavs] = useState(false);
   const [openModal, setOpenModal] = useState<null | "orders" | "downloads" | "notifications" | "security">(null);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   const ordersRef = useRef<HTMLDivElement | null>(null);
   const notificationsRef = useRef<HTMLDivElement | null>(null);
@@ -130,6 +132,47 @@ export default function AccountPage() {
     [orders]
   );
 
+  const updateSettingSafely = async (patch: Partial<UserSettings>) => {
+    const previous = settings;
+    setSettings((prev) => (prev ? { ...prev, ...patch } : { ...patch }));
+    try {
+      const next = await updateSettings(patch);
+      setSettings(next);
+      setSettingsError(null);
+    } catch {
+      setSettings(previous);
+      setSettingsError("Impossible de mettre à jour tes préférences pour le moment.");
+    }
+  };
+
+  const handleManageBilling = () => router.push("/web/abonnements?portal=1");
+
+  const handleExportData = () => {
+    const payload = {
+      favorites,
+      orders,
+      settings,
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "beatmakerz-donnees.json";
+    link.click();
+    URL.revokeObjectURL(url);
+    setInfoMessage("Export généré et téléchargé localement.");
+  };
+
+  const handleDeleteAccount = () => {
+    const confirmed = window.confirm(
+      "Confirmer la demande de suppression ? Nous te redirigerons vers le support pour finaliser la démarche."
+    );
+    if (confirmed) {
+      router.push("/web/contact?subject=suppression-compte");
+    }
+  };
+
   return (
     <div className="relative min-h-[100svh] bg-[#0A0A12] text-white">
       <AnimatedAmbient />
@@ -139,6 +182,17 @@ export default function AccountPage() {
         ) : (
           <>
             <Header currentUserName={displayName} currentUserEmail={email} onLogout={logout} />
+
+            {infoMessage ? (
+              <div className="mt-4 rounded-xl border border-emerald-400/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                {infoMessage}
+              </div>
+            ) : null}
+            {settingsError ? (
+              <div className="mt-3 rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                {settingsError}
+              </div>
+            ) : null}
 
             <section className="mt-10">
               <Card className="min-h-[260px]">
@@ -157,7 +211,7 @@ export default function AccountPage() {
                           <p className="text-sm text-zinc-200">Renouvellement: 2025-10-01</p>
                         </div>
                       </div>
-                      <Button variant="secondary" className="shrink-0">
+                      <Button variant="secondary" className="shrink-0" onClick={handleManageBilling}>
                         Gerer <ChevronRight className="h-4 w-4" />
                       </Button>
                     </div>
@@ -289,9 +343,9 @@ export default function AccountPage() {
               <Card ref={notificationsRef} className="lg:col-span-1">
                 <h3 className="mb-4 text-base font-semibold">Notifications</h3>
                 <div className="space-y-3 text-sm">
-                  <ToggleRow label="Nouveaux drops" checked={settings?.dropsOptIn ?? true} onChange={(v) => updateSettings({ dropsOptIn: v }).then(setSettings).catch(() => {})} />
-                  <ToggleRow label="Recommandations" checked={settings?.marketingOptIn ?? true} onChange={(v) => updateSettings({ marketingOptIn: v }).then(setSettings).catch(() => {})} />
-                  <ToggleRow label="Alertes securite" checked={settings?.securityOptIn ?? true} onChange={(v) => updateSettings({ securityOptIn: v }).then(setSettings).catch(() => {})} />
+                  <ToggleRow label="Nouveaux drops" checked={settings?.dropsOptIn ?? true} onChange={(v) => updateSettingSafely({ dropsOptIn: v })} />
+                  <ToggleRow label="Recommandations" checked={settings?.marketingOptIn ?? true} onChange={(v) => updateSettingSafely({ marketingOptIn: v })} />
+                  <ToggleRow label="Alertes securite" checked={settings?.securityOptIn ?? true} onChange={(v) => updateSettingSafely({ securityOptIn: v })} />
                 </div>
               </Card>
 
@@ -301,8 +355,8 @@ export default function AccountPage() {
                   <Pill>recommande</Pill>
                 </div>
                 <div className="space-y-3 text-sm">
-                  <ToggleRow label="2FA active" checked={settings?.twoFAEnabled ?? true} onChange={(v) => updateSettings({ twoFAEnabled: v }).then(setSettings).catch(() => {})} />
-                  <ToggleRow label="Mode anonyme" checked={settings?.anonymousMode ?? false} onChange={(v) => updateSettings({ anonymousMode: v }).then(setSettings).catch(() => {})} />
+                  <ToggleRow label="2FA active" checked={settings?.twoFAEnabled ?? true} onChange={(v) => updateSettingSafely({ twoFAEnabled: v })} />
+                  <ToggleRow label="Mode anonyme" checked={settings?.anonymousMode ?? false} onChange={(v) => updateSettingSafely({ anonymousMode: v })} />
                   <div className="rounded-xl bg-white/5 p-3 text-zinc-300">
                     <div className="mb-2 flex items-center gap-2 font-medium">
                       <Info className="h-4 w-4" /> Conseils
@@ -322,10 +376,10 @@ export default function AccountPage() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="max-w-2xl text-sm text-zinc-300">Sauvegarde tes donnees et verifie tes licences avant toute suppression. Ces actions sont definitives.</p>
                   <div className="flex gap-3 max-sm:flex-col">
-                    <Button variant="ghost" onClick={() => alert("Export de vos donnees...")}>
+                    <Button variant="ghost" onClick={handleExportData}>
                       Exporter mes donnees
                     </Button>
-                    <Button variant="danger" onClick={() => alert("Suppression declenchee (a brancher)")}>
+                    <Button variant="danger" onClick={handleDeleteAccount}>
                       <LogOut className="h-4 w-4" /> Supprimer le compte
                     </Button>
                   </div>

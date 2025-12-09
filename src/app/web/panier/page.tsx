@@ -47,20 +47,22 @@ const Panier: React.FC = () => {
     setMessage(null);
 
     try {
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "");
       const data = await apiPost<{ url: string }>("/checkout/session", {
-        successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/web/checkout/success`,
-        cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/web/checkout/cancel`,
+        successUrl: `${appUrl}/web/checkout/success`,
+        cancelUrl: `${appUrl}/web/checkout/cancel`,
       });
       if (data?.url) {
+        setStatus("success");
+        setMessage("Redirection vers Stripe...");
         window.location.href = data.url;
         return;
       }
       throw new Error("URL manquante");
     } catch (e) {
       setStatus("error");
-      setMessage("Impossible de lancer le paiement Stripe pour le moment.");
-    } finally {
-      setStatus("idle");
+      const fallback = e instanceof Error ? e.message : "Impossible de lancer le paiement Stripe pour le moment.";
+      setMessage(fallback);
     }
   };
 
