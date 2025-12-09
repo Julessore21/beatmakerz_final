@@ -25,14 +25,14 @@ export default function Tarification() {
               "Instrumentale sur mesure : 59,99€",
               "Instrumentales via l&apos;abonnement : incluses",
             ]}
-            description="Une sélection d'instrumentales de haute qualité, prêtes à utiliser ou personnalisables."
+            description="Une sélection d&apos;instrumentales de haute qualité, prêtes à utiliser ou personnalisables."
           />
 
           <SubscriptionSection
             name="Infini"
             price="19,99€ / mois"
             annual="209,99€ / an"
-            benefits={["3 prods par mois + 1 offerte", "Téléchargement instantané", "20€ d'économie par mois"]}
+            benefits={["3 prods par mois + 1 offerte", "Téléchargement instantané", "20€ d&apos;économie par mois"]}
           />
 
           <SubscriptionSection
@@ -44,7 +44,7 @@ export default function Tarification() {
               "Téléchargement instantané",
               "Support prioritaire",
               "15% sur les prods sur mesure",
-              "60€ d'économie par mois",
+              "60€ d&apos;économie par mois",
             ]}
           />
 
@@ -57,7 +57,7 @@ export default function Tarification() {
               "Téléchargement instantané",
               "Support prioritaire",
               "30% sur les prods sur mesure",
-              "90€ d'économie par mois",
+              "90€ d&apos;économie par mois",
             ]}
           />
         </div>
@@ -119,7 +119,7 @@ function SubscriptionSection({
       <ul className="mt-1 list-disc list-inside text-sm text-zinc-300 space-y-1">
         <li>Facturation mensuelle ou annuelle.</li>
         <li>Résiliation possible à tout moment pour le terme en cours.</li>
-        <li>Avantages actifs jusqu'à la fin de la période en cours après résiliation.</li>
+        <li>Avantages actifs jusqu&apos;à la fin de la période en cours après résiliation.</li>
       </ul>
     </section>
   );
