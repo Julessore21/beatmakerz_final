@@ -21,9 +21,9 @@ export default function Tarification() {
           <Section
             title="Tarifs des instrumentales"
             items={[
-              "Instrumentale à l'unité : 9,99€",
+              "Instrumentale à l&apos;unité : 9,99€",
               "Instrumentale sur mesure : 59,99€",
-              "Instrumentales via l'abonnement : incluses",
+              "Instrumentales via l&apos;abonnement : incluses",
             ]}
             description="Une sélection d'instrumentales de haute qualité, prêtes à utiliser ou personnalisables."
           />
