@@ -50,7 +50,7 @@ const Button: React.FC<React.ComponentProps<"button"> & { variant?: "primary" | 
   <button
     className={cn(
       "inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all",
-      variant === "primary" && "bg-indigo-600 hover:bg-indigo-500 text-white",
+      variant === "primary" && "text-white bg-[var(--brand-purple)] hover:bg-[var(--brand-purple-strong)] border border-white/10",
       variant === "secondary" && "bg-white/10 hover:bg-white/20 text-white",
       variant === "ghost" && "bg-transparent hover:bg-white/10 text-zinc-200 border border-white/10",
       variant === "danger" && "bg-rose-600 hover:bg-rose-500 text-white",
