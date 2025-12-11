@@ -78,7 +78,7 @@ export default function AccountPage() {
 
   const [favorites, setFavorites] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
-  const [settings, setSettings] = useState<any | null>(null);
+  const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [openFavs, setOpenFavs] = useState(false);
   const [openModal, setOpenModal] = useState<null | "orders" | "downloads" | "notifications" | "security">(null);
@@ -134,7 +134,7 @@ export default function AccountPage() {
 
   const updateSettingSafely = async (patch: Partial<UserSettings>) => {
     const previous = settings;
-    setSettings((prev) => (prev ? { ...prev, ...patch } : { ...patch }));
+    setSettings((prev: UserSettings | null) => (prev ? { ...prev, ...patch } : { ...patch }));
     try {
       const next = await updateSettings(patch);
       setSettings(next);
