@@ -134,7 +134,17 @@ export default function AccountPage() {
 
   const updateSettingSafely = async (patch: Partial<UserSettings>) => {
     const previous = settings;
-    setSettings((prev: UserSettings | null) => (prev ? { ...prev, ...patch } : { ...patch }));
+    setSettings((prev: UserSettings | null) =>
+      prev
+        ? { ...prev, ...patch }
+        : {
+            marketingOptIn: patch.marketingOptIn ?? false,
+            dropsOptIn: patch.dropsOptIn ?? false,
+            securityOptIn: patch.securityOptIn ?? false,
+            twoFAEnabled: patch.twoFAEnabled ?? false,
+            anonymousMode: patch.anonymousMode ?? false,
+          }
+    );
     try {
       const next = await updateSettings(patch);
       setSettings(next);
