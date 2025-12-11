@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 export default function Home() {
   const sections = useRef<HTMLElement[]>([]);
   const isScrolling = useRef(false);
+  const videoRefs = useRef<HTMLVideoElement[]>([]);
 
   const smoothScrollTo = useCallback(
     (targetIndex: number, direction: number, duration = 1200) => {
@@ -63,6 +64,28 @@ export default function Home() {
     };
   }, [smoothScrollTo]);
 
+  // Pause/lecture des vidéos uniquement quand la section est visible pour réduire le coût initial
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const idx = Number((entry.target as HTMLElement).dataset.index);
+          if (!Number.isFinite(idx)) return;
+          if (entry.isIntersecting) {
+            void videoRefs.current[idx]?.play().catch(() => undefined);
+          } else {
+            videoRefs.current[idx]?.pause();
+          }
+        });
+      },
+      { threshold: 0.35 }
+    );
+
+    videoRefs.current.forEach((video) => video && observer.observe(video));
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <div className="bg-black text-white h-screen overflow-hidden">
       {[0, 1, 2, 3].map((index) => {
@@ -101,12 +124,18 @@ export default function Home() {
             className="relative w-full h-screen overflow-hidden transition-opacity duration-500"
           >
             <video
+              ref={(el) => {
+                if (el) {
+                  videoRefs.current[index] = el;
+                }
+              }}
+              data-index={index}
               className="absolute top-0 left-0 w-full h-full object-cover z-0"
-              autoPlay
-              loop
+              preload="none"
+              loading="lazy"
               muted
               playsInline
-              preload="auto"
+              loop
             >
               <source src={`/videos/videotest${index}.mp4`} type="video/mp4" />
             </video>

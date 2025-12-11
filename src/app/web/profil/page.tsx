@@ -159,7 +159,7 @@ const Profil: React.FC = () => {
                   {loginErrors.general && <p className="text-xs text-red-500">{loginErrors.general}</p>}
                   <button
                     type="submit"
-                    className="w-full rounded-full bg-gradient-to-r from-[#6d3ff5] to-[#b74bff] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[#6d3ff540] transition hover:shadow-[#b74bff60]"
+                    className="w-full rounded-full px-5 py-3 text-sm font-semibold text-white transition shadow-[0_12px_32px_rgba(79,43,212,0.35)] bg-[var(--brand-purple)] hover:bg-[var(--brand-purple-strong)]"
                   >
                     Connexion
                   </button>
@@ -212,7 +212,7 @@ const Profil: React.FC = () => {
                   {signupErrors.general && <p className="text-xs text-red-500">{signupErrors.general}</p>}
                   <button
                     type="submit"
-                    className="w-full rounded-full bg-gradient-to-r from-[#6d3ff5] to-[#b74bff] px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-[#6d3ff540] transition hover:shadow-[#b74bff60]"
+                    className="w-full rounded-full px-5 py-3 text-sm font-semibold text-white transition shadow-[0_12px_32px_rgba(79,43,212,0.35)] bg-[var(--brand-purple)] hover:bg-[var(--brand-purple-strong)]"
                   >
                     Creer un compte
                   </button>
