@@ -132,7 +132,6 @@ export default function Home() {
               data-index={index}
               className="absolute top-0 left-0 w-full h-full object-cover z-0"
               preload="none"
-              loading="lazy"
               muted
               playsInline
               loop
