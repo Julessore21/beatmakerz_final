@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import VisibleProgressCircle from "@/components/VisibleProgressCircle";
 import Link from "next/link";
-import Footer from "@/components/Footer";
+import FooterHome from "@/components/FooterHome";
 
 export default function Home() {
   const sections = useRef<HTMLElement[]>([]);
@@ -170,7 +170,7 @@ export default function Home() {
         </div>
         <div className="relative z-10 flex h-full w-full items-end justify-center pb-8 sm:pb-12">
           <div className="w-full">
-            <Footer />
+            <FooterHome />
           </div>
         </div>
       </section>

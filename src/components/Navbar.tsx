@@ -4,6 +4,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   FaInstagram,
   FaTiktok,
@@ -130,6 +131,8 @@ const NavBar = () => {
   const { user } = useAuth();
 
   const overlayRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+  const isHome = pathname === "/";
 
   const toggleMenu = () => {
     if (isAnimating) return;
@@ -154,7 +157,11 @@ const NavBar = () => {
 
   return (
     <>
-      <nav className="fixed top-0 w-full z-50 bg-transparent text-white px-12 py-6 flex items-center justify-between max-sm:px-4 max-sm:py-4 xs:px-4 xxs:px-3">
+      <nav
+        className={`fixed top-0 w-full z-50 text-white px-12 py-6 flex items-center justify-between transition-colors duration-300 max-sm:px-4 max-sm:py-4 xs:px-4 xxs:px-3 ${
+          isHome ? "bg-transparent" : "bg-gradient-to-b from-[#0b0b14]/95 via-[#0b0b14]/80 to-transparent backdrop-blur-xl"
+        }`}
+      >
         {/* Toggle menu */}
         <div className="flex items-center m-2 space-x-2 cursor-pointer">
           <AnimatedTwoBarsToggle isOpen={isOpen} toggle={toggleMenu} />

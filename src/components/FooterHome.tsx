@@ -3,22 +3,14 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { FaInstagram, FaTiktok, FaYoutube, FaXTwitter } from "react-icons/fa6";
+import { LEGAL_LINKS } from "./Footer";
 
-export const LEGAL_LINKS: { label: string; href: string }[] = [
-  { label: "Mentions lÇ¸gales", href: "/web/mentions" },
-  { label: "CGV", href: "/web/cgv" },
-  { label: "CGU", href: "/web/cgu" },
-  { label: "Politique de confidentialitÇ¸", href: "/web/politique" },
-  { label: "Cookies", href: "/web/politique#cookies" },
-  { label: "PropriÇ¸tÇ¸ intellectuelle", href: "/web/mentions#propriete-intellectuelle" },
-];
-
-export default function Footer() {
+export default function FooterHome() {
   const [lang, setLang] = useState<"FR" | "EN">("FR");
 
   return (
-    <footer className="w-full text-white/90 bg-gradient-to-b from-transparent via-[#0b0b14]/50 to-[#08080f]/80 backdrop-blur-md">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
+    <footer className="w-full border-t border-white/10 bg-gradient-to-r from-[#080810] via-[#0a0a12] to-[#080810] text-white/90">
+      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="text-lg font-semibold tracking-wide text-white">BEATMAKERZ</div>
@@ -41,9 +33,9 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 h-px w-full bg-white/5" />
+        <div className="mt-6 h-px w-full bg-white/10" />
 
-        <div className="mt-8 grid grid-cols-1 gap-4 text-sm text-zinc-300">
+        <div className="mt-6 grid grid-cols-1 gap-4 text-sm text-zinc-300">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {LEGAL_LINKS.map((item, idx) => (
               <React.Fragment key={item.href}>
@@ -56,9 +48,9 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 h-px w-full bg-white/5" />
+        <div className="mt-6 h-px w-full bg-white/10" />
 
-        <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-zinc-400">
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-zinc-400">
           <span>¶¸ {new Date().getFullYear()} Beatmakerz. Tous droits rÇ¸servÇ¸s.</span>
           <div className="mt-2 sm:mt-0 flex items-center gap-3">
             <span className="h-[1px] w-6 bg-white/20" />
