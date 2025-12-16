@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useState } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -195,25 +196,25 @@ function Abonnements() {
         </div>
       </div>
 
-      <div className="relative mt-8 flex items-center justify-center w-[260px] h-12 border border-white/10 rounded-full bg-[#141416]/90 overflow-hidden">
-        <motion.div
-          className="absolute top-1 bottom-1 w-1/2 rounded-full bg-[#401a87]"
-          initial={false}
-          animate={{ left: isMensuel ? 4 : 126 }}
-          transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        />
-        <button
-          onClick={() => setIsMensuel(true)}
-          className="relative z-10 w-1/2 text-sm font-semibold text-center transition-colors text-white"
-        >
-          Mensuel
-        </button>
-        <button
-          onClick={() => setIsMensuel(false)}
-          className="relative z-10 w-1/2 text-sm font-semibold text-center transition-colors text-white"
-        >
-          Annuel
-        </button>
+      <div className="relative mt-8 flex items-center justify-center">
+        <div className="flex w-[260px] items-center gap-1 rounded-full border border-white/10 bg-[#0f0f18] p-1 shadow-[0_6px_24px_rgba(0,0,0,0.35)]">
+          <button
+            onClick={() => setIsMensuel(true)}
+            className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+              isMensuel ? "bg-[var(--brand-purple)] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.3)]" : "text-white/75 hover:text-white"
+            }`}
+          >
+            Mensuel
+          </button>
+          <button
+            onClick={() => setIsMensuel(false)}
+            className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+              !isMensuel ? "bg-[var(--brand-purple)] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.3)]" : "text-white/75 hover:text-white"
+            }`}
+          >
+            Annuel
+          </button>
+        </div>
       </div>
 
       {checkoutStatus === "success" && (
@@ -288,7 +289,7 @@ function Abonnements() {
             labelClassList.push("bg-[#141416] text-zinc-200 border border-white/10");
           }
           if (plan.label === "MEILLEURE OFFRE") {
-            labelClassList.push("bg-[#401a87] text-white");
+            labelClassList.push("bg-[var(--brand-purple)] text-white");
           }
           const labelClassName = labelClassList.join(" ");
 
@@ -338,7 +339,7 @@ function Abonnements() {
                   handleSubscribe(plan);
                 }}
                 disabled={buttonDisabled}
-                className="mt-auto py-2.5 px-5 rounded-full border font-semibold text-sm transition-colors border-[#401a87] text-white hover:bg-[#401a87] disabled:cursor-not-allowed disabled:opacity-60"
+                className="mt-auto py-2.5 px-5 rounded-full border font-semibold text-sm transition-colors text-white disabled:cursor-not-allowed disabled:opacity-60 border-[var(--brand-purple)] bg-[var(--brand-purple)] hover:bg-[var(--brand-purple-strong)]"
               >
                 {buttonLabel}
               </button>
@@ -348,7 +349,9 @@ function Abonnements() {
       </div>
 
       <div className="text-center mt-5 text-xs md:text-sm text-neutral-400">
-        en savoir plus sur la tarification
+        <Link href="/web/faq#tarifs" className="underline hover:text-white">
+          En savoir plus sur la tarification
+        </Link>
       </div>
     </div>
   );

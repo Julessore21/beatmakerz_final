@@ -3,6 +3,12 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --brand-purple: #4f2bd4;
+    --brand-purple-strong: #5b35e8;
+    --brand-surface: #0f0f18;
+    --brand-border: rgba(255, 255, 255, 0.08);
+  }
   html {
     background-color: #090912;
   }
@@ -36,7 +42,12 @@
   }
 
   .btn-primary {
-    @apply bg-[#401a87] hover:bg-[#5e2ea4] text-white font-semibold py-2 px-4 rounded-full transition-colors;
+    @apply text-white font-semibold py-2 px-4 rounded-full transition-colors;
+    background-color: var(--brand-purple);
+    border: 1px solid var(--brand-border);
+  }
+  .btn-primary:hover {
+    background-color: var(--brand-purple-strong);
   }
 
   .input-field {

@@ -71,23 +71,25 @@ export default function ActionBar({
       </motion.button>
 
       <button
-      data-testid="action-favorite"
-      onClick={onFav}
-      className={className}
-      aria-label="Ajouter aux favoris"
-      title="Ajouter aux favoris"
-    >
-      <Heart size={icon} className={isFav ? "text-rose-400" : ""} fill={isFav ? "currentColor" : "none"} />
+        data-testid="action-favorite"
+        onClick={onFav}
+        className={className}
+        aria-label="Ajouter aux favoris"
+        title="Ajouter aux favoris"
+      >
+        <Heart size={icon} className={isFav ? "text-rose-400" : ""} fill={isFav ? "currentColor" : "none"} />
       </button>
 
-      <button
-        onClick={onMore}
-        className={className}
-        aria-label="Plus d'options"
-        title="Plus d'options"
-      >
-        <MoreVertical size={icon} />
-      </button>
+      {onMore ? (
+        <button
+          onClick={onMore}
+          className={className}
+          aria-label="Plus d'options"
+          title="Plus d'options"
+        >
+          <MoreVertical size={icon} />
+        </button>
+      ) : null}
     </div>
   );
 }
