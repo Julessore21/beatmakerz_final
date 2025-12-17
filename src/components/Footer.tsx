@@ -4,25 +4,27 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { FaInstagram, FaTiktok, FaYoutube, FaXTwitter } from "react-icons/fa6";
 
+// Liens légaux communs
 export const LEGAL_LINKS: { label: string; href: string }[] = [
-  { label: "Mentions lÇ¸gales", href: "/web/mentions" },
+  { label: "Mentions légales", href: "/web/mentions" },
   { label: "CGV", href: "/web/cgv" },
   { label: "CGU", href: "/web/cgu" },
-  { label: "Politique de confidentialitÇ¸", href: "/web/politique" },
+  { label: "Politique de confidentialité", href: "/web/politique" },
   { label: "Cookies", href: "/web/politique#cookies" },
-  { label: "PropriÇ¸tÇ¸ intellectuelle", href: "/web/mentions#propriete-intellectuelle" },
+  { label: "Propriété intellectuelle", href: "/web/mentions#propriete-intellectuelle" },
 ];
 
 export default function Footer() {
   const [lang, setLang] = useState<"FR" | "EN">("FR");
 
   return (
-    <footer className="w-full text-white/90 bg-gradient-to-b from-transparent via-[#0b0b14]/50 to-[#08080f]/80 backdrop-blur-md">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
+    <footer className="relative w-full text-white/90">
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-[#0b0b14]/60 to-[#08080f]/85 blur-xl" />
+      <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="text-lg font-semibold tracking-wide text-white">BEATMAKERZ</div>
-            <div className="mt-1 text-xs text-zinc-400">Plateforme franÇõaise pour artistes & beatmakers</div>
+            <div className="mt-1 text-xs text-zinc-400">Plateforme française pour artistes & beatmakers</div>
           </div>
           <div className="flex items-center gap-3 text-white/80">
             <SocialLink href="https://www.instagram.com/beatmakerz_pro/" label="Instagram">
@@ -41,8 +43,6 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 h-px w-full bg-white/5" />
-
         <div className="mt-8 grid grid-cols-1 gap-4 text-sm text-zinc-300">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {LEGAL_LINKS.map((item, idx) => (
@@ -56,16 +56,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 h-px w-full bg-white/5" />
-
         <div className="mt-6 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-zinc-400">
-          <span>¶¸ {new Date().getFullYear()} Beatmakerz. Tous droits rÇ¸servÇ¸s.</span>
+          <span>© {new Date().getFullYear()} Beatmakerz. Tous droits réservés.</span>
           <div className="mt-2 sm:mt-0 flex items-center gap-3">
-            <span className="h-[1px] w-6 bg-white/20" />
+            <span className="h-[1px] w-6 bg-white/15" />
             <Link href="/web/politique#cookies" className="hover:text-white">
               Cookies
             </Link>
-            <span className="h-[1px] w-6 bg-white/20" />
+            <span className="h-[1px] w-6 bg-white/15" />
             <Link href="/web/contact" className="hover:text-white">
               Support
             </Link>
