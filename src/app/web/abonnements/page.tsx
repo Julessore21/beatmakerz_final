@@ -18,6 +18,9 @@ type PlanDefinition = {
   lookupKeys: Partial<Record<BillingCycle, string>>;
 };
 
+const fallbackPrice = (envValue: string | undefined, hardcoded: string) =>
+  envValue && envValue.trim().length > 0 ? envValue : hardcoded;
+
 const PLAN_DEFINITIONS: PlanDefinition[] = [
   {
     name: "INFINI",
@@ -27,8 +30,14 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
     label: "BASIQUE",
     description: ["4 prods/mois", "40 EUR d&#39;economie", "100% royalty free"],
     priceIds: {
-      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_MONTHLY,
-      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_YEARLY,
+      monthly: fallbackPrice(
+        process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_MONTHLY,
+        "price_1SnK8e0nYDWJhtuoZgaE2nLA"
+      ),
+      yearly: fallbackPrice(
+        process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_YEARLY,
+        "price_1SnK8e0nYDWJhtuoDKA2ci7R"
+      ),
     },
     lookupKeys: {
       monthly: process.env.NEXT_PUBLIC_STRIPE_LOOKUP_INFINI_MONTHLY,
@@ -49,8 +58,14 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
       "SAV prioritaire",
     ],
     priceIds: {
-      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_PLUS_MONTHLY,
-      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_PLUS_YEARLY,
+      monthly: fallbackPrice(
+        process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_PLUS_MONTHLY,
+        "price_1SnK8e0nYDWJhtuo0ChoHnJa"
+      ),
+      yearly: fallbackPrice(
+        process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_PLUS_YEARLY,
+        "price_1SnK8e0nYDWJhtuoONvIdvKA"
+      ),
     },
     lookupKeys: {
       monthly: process.env.NEXT_PUBLIC_STRIPE_LOOKUP_INFINI_PLUS_MONTHLY,
@@ -71,8 +86,14 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
       "SAV prioritaire",
     ],
     priceIds: {
-      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_X_MONTHLY,
-      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_X_YEARLY,
+      monthly: fallbackPrice(
+        process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_X_MONTHLY,
+        "price_1SnK8e0nYDWJhtuoBSlmTfTH"
+      ),
+      yearly: fallbackPrice(
+        process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_X_YEARLY,
+        "price_1SnK8e0nYDWJhtuo7Pj17DD8"
+      ),
     },
     lookupKeys: {
       monthly: process.env.NEXT_PUBLIC_STRIPE_LOOKUP_INFINI_X_MONTHLY,
