@@ -5,6 +5,7 @@ export const runtime = "nodejs";
 
 interface CheckoutRequestBody {
   lookupKey?: string;
+  priceId?: string;
   quantity?: number;
   mode?: "subscription" | "payment";
 }
@@ -17,29 +18,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
   }
 
-  const { lookupKey, quantity = 1, mode = "subscription" } = body ?? {};
-  if (!lookupKey) {
-    return NextResponse.json({ error: "Missing lookup key." }, { status: 400 });
+  const { lookupKey, priceId, quantity = 1, mode = "subscription" } = body ?? {};
+  if (!lookupKey && !priceId) {
+    return NextResponse.json(
+      { error: "Missing price reference (lookup key or price id)." },
+      { status: 400 }
+    );
   }
 
   try {
     const stripe = getStripe();
-    const prices = await stripe.prices.list({
-      lookup_keys: [lookupKey],
-      expand: ["data.product"],
-      limit: 1,
-    });
+    let resolvedPriceId = priceId ?? "";
 
-    const price = prices.data[0];
-    if (!price) {
-      return NextResponse.json({ error: "Price not found for lookup key." }, { status: 404 });
+    if (!resolvedPriceId && lookupKey) {
+      const prices = await stripe.prices.list({
+        lookup_keys: [lookupKey],
+        limit: 1,
+      });
+
+      resolvedPriceId = prices.data[0]?.id ?? "";
+
+      if (!resolvedPriceId) {
+        return NextResponse.json(
+          { error: "Price not found for lookup key." },
+          { status: 404 }
+        );
+      }
     }
 
     const origin = getAppBaseUrl(req.headers.get("origin") ?? undefined);
 
     const session = await stripe.checkout.sessions.create({
       billing_address_collection: "auto",
-      line_items: [{ price: price.id, quantity }],
+      line_items: [{ price: resolvedPriceId, quantity }],
       mode,
       success_url: `${origin}/web/abonnements?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/web/abonnements?canceled=true`,

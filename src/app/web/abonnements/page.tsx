@@ -14,6 +14,7 @@ type PlanDefinition = {
   yearly: string;
   label: string;
   description: string[];
+  priceIds: Partial<Record<BillingCycle, string>>;
   lookupKeys: Partial<Record<BillingCycle, string>>;
 };
 
@@ -22,9 +23,13 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
     name: "INFINI",
     subTitle: "A partir de",
     monthly: "19.99 EUR",
-    yearly: "209.99 EUR",
+    yearly: "199.99 EUR",
     label: "BASIQUE",
-    description: ["4 prods/mois", "20 EUR d&#39;economie", "100% royalty free"],
+    description: ["4 prods/mois", "40 EUR d&#39;economie", "100% royalty free"],
+    priceIds: {
+      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_MONTHLY,
+      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_YEARLY,
+    },
     lookupKeys: {
       monthly: process.env.NEXT_PUBLIC_STRIPE_LOOKUP_INFINI_MONTHLY,
       yearly: process.env.NEXT_PUBLIC_STRIPE_LOOKUP_INFINI_YEARLY,
@@ -34,15 +39,19 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
     name: "INFINI +",
     subTitle: "A partir de",
     monthly: "39.99 EUR",
-    yearly: "409.99 EUR",
+    yearly: "399.99 EUR",
     label: "POPULAIRE",
     description: [
       "10 prods/mois",
-      "60 EUR d&#39;economie",
+      "80 EUR d&#39;economie",
       "100% royalty free",
       "-15 % (prods sur mesure)",
       "SAV prioritaire",
     ],
+    priceIds: {
+      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_PLUS_MONTHLY,
+      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_PLUS_YEARLY,
+    },
     lookupKeys: {
       monthly: process.env.NEXT_PUBLIC_STRIPE_LOOKUP_INFINI_PLUS_MONTHLY,
       yearly: process.env.NEXT_PUBLIC_STRIPE_LOOKUP_INFINI_PLUS_YEARLY,
@@ -56,11 +65,15 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
     label: "MEILLEURE OFFRE",
     description: [
       "15 prods/mois",
-      "90 EUR d&#39;economie",
+      "120 EUR d&#39;economie",
       "100% royalty free",
       "-30 % (prods sur mesure)",
       "SAV prioritaire",
     ],
+    priceIds: {
+      monthly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_X_MONTHLY,
+      yearly: process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_X_YEARLY,
+    },
     lookupKeys: {
       monthly: process.env.NEXT_PUBLIC_STRIPE_LOOKUP_INFINI_X_MONTHLY,
       yearly: process.env.NEXT_PUBLIC_STRIPE_LOOKUP_INFINI_X_YEARLY,
@@ -91,8 +104,10 @@ function Abonnements() {
 
   const handleSubscribe = useCallback(
     async (plan: PlanDefinition) => {
+      const priceId = plan.priceIds[billingCycle];
       const lookupKey = plan.lookupKeys[billingCycle];
-      if (!lookupKey) {
+
+      if (!priceId && !lookupKey) {
         setFeedbackMessage(
           "Ce plan n&#39;est pas encore disponible. Contacte-nous pour plus d'informations."
         );
@@ -104,10 +119,14 @@ function Abonnements() {
       setFeedbackMessage(null);
 
       try {
+        const payload: Record<string, unknown> = { mode: "subscription" };
+        if (priceId) payload.priceId = priceId;
+        if (lookupKey) payload.lookupKey = lookupKey;
+
         const response = await fetch("/api/stripe/create-checkout-session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ lookupKey, mode: "subscription" }),
+          body: JSON.stringify(payload),
         });
         const payload = (await response.json()) as { url?: string; error?: string };
 
@@ -266,13 +285,15 @@ function Abonnements() {
           }
 
           const lookupKey = plan.lookupKeys[billingCycle];
+          const priceId = plan.priceIds[billingCycle];
           const isProcessing = processingPlan === plan.name;
-          const buttonDisabled = !lookupKey || isProcessing;
-          const buttonLabel = !lookupKey
-            ? "Plan indisponible"
-            : isProcessing
-              ? "Redirection..."
-              : "S&#39;abonner";
+          const buttonDisabled = (!lookupKey && !priceId) || isProcessing;
+          const buttonLabel =
+            !lookupKey && !priceId
+              ? "Plan indisponible"
+              : isProcessing
+                ? "Redirection..."
+                : "S&#39;abonner";
 
           const cardClassName = [
             "relative flex flex-col items-center text-center cursor-pointer",

@@ -2,9 +2,9 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiGet, apiPost } from "@/lib/services/api-client";
+import { apiGet, getAccessToken } from "@/lib/services/api-client";
 import { useAuth } from "@/context/AuthContext";
-import { ShoppingCart, CreditCard, Loader2, ArrowLeft } from "lucide-react";
+import { CreditCard, Loader2, ArrowLeft } from "lucide-react";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
 
 type CartItem = {
@@ -62,15 +62,23 @@ export default function CheckoutPage() {
     setError(null);
     setLoading(true);
     try {
-      const data = await apiPost<{ url: string }>("/checkout/session", {
-        successUrl: `${process.env.NEXT_PUBLIC_APP_URL}/web/checkout/success`,
-        cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL}/web/checkout/cancel`,
+      const token = getAccessToken();
+      const res = await fetch("/api/checkout/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
       });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error((data && data.error) || "Checkout session failed");
+      }
       if (data?.url) {
         window.location.href = data.url;
-      } else {
-        throw new Error("URL de redirection manquante");
+        return;
       }
+      throw new Error("URL de redirection manquante");
     } catch (e: any) {
       setError("Impossible de créer la session de paiement");
       setLoading(false);

@@ -43,6 +43,9 @@ const refreshAccessToken = async () => {
   return false;
 };
 
+// Exposé pour les appels internes (ex: proxy Next -> API)
+export const getAccessToken = () => getToken();
+
 const doFetch = async (path: string, init: RequestInit) => {
   const exec = async () =>
     fetch(`${API_URL}${path}`, {
