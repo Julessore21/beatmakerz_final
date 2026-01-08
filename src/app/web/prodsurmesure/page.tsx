@@ -47,6 +47,8 @@ const fillMap: Record<number, number> = { 1: 33, 2: 66, 3: 100 };
 
 type Sample = { id: string; title: string; tag: string; src: string };
 
+const PROD_SUR_MESURE_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_PROD_SUR_MESURE;
+
 /* =========================== Page =========================== */
 
 function ProdSurMesure() {
@@ -584,21 +586,55 @@ function BriefModal({
     setSending(true);
     setOk(null);
 
+    if (!PROD_SUR_MESURE_PRICE_ID) {
+      setOk("error");
+      alert("Le tarif Stripe pour les prods sur mesure n'est pas configure.");
+      setSending(false);
+      return;
+    }
+
     const fd = new FormData(e.currentTarget);
-    fd.set("genre", genre);
-    fd.set("style", styleOther.trim() ? styleOther.trim() : style);
-    // instruments multiples
-    fd.delete("instruments[]");
-    selectedInstruments.forEach((ins) => fd.append("instruments[]", ins));
-    fd.set("bpm", String(bpm));
-    fd.set("key", key);
+    const baseStyle = styleOther.trim() ? styleOther.trim() : style;
+    const details = (fd.get("details") as FormDataEntryValue | null)?.toString() ?? "";
+    const notes = (fd.get("notes") as FormDataEntryValue | null)?.toString() ?? "";
+    const fileInput = e.currentTarget.querySelector<HTMLInputElement>('input[name="file"]');
+    const fileName = fileInput?.files?.[0]?.name ?? "";
+    const instrumentsLabel = selectedInstruments.join(", ");
+
+    const truncate = (value: string, max = 450) =>
+      value.length > max ? `${value.slice(0, max - 3)}...` : value;
+
+    const metadata: Record<string, string> = {
+      genre: truncate(genre),
+      style: truncate(baseStyle),
+      bpm: String(bpm),
+      key: key || "non_precise",
+      instruments: truncate(instrumentsLabel || "non_precise"),
+      brief: truncate(details),
+    };
+
+    if (notes.trim()) metadata.notes = truncate(notes.trim());
+    if (fileName) metadata.file = truncate(fileName, 120);
 
     try {
-      // await fetch("/api/brief", { method: "POST", body: fd });
-      console.log("Formulaire PROD:", Array.from(fd.entries()));
-      setOk("success");
-      (e.target as HTMLFormElement).reset();
-      // on conserve les selections par défaut
+      const response = await fetch("/api/stripe/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          priceId: PROD_SUR_MESURE_PRICE_ID,
+          mode: "payment",
+          metadata,
+          successUrl: "/web/prodsurmesure?success=true&session_id={CHECKOUT_SESSION_ID}",
+          cancelUrl: "/web/prodsurmesure?canceled=true",
+        }),
+      });
+
+      const payload = (await response.json()) as { url?: string; error?: string };
+      if (!response.ok || !payload.url) {
+        throw new Error(payload.error || "Impossible de demarrer le paiement Stripe.");
+      }
+
+      window.location.href = payload.url;
     } catch (err) {
       console.error(err);
       setOk("error");
@@ -870,7 +906,7 @@ function BriefModal({
                   disabled={sending}
                   className="w-full rounded-xl bg-white px-6 py-3 font-semibold text-black hover:bg-zinc-100 disabled:opacity-70"
                 >
-                  {sending ? "Redirection…" : "Procéder au paiement"}
+                  {sending ? "Redirection..." : "Proceder au paiement"}
                 </button>
                 <p className="mt-2 text-center text-xs text-zinc-500">
                   Licence exclusive délivrée · Deadline finale <span className="font-medium">fixe</span> (gérée par nos conditions et visible dans ton compte).
