@@ -128,13 +128,13 @@ function Abonnements() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        const payload = (await response.json()) as { url?: string; error?: string };
+        const responsePayload = (await response.json()) as { url?: string; error?: string };
 
-        if (!response.ok || !payload.url) {
-          throw new Error(payload.error || "Impossible de demarrer le paiement.");
+        if (!response.ok || !responsePayload.url) {
+          throw new Error(responsePayload.error || "Impossible de demarrer le paiement.");
         }
 
-        window.location.href = payload.url;
+        window.location.href = responsePayload.url;
       } catch (error) {
         const message =
           error instanceof Error
