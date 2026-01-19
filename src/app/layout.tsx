@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import type { Metadata } from "next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
 import { CartProvider } from "@/context/CartContext";
 import GlobalAudioPlayer from "@/components/GlobalAudioPlayer";
@@ -84,6 +85,7 @@ export default function RootLayout({
             </AudioPlayerProvider>
           </AuthProvider>
         </CartProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
