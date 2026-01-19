@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
 import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
 import { CartProvider } from "@/context/CartContext";
 import GlobalAudioPlayer from "@/components/GlobalAudioPlayer";
@@ -84,6 +85,7 @@ export default function RootLayout({
             </AudioPlayerProvider>
           </AuthProvider>
         </CartProvider>
+        <Analytics />
       </body>
     </html>
   );
