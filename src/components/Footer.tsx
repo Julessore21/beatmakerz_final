@@ -23,10 +23,10 @@ export default function Footer() {
       <div className="relative mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="text-lg font-semibold tracking-wide text-white">BEATMAKERZ</div>
+            <div className="text-base sm:text-lg font-semibold tracking-wide text-white">BEATMAKERZ</div>
             <div className="mt-1 text-xs text-zinc-400">Plateforme française pour artistes & beatmakers</div>
           </div>
-          <div className="flex items-center gap-3 text-white/80">
+          <div className="flex flex-wrap items-center gap-3 text-white/80">
             <SocialLink href="https://www.instagram.com/beatmakerz_pro/" label="Instagram">
               <FaInstagram />
             </SocialLink>
@@ -43,7 +43,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-4 text-sm text-zinc-300">
+        <div className="mt-8 grid grid-cols-1 gap-4 text-xs sm:text-sm text-zinc-300">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             {LEGAL_LINKS.map((item, idx) => (
               <React.Fragment key={item.href}>

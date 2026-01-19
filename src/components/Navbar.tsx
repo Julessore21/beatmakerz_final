@@ -158,7 +158,7 @@ const NavBar = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 w-full z-50 text-white px-12 py-6 flex items-center justify-between transition-colors duration-300 max-sm:px-4 max-sm:py-4 xs:px-4 xxs:px-3 ${
+        className={`fixed top-0 w-full z-50 text-white px-4 sm:px-6 lg:px-12 py-4 sm:py-6 flex items-center justify-between transition-colors duration-300 ${
           isHome ? "bg-transparent" : "bg-gradient-to-b from-[#0b0b14]/95 via-[#0b0b14]/80 to-transparent backdrop-blur-xl"
         }`}
       >
@@ -170,9 +170,33 @@ const NavBar = () => {
 
         <div className="absolute left-1/2 transform -translate-x-1/2">
           <Link href="/#hero">
-            <h1 className="text-base font-bold tracking-widest cursor-pointer uppercase">
+            <h1 className="text-sm sm:text-base font-bold tracking-[0.35em] sm:tracking-widest cursor-pointer uppercase">
               BEATMAKERZ
             </h1>
+          </Link>
+        </div>
+
+        <div className="flex items-center space-x-2 md:hidden">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              setIsCartOpen(true);
+            }}
+            className="p-1.5 rounded-full border border-white/20 relative"
+          >
+            <img src="/img/panier.png" alt="Panier" className="h-3.5 w-3.5" />
+            {totalItems > 0 && (
+              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] px-1 rounded-full">
+                {totalItems}
+              </span>
+            )}
+          </button>
+
+          <Link
+            href={user ? "/account" : "/profil"}
+            className="p-1.5 rounded-full border border-white/20"
+          >
+            <img src="/img/profil.png" alt="Profil" className="h-3.5 w-3.5" />
           </Link>
         </div>
 
@@ -223,9 +247,9 @@ const NavBar = () => {
               <div className="absolute inset-0 bg-black/70 backdrop-blur-lg" />
               <div
                 ref={overlayRef}
-                className="absolute top-0 left-0 h-screen w-2/5 bg-black bg-opacity-60 backdrop-blur-xl text-white transform transition-transform duration-300 flex flex-col pt-16 space-y-8 max-sm:w-full xs:w-4/5 sm:w-2/3 md:w-2/5"
+                className="absolute top-0 left-0 h-screen w-2/5 bg-black bg-opacity-60 backdrop-blur-xl text-white transform transition-transform duration-300 flex flex-col pt-16 space-y-8 max-sm:w-full xs:w-4/5 sm:w-2/3 md:w-2/5 overflow-y-auto"
               >
-                <div className="flex flex-col items-start ml-8 mt-1 pl-6 space-y-4">
+                <div className="flex flex-col items-start ml-4 sm:ml-8 mt-1 pl-3 sm:pl-6 space-y-3 sm:space-y-4">
                   {[
                     ["/", "ACCUEIL"],
                     ["/catalogue", "CATALOGUE"],
@@ -239,15 +263,15 @@ const NavBar = () => {
                       key={href}
                       href={href}
                       text={text}
-                      textSize="text-4xl"
+                      textSize="text-3xl sm:text-4xl"
                       onClick={toggleMenu}
                     />
                   ))}
                 </div>
 
-                <div className="flex ml-8 flex-col items-start pl-6 space-y-2 mt-12">
+                <div className="flex ml-4 sm:ml-8 flex-col items-start pl-3 sm:pl-6 space-y-2 mt-8 sm:mt-12">
                   <div className="w-[95%] border-t-2 border-white opacity-25"></div>
-                  <div className="grid grid-cols-2 gap-4 w-full">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                     {[
                       ["/tarification", "TARIFICATION"],
                       ["/faq", "FAQ"],
@@ -258,13 +282,13 @@ const NavBar = () => {
                         key={href}
                         href={href}
                         text={text}
-                        textSize="text-sm"
+                        textSize="text-xs sm:text-sm"
                         onClick={toggleMenu}
                       />
                     ))}
                   </div>
                   <div className="w-[95%] border-b-2 border-white opacity-25"></div>
-                  <div className="grid grid-cols-2 gap-4 w-full">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                     {[
                       ["/cgv", "CGV"],
                       ["/cgu", "CGU"],
@@ -275,7 +299,7 @@ const NavBar = () => {
                         key={href}
                         href={href}
                         text={text}
-                        textSize="text-sm"
+                        textSize="text-xs sm:text-sm"
                         onClick={toggleMenu}
                       />
                     ))}
@@ -283,7 +307,7 @@ const NavBar = () => {
                   <div className="w-[95%] border-b-2 border-white opacity-25"></div>
                 </div>
 
-                <div className="flex flex-col items-center justify-center space-y-10 mt-12">
+                <div className="flex flex-col items-center justify-center space-y-6 sm:space-y-10 mt-8 sm:mt-12 pb-10">
                   <div className="flex items-center justify-center space-x-8">
                     <a
                       href="https://www.instagram.com/beatmakerz_pro/"

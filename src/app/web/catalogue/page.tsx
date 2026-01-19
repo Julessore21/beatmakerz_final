@@ -12,7 +12,7 @@ import { useAuth } from "@/context/AuthContext";
 import BeatCard from "@/components/BeatCard";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
 import BeatTableRow from "@/components/BeatTableRow";
-import { apiGet } from "@/lib/services/api-client";
+import { fetchFileUpCatalogue } from "@/lib/services/fileup-catalogue";
 import { fetchFavorites, toggleFavorite as toggleFavoriteApi } from "@/lib/services/user-api";
 
 /* ------------------------------ types & data ------------------------------ */
@@ -166,18 +166,23 @@ function CatalogueContent() {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await apiGet<{ items: any[] }>("/beats");
+        const items = await fetchFileUpCatalogue();
         const mapped =
-          data.items?.map((b, idx) => ({
-            id: b._id || b.id || `beat-${idx}`,
-            name: b.title || "Beat",
-            artist: b.artist?.name || "Beatmaker",
-            genre: b.genres?.[0] || "Beat",
+          items.map((b, idx) => ({
+            id: b.id ?? `beat-${idx}`,
+            name: b.title || b.name || "Beat",
+            artist: typeof b.artist === "string" ? b.artist : b.artist?.name || "Beatmaker",
+            genre: b.genres?.[0] || b.genre || "Beat",
             bpm: b.bpm ?? 120,
             key: b.key || "Am",
             tag: null as Tag | null,
-            audio: b.assets?.find((a: any) => a.type === "preview")?.storageKey || TEST_AUDIO,
-            price: (b.priceOverrides?.[0]?.priceCents ?? b.priceCents ?? 1999) / 100,
+            audio:
+              b.previewUrl ||
+              b.audioUrl ||
+              b.assets?.find((a) => a.type === "preview")?.url ||
+              b.assets?.find((a) => a.type === "preview")?.storageKey ||
+              TEST_AUDIO,
+            price: typeof b.price === "number" ? b.price : (b.priceCents ?? 1999) / 100,
           })) || [];
         setBeats(mapped);
       } catch {
@@ -320,6 +325,97 @@ function CatalogueContent() {
     setFavIds((prev) => (prev.includes(beatId) ? prev.filter((id) => id !== beatId) : [...prev, beatId]));
   };
 
+  const FiltersBlocks = () => (
+    <>
+      <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
+        <div className="flex items-center justify-between">
+          <SectionTitle>Genres</SectionTitle>
+          {selectedGenres.length > 0 && (
+            <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setSelectedGenres([])}>
+              Effacer
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {GENRES.map((g) => (
+            <button
+              key={g}
+              onClick={() => toggleInArray(g, selectedGenres, setSelectedGenres)}
+              className={`h-8 rounded-xl border px-2 text-[11px] text-left ${
+                selectedGenres.includes(g) ? "border-indigo-500 bg-indigo-500 text-white" : "border-white/10 bg-white/5 hover:bg-white/10 text-zinc-100"
+              }`}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
+        <div className="flex items-center justify-between">
+          <SectionTitle>Tonalites</SectionTitle>
+          {selectedKeys.length > 0 && (
+            <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setSelectedKeys([])}>
+              Effacer
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+          {KEYS.map((k) => (
+            <Chip key={k} active={selectedKeys.includes(k)} onClick={() => toggleInArray(k, selectedKeys, setSelectedKeys)}>
+              {k}
+            </Chip>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
+        <div className="flex items-center justify-between">
+          <SectionTitle>BPM (min)</SectionTitle>
+          {bpmMin !== BPM_MIN && (
+            <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setBpmMin(BPM_MIN)}>
+              Effacer
+            </button>
+          )}
+        </div>
+        <div className="mt-2 flex items-center gap-3">
+          <input
+            type="range"
+            min={BPM_MIN}
+            max={BPM_MAX}
+            step={1}
+            value={bpmMin}
+            onChange={(e) => {
+              const v = parseInt(e.target.value, 10);
+              setBpmMin(v);
+              setBpmInput(String(v));
+            }}
+            className="w-full"
+          />
+          <input
+            type="number"
+            min={BPM_MIN}
+            max={BPM_MAX}
+            value={bpmInput}
+            onChange={(e) => {
+              const raw = e.target.value;
+              setBpmInput(raw);
+              const v = parseInt(raw, 10);
+              if (!Number.isNaN(v)) setBpmMin(Math.max(BPM_MIN, Math.min(BPM_MAX, v)));
+            }}
+            onBlur={() => {
+              if (bpmInput === "" || Number.isNaN(parseInt(bpmInput, 10))) {
+                setBpmInput(String(BPM_MIN));
+                setBpmMin(BPM_MIN);
+              }
+            }}
+            className="w-[56px] rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center text-xs text-white"
+          />
+        </div>
+      </div>
+    </>
+  );
+
   /* --------------------------------- render -------------------------------- */
 
   return (
@@ -426,50 +522,65 @@ function CatalogueContent() {
       {/* content */}
       <div className="container mx-auto mt-8 max-w-screen-2xl px-4 xs:px-5 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-          {/* filters */}
-          <aside className="lg:col-span-3">
-            <div className="sticky top-24 space-y-4">
-              <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
-                <div className="flex items-center justify-between">
-                  <SectionTitle>Genres</SectionTitle>
-                  {selectedGenres.length > 0 && (
-                    <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setSelectedGenres([])}>
-                      Effacer
-                    </button>
-                  )}
+          <section className="lg:col-span-12 lg:hidden">
+            <div className="space-y-3">
+              <details className="group rounded-2xl border border-white/10 bg-[#141416]/80 backdrop-blur-xl">
+                <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm text-zinc-200">
+                  <span>Genres</span>
+                  <ChevronDown className="h-4 w-4 text-zinc-400 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="px-4 pb-4 space-y-3">
+                  <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
+                    <div className="flex items-center justify-between">
+                      <SectionTitle>Genres</SectionTitle>
+                      {selectedGenres.length > 0 && (
+                        <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setSelectedGenres([])}>
+                          Effacer
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {GENRES.map((g) => (
+                        <button
+                          key={g}
+                          onClick={() => toggleInArray(g, selectedGenres, setSelectedGenres)}
+                          className={`h-8 rounded-xl border px-2 text-[11px] text-left ${
+                            selectedGenres.includes(g) ? "border-indigo-500 bg-indigo-500 text-white" : "border-white/10 bg-white/5 hover:bg-white/10 text-zinc-100"
+                          }`}
+                        >
+                          {g}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                  {GENRES.map((g) => (
-                    <button
-                      key={g}
-                      onClick={() => toggleInArray(g, selectedGenres, setSelectedGenres)}
-                      className={`h-8 rounded-xl border px-2 text-[11px] text-left ${
-                        selectedGenres.includes(g) ? "border-indigo-500 bg-indigo-500 text-white" : "border-white/10 bg-white/5 hover:bg-white/10 text-zinc-100"
-                      }`}
-                    >
-                      {g}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              </details>
 
-              <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
-                <div className="flex items-center justify-between">
-                  <SectionTitle>Tonalités</SectionTitle>
-                  {selectedKeys.length > 0 && (
-                    <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setSelectedKeys([])}>
-                      Effacer
-                    </button>
-                  )}
+              <details className="group rounded-2xl border border-white/10 bg-[#141416]/80 backdrop-blur-xl">
+                <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm text-zinc-200">
+                  <span>Tonalites</span>
+                  <ChevronDown className="h-4 w-4 text-zinc-400 transition-transform group-open:rotate-180" />
+                </summary>
+                <div className="px-4 pb-4 space-y-3">
+                  <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
+                    <div className="flex items-center justify-between">
+                      <SectionTitle>Tonalites</SectionTitle>
+                      {selectedKeys.length > 0 && (
+                        <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setSelectedKeys([])}>
+                          Effacer
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+                      {KEYS.map((k) => (
+                        <Chip key={k} active={selectedKeys.includes(k)} onClick={() => toggleInArray(k, selectedKeys, setSelectedKeys)}>
+                          {k}
+                        </Chip>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
-                  {KEYS.map((k) => (
-                    <Chip key={k} active={selectedKeys.includes(k)} onClick={() => toggleInArray(k, selectedKeys, setSelectedKeys)}>
-                      {k}
-                    </Chip>
-                  ))}
-                </div>
-              </div>
+              </details>
 
               <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
                 <div className="flex items-center justify-between">
@@ -516,6 +627,28 @@ function CatalogueContent() {
                 </div>
               </div>
 
+              {selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || selectedTag ? (
+                <button
+                  onClick={() => {
+                    setSelectedGenres([]);
+                    setSelectedKeys([]);
+                    setBpmMin(BPM_MIN);
+                    setBpmInput(String(BPM_MIN));
+                    setSelectedTag(null);
+                    setQuery("");
+                    setDebounced("");
+                  }}
+                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
+                >
+                  Reinitialiser tous les filtres
+                </button>
+              ) : null}
+            </div>
+          </section>
+          {/* filters */}
+          <aside className="hidden lg:block lg:col-span-3">
+            <div className="sticky top-24 space-y-4">
+              <FiltersBlocks />
               {selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || selectedTag ? (
                 <button
                   onClick={() => {

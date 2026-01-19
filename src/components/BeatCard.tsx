@@ -31,7 +31,7 @@ export type BeatCardProps = {
 };
 
 const chipClass =
-  "inline-flex items-center justify-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-0.5 text-[10px] text-zinc-200";
+  "inline-flex items-center justify-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-0.5 text-[10px] sm:text-[11px] text-zinc-200";
 
 export default function BeatCard({
   id,
@@ -109,7 +109,7 @@ export default function BeatCard({
       )}
       <div className="absolute inset-0 bg-black/50" />
 
-      <div className="relative flex h-full flex-col justify-between p-4">
+      <div className="relative flex h-full flex-col justify-between p-4 sm:p-5">
         <div className="flex items-start justify-end">
           <span className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-xs font-semibold text-white">
             {price.toFixed(2)} EUR
@@ -117,8 +117,8 @@ export default function BeatCard({
         </div>
 
         <div className="min-w-0">
-          <h3 className="truncate text-sm font-semibold text-white">{name}</h3>
-          <div className="truncate text-[11px] text-zinc-300/90">{artist}</div>
+          <h3 className="truncate text-sm sm:text-base font-semibold text-white">{name}</h3>
+          <div className="truncate text-[11px] sm:text-xs text-zinc-300/90">{artist}</div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <span className={`${chipClass} whitespace-nowrap`}>
               <Music2 className="h-3 w-3" />
@@ -140,7 +140,7 @@ export default function BeatCard({
               onMore={onMore}
             />
             {tag && showTag && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[0.68rem] text-zinc-200">
+              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[0.6rem] sm:text-[0.68rem] text-zinc-200">
                 {tag === "Tendance" && <Flame className="h-3 w-3 text-orange-400" />}
                 {tag === "Nouveau" && <Star className="h-3 w-3 text-yellow-300" />}
                 {tag === "Populaire" && <Crown className="h-3 w-3 text-amber-300" />}

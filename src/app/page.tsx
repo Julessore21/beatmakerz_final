@@ -87,7 +87,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="bg-black text-white h-screen overflow-hidden">
+    <div className="bg-black text-white min-h-[100svh] overflow-hidden">
       {[0, 1, 2, 3].map((index) => {
         const titles = [
           [
@@ -121,7 +121,7 @@ export default function Home() {
               }
             }}
             id={`${index + 1}`}
-            className="relative w-full h-screen overflow-hidden transition-opacity duration-500"
+            className="relative w-full min-h-[100svh] overflow-hidden transition-opacity duration-500"
           >
             <video
               ref={(el) => {
@@ -139,20 +139,20 @@ export default function Home() {
               <source src={`/videos/videotest${index}.mp4`} type="video/mp4" />
             </video>
             <div className="absolute top-0 left-0 w-full h-full bg-black opacity-50 z-0"></div>
-            <div className="absolute bottom-24 left-16 z-10 max-w-xl flex flex-col space-y-4 items-start max-sm:left-4 max-sm:bottom-20 max-sm:max-w-[88%]">
-              <span className="uppercase text-sm font-semibold tracking-wider opacity-70 ml-1">
+            <div className="absolute bottom-16 left-6 sm:left-10 lg:left-16 z-10 max-w-[92%] sm:max-w-lg lg:max-w-xl flex flex-col space-y-3 sm:space-y-4 items-start">
+              <span className="uppercase text-xs sm:text-sm font-semibold tracking-wider opacity-70 ml-1">
                 {subtitle}
               </span>
-              <h1 className="text-8xl font-bold leading-tight whitespace-nowrap max-sm:text-5xl max-[380px]:text-4xl max-sm:whitespace-normal">
+              <h1 className="text-4xl xs:text-5xl sm:text-6xl lg:text-8xl font-bold leading-tight sm:whitespace-nowrap">
                 {title}
               </h1>
               <Link
                 href={{ pathname: href as string }}
-                className="text-xs font-bold opacity-90 ml-2 hover:underline"
+                className="text-sm sm:text-xs font-bold opacity-90 ml-2 hover:underline"
               >
                 {cta}
               </Link>
-              <div className="transform translate-y-6 max-sm:translate-y-4">
+              <div className="transform translate-y-5 sm:translate-y-6">
                 <VisibleProgressCircle
                   duration={4}
                   onAnimationEnd={() => {
@@ -188,7 +188,7 @@ export default function Home() {
             sections.current.push(el);
           }
         }}
-        className="relative w-full h-screen overflow-hidden bg-[#090912]"
+        className="relative w-full min-h-[100svh] overflow-hidden bg-[#090912]"
       >
         <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
           <div className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet-600/25 blur-3xl" />
