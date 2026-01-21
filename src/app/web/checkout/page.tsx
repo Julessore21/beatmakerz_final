@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiGet, getAccessToken } from "@/lib/services/api-client";
+import { apiGet, apiPost } from "@/lib/services/api-client";
 import { useAuth } from "@/context/AuthContext";
 import { CreditCard, Loader2, ArrowLeft } from "lucide-react";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
@@ -62,18 +62,7 @@ export default function CheckoutPage() {
     setError(null);
     setLoading(true);
     try {
-      const token = getAccessToken();
-      const res = await fetch("/api/checkout/session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error((data && data.error) || "Checkout session failed");
-      }
+      const data = await apiPost<{ url?: string; error?: string }>("/checkout/session", {});
       if (data?.url) {
         window.location.href = data.url;
         return;

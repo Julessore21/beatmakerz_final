@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { Minus, Plus, Trash2, ShieldCheck, CreditCard, PackageSearch, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { getAccessToken } from "@/lib/services/api-client";
+import { apiPost } from "@/lib/services/api-client";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
 
 const SummaryRow = ({ label, value, bold = false }: { label: string; value: string; bold?: boolean }) => (
@@ -47,18 +47,7 @@ const Panier: React.FC = () => {
     setMessage(null);
 
     try {
-      const token = getAccessToken();
-      const res = await fetch("/api/checkout/session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error((data && data.error) || "Impossible de lancer le paiement Stripe pour le moment.");
-      }
+      const data = await apiPost<{ url?: string; error?: string }>("/checkout/session", {});
       if (data?.url) {
         setStatus("success");
         setMessage("Redirection vers Stripe...");

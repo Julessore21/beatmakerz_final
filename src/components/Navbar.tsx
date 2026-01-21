@@ -5,13 +5,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  FaInstagram,
-  FaTiktok,
-  FaYoutube,
-  FaEnvelope,
-  FaSearch,
-} from "react-icons/fa";
+import { FaInstagram, FaTiktok, FaYoutube, FaEnvelope } from "react-icons/fa";
 // SearchBar supprimé
 import CartSideBar from "./CartSideBar";
 import { useCart } from "@/context/CartContext";
@@ -80,6 +74,27 @@ const AnimatedTwoBarsToggle = ({
     </motion.button>
   );
 };
+
+const primaryNavLinks = [
+  ["/", "Accueil"],
+  ["/catalogue", "Catalogue"],
+  ["/abonnements", "Abonnements"],
+  ["/prodsurmesure", "Prod personnalisée"],
+  ["/web/marketplace", "Marketplace"],
+  ["/cartecadeau", "Carte cadeau"],
+  ["/programmefidelite", "Programme fidélité"],
+];
+
+const secondaryNavLinks = [
+  ["/tarification", "Tarification"],
+  ["/faq", "FAQ"],
+  ["/retractation", "Droit de rétractation"],
+  ["/politique", "Politique de confidentialité"],
+  ["/cgv", "CGV"],
+  ["/cgu", "CGU"],
+  ["/mentions", "Mentions légales"],
+  ["/contact", "Contact"],
+];
 
 const UnderlineLink = ({
   text,
@@ -243,100 +258,95 @@ const NavBar = () => {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
             >
-              {/* voile flouté/assombri */}
               <div className="absolute inset-0 bg-black/70 backdrop-blur-lg" />
               <div
                 ref={overlayRef}
-                className="absolute top-0 left-0 h-screen w-2/5 bg-black bg-opacity-60 backdrop-blur-xl text-white transform transition-transform duration-300 flex flex-col pt-16 space-y-8 max-sm:w-full xs:w-4/5 sm:w-2/3 md:w-2/5 overflow-y-auto"
+                className="absolute top-0 left-0 h-screen w-full max-w-[360px] bg-black/80 backdrop-blur-3xl text-white shadow-[10px_0_50px_rgba(0,0,0,0.6)] flex flex-col border-r border-white/5"
               >
-                <div className="flex flex-col items-start ml-4 sm:ml-8 mt-1 pl-3 sm:pl-6 space-y-3 sm:space-y-4">
-                  {[
-                    ["/", "ACCUEIL"],
-                    ["/catalogue", "CATALOGUE"],
-                    ["/abonnements", "ABONNEMENTS"],
-                    ["/prodsurmesure", "PROD PERSONNALISÉE"],
-                    ["/web/marketplace", "MARKETPLACE"],
-                    ["/cartecadeau", "CARTE CADEAU"],
-                    ["/programmefidelite", "PROGRAMME FIDÉLITÉ"],
-                  ].map(([href, text]) => (
-                    <UnderlineLink
-                      key={href}
-                      href={href}
-                      text={text}
-                      textSize="text-3xl sm:text-4xl"
-                      onClick={toggleMenu}
-                    />
-                  ))}
+                <div className="flex items-center justify-between border-b border-white/10 px-5 pt-6 pb-4">
+                  <span className="text-xs tracking-[0.5em] uppercase text-white/60">Menu</span>
+                  <button
+                    type="button"
+                    onClick={toggleMenu}
+                    className="text-sm uppercase tracking-wide text-white/70 hover:text-white transition"
+                  >
+                    Fermer
+                  </button>
                 </div>
 
-                <div className="flex ml-4 sm:ml-8 flex-col items-start pl-3 sm:pl-6 space-y-2 mt-8 sm:mt-12">
-                  <div className="w-[95%] border-t-2 border-white opacity-25"></div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                    {[
-                      ["/tarification", "TARIFICATION"],
-                      ["/faq", "FAQ"],
-                      ["/retractation", "DROIT DE RETRACTATION"],
-                      ["/politique", "POLITIQUE DE CONFIDENTIALITE"],
-                    ].map(([href, text]) => (
-                      <UnderlineLink
+                <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
+                  <div className="space-y-1">
+                    <div className="text-[10px] font-semibold tracking-[0.4em] uppercase text-zinc-400">Navigation</div>
+                    {primaryNavLinks.map(([href, label]) => (
+                      <Link
                         key={href}
                         href={href}
-                        text={text}
-                        textSize="text-xs sm:text-sm"
                         onClick={toggleMenu}
-                      />
+                        className="block text-lg font-semibold uppercase tracking-wide text-white/90 transition-colors hover:text-white"
+                      >
+                        {label}
+                      </Link>
                     ))}
                   </div>
-                  <div className="w-[95%] border-b-2 border-white opacity-25"></div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
-                    {[
-                      ["/cgv", "CGV"],
-                      ["/cgu", "CGU"],
-                      ["/mentions", "MENTIONS LÉGALES"],
-                      ["/contact", "CONTACT"],
-                    ].map(([href, text]) => (
-                      <UnderlineLink
-                        key={href}
-                        href={href}
-                        text={text}
-                        textSize="text-xs sm:text-sm"
-                        onClick={toggleMenu}
-                      />
-                    ))}
-                  </div>
-                  <div className="w-[95%] border-b-2 border-white opacity-25"></div>
-                </div>
 
-                <div className="flex flex-col items-center justify-center space-y-6 sm:space-y-10 mt-8 sm:mt-12 pb-10">
-                  <div className="flex items-center justify-center space-x-8">
-                    <a
-                      href="https://www.instagram.com/beatmakerz_pro/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <FaInstagram className="text-white w-7 h-7 hover:text-gray-400" />
-                    </a>
-                    <a
-                      href="https://www.tiktok.com/@beatmakerz.pro"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <FaTiktok className="text-white w-7 h-7 hover:text-gray-400" />
-                    </a>
-                    <a
-                      href="https://www.youtube.com/@BEATMAKERZ-PRO"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <FaYoutube className="text-white w-7 h-7 hover:text-gray-400" />
-                    </a>
-                    <a
-                      href="mailto:beatmakerz.contact@gmail.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <FaEnvelope className="text-white w-7 h-7 hover:text-gray-400" />
-                    </a>
+                  <div className="border-t border-white/10 pt-4">
+                    <div className="text-[10px] font-semibold tracking-[0.4em] uppercase text-zinc-400 mb-2">Infos & Legal</div>
+                    <div className="space-y-2">
+                      {secondaryNavLinks.map(([href, label]) => (
+                        <Link
+                          key={href}
+                          href={href}
+                          onClick={toggleMenu}
+                          className="block text-[13px] font-semibold uppercase tracking-wide text-white/80 transition-colors hover:text-white"
+                        >
+                          {label}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-white/10 pt-4">
+                    <div className="flex items-center justify-between text-xs uppercase tracking-widest text-zinc-400">
+                      <span>Suivez-nous</span>
+                      <div className="flex items-center gap-3 text-white/70">
+                        <a
+                          href="https://www.instagram.com/beatmakerz_pro/"
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="Instagram"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 hover:border-white/40"
+                        >
+                          <FaInstagram className="h-4 w-4" />
+                        </a>
+                        <a
+                          href="https://www.tiktok.com/@beatmakerz.pro"
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="TikTok"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 hover:border-white/40"
+                        >
+                          <FaTiktok className="h-4 w-4" />
+                        </a>
+                        <a
+                          href="https://www.youtube.com/@BEATMAKERZ-PRO"
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="YouTube"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 hover:border-white/40"
+                        >
+                          <FaYoutube className="h-4 w-4" />
+                        </a>
+                        <a
+                          href="mailto:beatmakerz.contact@gmail.com"
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label="Email"
+                          className="flex h-9 w-9 items-center justify-center rounded-full border border-white/10 hover:border-white/40"
+                        >
+                          <FaEnvelope className="h-4 w-4" />
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
