@@ -263,14 +263,14 @@ const NavBar = () => {
                 ref={overlayRef}
                 className="absolute top-0 left-0 h-screen w-full max-w-[360px] bg-black/80 backdrop-blur-3xl text-white shadow-[10px_0_50px_rgba(0,0,0,0.6)] flex flex-col border-r border-white/5"
               >
-                <div className="flex items-center justify-between border-b border-white/10 px-5 pt-6 pb-4">
-                  <span className="text-xs tracking-[0.5em] uppercase text-white/60">Menu</span>
+                <div className="flex items-center justify-end border-b border-white/10 px-5 pt-6 pb-4">
                   <button
                     type="button"
                     onClick={toggleMenu}
-                    className="text-sm uppercase tracking-wide text-white/70 hover:text-white transition"
+                    aria-label="Fermer le menu"
+                    className="text-white/80 transition hover:text-white"
                   >
-                    Fermer
+                    ×
                   </button>
                 </div>
 
