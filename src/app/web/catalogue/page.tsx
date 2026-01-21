@@ -153,7 +153,9 @@ function CatalogueContent() {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
   const [bpmMin, setBpmMin] = useState<number>(BPM_MIN);
+  const [bpmMax, setBpmMax] = useState<number>(BPM_MAX);
   const [bpmInput, setBpmInput] = useState<string>(String(BPM_MIN));
+  const [bpmMaxInput, setBpmMaxInput] = useState<string>(String(BPM_MAX));
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Prix ↑");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -216,6 +218,7 @@ function CatalogueContent() {
     const g = searchParams.get("genres")?.split(",").filter(Boolean) ?? [];
     const k = searchParams.get("keys")?.split(",").filter(Boolean) ?? [];
     const bpmMinUrl = parseInt(searchParams.get("bpmMin") || "", 10);
+    const bpmMaxUrl = parseInt(searchParams.get("bpmMax") || "", 10);
     const tag = (searchParams.get("tag") as Tag) || null;
     const s = (searchParams.get("sort") as (typeof SORTS)[number]) || "Pertinence";
     const v = (searchParams.get("view") as ViewMode) || "grid";
@@ -224,14 +227,30 @@ function CatalogueContent() {
     setDebounced(q);
     setSelectedGenres(g);
     setSelectedKeys(k);
+    let initialMin = BPM_MIN;
+    let initialMax = BPM_MAX;
     if (!Number.isNaN(bpmMinUrl)) {
-      const v2 = Math.max(BPM_MIN, Math.min(BPM_MAX, bpmMinUrl));
-      setBpmMin(v2);
-      setBpmInput(String(v2));
-    } else {
-      setBpmMin(BPM_MIN);
-      setBpmInput(String(BPM_MIN));
+      initialMin = Math.max(BPM_MIN, Math.min(BPM_MAX, bpmMinUrl));
     }
+    if (!Number.isNaN(bpmMaxUrl)) {
+      initialMax = Math.max(BPM_MIN, Math.min(BPM_MAX, bpmMaxUrl));
+    }
+
+    if (initialMin >= initialMax) {
+      if (!Number.isNaN(bpmMaxUrl)) {
+        initialMax = Math.min(BPM_MAX, initialMin + 1);
+      } else if (!Number.isNaN(bpmMinUrl)) {
+        initialMin = Math.max(BPM_MIN, initialMax - 1);
+      } else {
+        initialMax = Math.max(initialMin + 1, initialMax);
+      }
+    }
+
+    setBpmMin(initialMin);
+    setBpmInput(String(initialMin));
+
+    setBpmMax(initialMax);
+    setBpmMaxInput(String(initialMax));
     setSelectedTag(tag);
     setSort(s);
     setViewMode(v);
@@ -245,6 +264,7 @@ function CatalogueContent() {
     if (selectedGenres.length) p.set("genres", selectedGenres.join(","));
     if (selectedKeys.length) p.set("keys", selectedKeys.join(","));
     if (bpmMin !== BPM_MIN) p.set("bpmMin", String(bpmMin));
+    if (bpmMax !== BPM_MAX) p.set("bpmMax", String(bpmMax));
     if (selectedTag) p.set("tag", selectedTag);
     p.set("sort", sort);
     p.set("view", viewMode);
@@ -276,7 +296,7 @@ function CatalogueContent() {
       const mG = selectedGenres.length ? selectedGenres.includes(b.genre) : true;
       const mK = selectedKeys.length ? selectedKeys.includes(b.key) : true;
       const mT = selectedTag ? b.tag === selectedTag : true;
-      const mB = b.bpm >= bpmMin;
+      const mB = b.bpm >= bpmMin && b.bpm <= bpmMax;
       return mQ && mG && mK && mT && mB;
     });
   }, [beats, debounced, selectedGenres, selectedKeys, selectedTag, bpmMin]);
@@ -314,6 +334,20 @@ function CatalogueContent() {
 
   const toggleInArray = (val: string, arr: string[], set: (v: string[]) => void) =>
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
+
+  const handleBpmMinChange = (value: number) => {
+    const maxBound = Math.max(bpmMax - 1, BPM_MIN);
+    const clamped = Math.min(Math.max(value, BPM_MIN), maxBound);
+    setBpmMin(clamped);
+    setBpmInput(String(clamped));
+  };
+
+  const handleBpmMaxChange = (value: number) => {
+    const minBound = Math.min(bpmMin + 1, BPM_MAX);
+    const clamped = Math.max(Math.min(value, BPM_MAX), minBound);
+    setBpmMax(clamped);
+    setBpmMaxInput(String(clamped));
+  };
 
   const onPlay = (b: Beat) => (track?.id === b.id && isPlaying ? toggle() : play(b, currentBeats));
   const onToggleFav = async (beatId: string) => {
