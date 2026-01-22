@@ -464,7 +464,7 @@ function CatalogueContent() {
 
   const FiltersBlocks = () => (
     <>
-    <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl space-y-4">
+      <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl space-y-4">
         <div className="flex items-center justify-between">
           <SectionTitle>Genres</SectionTitle>
           {selectedGenres.length > 0 && (
@@ -504,6 +504,8 @@ function CatalogueContent() {
             </Chip>
           ))}
         </div>
+      </div>
+
       <RangeSlider
         min={BPM_MIN}
         max={BPM_MAX}
