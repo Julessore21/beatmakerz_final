@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
 import { requireAdmin } from "@/lib/server-auth";
 import { BeatDocument } from "@/types/models";
@@ -6,7 +7,10 @@ import { BeatDocument } from "@/types/models";
 const DEFAULT_STATUS: BeatDocument["status"] = "draft";
 const DEFAULT_VISIBILITY: BeatDocument["visibility"] = "public";
 
-const validateBeatPayload = (payload: Partial<BeatDocument>) => {
+type BeatRecord = Omit<BeatDocument, "_id"> & { _id?: ObjectId };
+type BeatPayload = Partial<Omit<BeatDocument, "_id">>;
+
+const validateBeatPayload = (payload: BeatPayload) => {
   if (!payload.title?.trim()) {
     return "Le titre est obligatoire.";
   }
@@ -44,7 +48,7 @@ const sanitizeBeat = (doc: any): BeatDocument => ({
 export async function GET() {
   const db = await getDatabase();
   const beats = await db
-    .collection("beats")
+    .collection<BeatRecord>("beats")
     .find()
     .sort({ updatedAt: -1 })
     .toArray();
@@ -56,14 +60,14 @@ export async function POST(req: NextRequest) {
   const authResponse = requireAdmin(req);
   if (authResponse) return authResponse;
 
-  const payload = (await req.json()) as Partial<BeatDocument>;
+  const payload = (await req.json()) as BeatPayload;
   const validationError = validateBeatPayload(payload);
   if (validationError) {
     return NextResponse.json({ error: validationError }, { status: 400 });
   }
 
   const now = new Date();
-  const doc: BeatDocument = {
+  const doc: BeatRecord = {
     ...payload,
     title: payload.title!.trim(),
     bpm: payload.bpm,
@@ -83,7 +87,7 @@ export async function POST(req: NextRequest) {
   };
 
   const db = await getDatabase();
-  const result = await db.collection("beats").insertOne(doc);
+  const result = await db.collection<BeatRecord>("beats").insertOne(doc);
   if (result.insertedId) {
     return NextResponse.json({ id: result.insertedId.toString() });
   }

@@ -3,16 +3,22 @@ import { ObjectId } from "mongodb";
 import { getDatabase } from "@/lib/mongodb";
 import { requireUserId } from "@/lib/server-auth";
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { orderId: string; beatId: string } }
-) {
+type RouteContext = {
+  params: Promise<Record<string, string | string[] | undefined>>;
+};
+
+const getRouteParam = (value: string | string[] | undefined) =>
+  Array.isArray(value) ? value[0] : value;
+
+export async function GET(req: NextRequest, ctx: RouteContext) {
   const userId = requireUserId(req);
   if (!userId) {
     return NextResponse.json({ error: "Authentification requise" }, { status: 401 });
   }
 
-  const { orderId, beatId } = params;
+  const params = await ctx.params;
+  const orderId = getRouteParam(params["orderId"]);
+  const beatId = getRouteParam(params["beatId"]);
   if (!orderId || !beatId) {
     return NextResponse.json({ error: "Paramètres invalides" }, { status: 400 });
   }
@@ -32,10 +38,10 @@ export async function GET(
     return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
   }
   if (order.userId !== userId) {
-    return NextResponse.json({ error: "Accès refusé", status: 403 }, { status: 403 });
+    return NextResponse.json({ error: "Accès refusé" }, { status: 403 });
   }
   if (order.status !== "paid") {
-    return NextResponse.json({ error: "Commande non payée", status: 403 }, { status: 403 });
+    return NextResponse.json({ error: "Commande non payée" }, { status: 403 });
   }
 
   const item = (order.items || []).find((it: { beatId: string }) => it.beatId === beatId);
@@ -49,7 +55,7 @@ export async function GET(
   }
 
   await db.collection("orders").updateOne(
-    { _id: new ObjectId(orderId) },
+    { _id: orderObjectId },
     {
       $set: { downloadGranted: true },
       $inc: { downloadCount: 1 },

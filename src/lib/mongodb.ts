@@ -1,17 +1,17 @@
-import { MongoClient, Db } from "mongodb";
+import { Db, MongoClient } from "mongodb";
 
 const uri = process.env.MONGO_URL || process.env.MONGO_URl;
 
 let cachedClient: MongoClient | null = null;
 let cachedDb: Db | null = null;
 
-if (!uri) {
-  throw new Error("MONGO_URL (ou MONGO_URl) est requis pour accéder à la base.");
-}
-
 export async function getDatabase(): Promise<Db> {
   if (cachedDb && cachedClient) {
     return cachedDb;
+  }
+
+  if (!uri) {
+    throw new Error("MONGO_URL (ou MONGO_URl) est requis pour accéder à la base.");
   }
 
   const client = new MongoClient(uri);

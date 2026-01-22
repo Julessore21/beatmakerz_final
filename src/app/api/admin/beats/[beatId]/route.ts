@@ -4,6 +4,13 @@ import { getDatabase } from "@/lib/mongodb";
 import { requireAdmin } from "@/lib/server-auth";
 import { BeatDocument } from "@/types/models";
 
+type RouteContext = {
+  params: Promise<Record<string, string | string[] | undefined>>;
+};
+
+const getRouteParam = (value: string | string[] | undefined) =>
+  Array.isArray(value) ? value[0] : value;
+
 const sanitizeBeat = (doc: any): BeatDocument => ({
   _id: doc._id?.toString?.() ?? doc._id,
   artistId: doc.artistId,
@@ -24,8 +31,15 @@ const sanitizeBeat = (doc: any): BeatDocument => ({
   updatedAt: doc.updatedAt,
 });
 
+type BeatFromDb = {
+  status?: BeatDocument["status"];
+  visibility?: BeatDocument["visibility"];
+  previewUrl?: string;
+  audioUrl?: string;
+};
+
 const validateUpdate = (
-  existing: BeatDocument,
+  existing: BeatFromDb,
   payload: Partial<BeatDocument>
 ): string | null => {
   const status = payload.status ?? existing.status;
@@ -42,11 +56,12 @@ const validateUpdate = (
   return null;
 };
 
-export async function PUT(req: NextRequest, { params }: { params: { beatId: string } }) {
+export async function PUT(req: NextRequest, ctx: RouteContext) {
   const authResponse = requireAdmin(req);
   if (authResponse) return authResponse;
 
-  const { beatId } = params;
+  const params = await ctx.params;
+  const beatId = getRouteParam(params["beatId"]);
   if (!beatId) {
     return NextResponse.json({ error: "Identifiant manquant" }, { status: 400 });
   }
@@ -60,7 +75,7 @@ export async function PUT(req: NextRequest, { params }: { params: { beatId: stri
   }
 
   const payload = (await req.json()) as Partial<BeatDocument>;
-  const validationError = validateUpdate(existing as BeatDocument, payload);
+  const validationError = validateUpdate(existing as unknown as BeatFromDb, payload);
   if (validationError) {
     return NextResponse.json({ error: validationError }, { status: 400 });
   }
@@ -85,11 +100,12 @@ export async function PUT(req: NextRequest, { params }: { params: { beatId: stri
   return NextResponse.json(updated ? sanitizeBeat(updated) : null);
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: { beatId: string } }) {
-  const authResponse = requireAdmin(_);
+export async function DELETE(req: NextRequest, ctx: RouteContext) {
+  const authResponse = requireAdmin(req);
   if (authResponse) return authResponse;
 
-  const { beatId } = params;
+  const params = await ctx.params;
+  const beatId = getRouteParam(params["beatId"]);
   if (!beatId) {
     return NextResponse.json({ error: "Identifiant manquant" }, { status: 400 });
   }
