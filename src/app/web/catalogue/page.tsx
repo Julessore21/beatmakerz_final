@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Grid3X3, Rows3, SlidersHorizontal, Star, Crown, Flame, ChevronDown } from "lucide-react";
@@ -154,8 +154,6 @@ function CatalogueContent() {
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
   const [bpmMin, setBpmMin] = useState<number>(BPM_MIN);
   const [bpmMax, setBpmMax] = useState<number>(BPM_MAX);
-  const [bpmInput, setBpmInput] = useState<string>(String(BPM_MIN));
-  const [bpmMaxInput, setBpmMaxInput] = useState<string>(String(BPM_MAX));
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Prix ↑");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -335,19 +333,23 @@ function CatalogueContent() {
   const toggleInArray = (val: string, arr: string[], set: (v: string[]) => void) =>
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
 
-  const handleBpmMinChange = (value: number) => {
-    const maxBound = Math.max(bpmMax - 1, BPM_MIN);
-    const clamped = Math.min(Math.max(value, BPM_MIN), maxBound);
-    setBpmMin(clamped);
-    setBpmInput(String(clamped));
-  };
+  const handleBpmMinChange = useCallback(
+    (value: number) => {
+      const maxBound = Math.max(bpmMax - 1, BPM_MIN);
+      const clamped = Math.min(Math.max(value, BPM_MIN), maxBound);
+      setBpmMin(clamped);
+    },
+    [bpmMax]
+  );
 
-  const handleBpmMaxChange = (value: number) => {
-    const minBound = Math.min(bpmMin + 1, BPM_MAX);
-    const clamped = Math.max(Math.min(value, BPM_MAX), minBound);
-    setBpmMax(clamped);
-    setBpmMaxInput(String(clamped));
-  };
+  const handleBpmMaxChange = useCallback(
+    (value: number) => {
+      const minBound = Math.min(bpmMin + 1, BPM_MAX);
+      const clamped = Math.max(Math.min(value, BPM_MAX), minBound);
+      setBpmMax(clamped);
+    },
+    [bpmMin]
+  );
 
   const onPlay = (b: Beat) => (track?.id === b.id && isPlaying ? toggle() : play(b, currentBeats));
   const onToggleFav = async (beatId: string) => {
@@ -359,9 +361,112 @@ function CatalogueContent() {
     setFavIds((prev) => (prev.includes(beatId) ? prev.filter((id) => id !== beatId) : [...prev, beatId]));
   };
 
+  const RangeSlider = ({
+    min,
+    max,
+    valueMin,
+    valueMax,
+    onChangeMin,
+    onChangeMax,
+  }: {
+    min: number;
+    max: number;
+    valueMin: number;
+    valueMax: number;
+    onChangeMin: (value: number) => void;
+    onChangeMax: (value: number) => void;
+  }) => {
+    const sliderRef = useRef<HTMLDivElement>(null);
+    const [activeHandle, setActiveHandle] = useState<"min" | "max" | null>(null);
+
+    const getValueFromPointer = useCallback(
+      (clientX: number) => {
+        const rect = sliderRef.current?.getBoundingClientRect();
+        if (!rect) return null;
+        const ratio = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
+        return Math.round(min + ratio * (max - min));
+      },
+      [min, max]
+    );
+
+    const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      const value = getValueFromPointer(event.clientX);
+      if (value === null) return;
+      const distanceToMin = Math.abs(value - valueMin);
+      const distanceToMax = Math.abs(value - valueMax);
+      const handle = distanceToMin <= distanceToMax ? "min" : "max";
+      setActiveHandle(handle);
+      (handle === "min" ? onChangeMin : onChangeMax)(value);
+    };
+
+    const handleWindowPointerMove = useCallback(
+      (event: PointerEvent) => {
+        if (!activeHandle) return;
+        const value = getValueFromPointer(event.clientX);
+        if (value === null) return;
+        (activeHandle === "min" ? onChangeMin : onChangeMax)(value);
+      },
+      [activeHandle, getValueFromPointer, onChangeMax, onChangeMin]
+    );
+
+    useEffect(() => {
+      if (!activeHandle) return;
+      const handlePointerUp = () => {
+        setActiveHandle(null);
+      };
+      window.addEventListener("pointermove", handleWindowPointerMove);
+      window.addEventListener("pointerup", handlePointerUp);
+      window.addEventListener("pointercancel", handlePointerUp);
+      return () => {
+        window.removeEventListener("pointermove", handleWindowPointerMove);
+        window.removeEventListener("pointerup", handlePointerUp);
+        window.removeEventListener("pointercancel", handlePointerUp);
+      };
+    }, [activeHandle, handleWindowPointerMove]);
+
+    const totalRange = max - min;
+    const minPercent = totalRange > 0 ? ((valueMin - min) / totalRange) * 100 : 0;
+    const maxPercent = totalRange > 0 ? ((valueMax - min) / totalRange) * 100 : 100;
+
+    return (
+      <div className="space-y-2">
+        <div
+          ref={sliderRef}
+          className="relative h-3 cursor-pointer rounded-full bg-white/10"
+          onPointerDown={handlePointerDown}
+        >
+          <div
+            className="absolute inset-y-0 rounded-full bg-gradient-to-r from-[#7c5cff] to-[#c43eff]"
+            style={{
+              left: `${Math.min(minPercent, maxPercent)}%`,
+              right: `${100 - Math.max(minPercent, maxPercent)}%`,
+            }}
+          />
+          <div
+            className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border border-white/40 bg-white/90 shadow-lg transition ${
+              activeHandle === "min" ? "scale-110" : ""
+            }`}
+            style={{ left: `${minPercent}%`, transform: `translate(-50%, -50%)` }}
+          />
+          <div
+            className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border border-white/40 bg-white/90 shadow-lg transition ${
+              activeHandle === "max" ? "scale-110" : ""
+            }`}
+            style={{ left: `${maxPercent}%`, transform: `translate(-50%, -50%)` }}
+          />
+        </div>
+        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-zinc-400">
+          <span>Min {valueMin} BPM</span>
+          <span>Max {valueMax} BPM</span>
+        </div>
+      </div>
+    );
+  };
+
   const FiltersBlocks = () => (
     <>
-      <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
+    <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl space-y-4">
         <div className="flex items-center justify-between">
           <SectionTitle>Genres</SectionTitle>
           {selectedGenres.length > 0 && (
@@ -401,94 +506,14 @@ function CatalogueContent() {
             </Chip>
           ))}
         </div>
-      </div>
-
-      <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
-        <div className="flex items-center justify-between">
-          <SectionTitle>BPM</SectionTitle>
-          {(bpmMin !== BPM_MIN || bpmMax !== BPM_MAX) && (
-            <button
-              className="text-xs text-zinc-400 hover:text-zinc-200"
-              onClick={() => {
-                setBpmMin(BPM_MIN);
-                setBpmMax(BPM_MAX);
-                setBpmInput(String(BPM_MIN));
-                setBpmMaxInput(String(BPM_MAX));
-              }}
-            >
-              Effacer
-            </button>
-          )}
-        </div>
-        <div className="mt-3 space-y-3">
-          <div className="text-[11px] text-zinc-500 uppercase tracking-wide">Min</div>
-          <input
-            type="range"
-            min={BPM_MIN}
-            max={Math.max(bpmMax - 1, BPM_MIN)}
-            step={1}
-            value={bpmMin}
-            onChange={(e) => handleBpmMinChange(parseInt(e.target.value, 10))}
-            className="w-full accent-indigo-500"
-          />
-          <div className="text-[11px] text-zinc-500 uppercase tracking-wide">Max</div>
-          <input
-            type="range"
-            min={Math.min(bpmMin + 1, BPM_MAX)}
-            max={BPM_MAX}
-            step={1}
-            value={bpmMax}
-            onChange={(e) => handleBpmMaxChange(parseInt(e.target.value, 10))}
-            className="w-full accent-indigo-500"
-          />
-        </div>
-        <div className="mt-3 flex gap-3 text-[12px]">
-          <label className="flex-1">
-            <span className="block text-[10px] uppercase text-zinc-400">Min</span>
-            <input
-              type="number"
-              min={BPM_MIN}
-              max={BPM_MAX}
-              value={bpmInput}
-              onChange={(e) => {
-                const raw = e.target.value;
-                setBpmInput(raw);
-                const v = parseInt(raw, 10);
-                if (!Number.isNaN(v)) handleBpmMinChange(v);
-              }}
-              onBlur={() => {
-                if (bpmInput === "" || Number.isNaN(parseInt(bpmInput, 10))) {
-                  setBpmInput(String(BPM_MIN));
-                  handleBpmMinChange(BPM_MIN);
-                }
-              }}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center text-xs text-white"
-            />
-          </label>
-          <label className="flex-1">
-            <span className="block text-[10px] uppercase text-zinc-400">Max</span>
-            <input
-              type="number"
-              min={BPM_MIN}
-              max={BPM_MAX}
-              value={bpmMaxInput}
-              onChange={(e) => {
-                const raw = e.target.value;
-                setBpmMaxInput(raw);
-                const v = parseInt(raw, 10);
-                if (!Number.isNaN(v)) handleBpmMaxChange(v);
-              }}
-              onBlur={() => {
-                if (bpmMaxInput === "" || Number.isNaN(parseInt(bpmMaxInput, 10))) {
-                  setBpmMaxInput(String(BPM_MAX));
-                  handleBpmMaxChange(BPM_MAX);
-                }
-              }}
-              className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center text-xs text-white"
-            />
-          </label>
-        </div>
-      </div>
+      <RangeSlider
+        min={BPM_MIN}
+        max={BPM_MAX}
+        valueMin={bpmMin}
+        valueMax={bpmMax}
+        onChangeMin={handleBpmMinChange}
+        onChangeMax={handleBpmMaxChange}
+      />
     </>
   );
 
@@ -602,63 +627,12 @@ function CatalogueContent() {
             <div className="space-y-3">
               <details className="group rounded-2xl border border-white/10 bg-[#141416]/80 backdrop-blur-xl">
                 <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm text-zinc-200">
-                  <span>Genres</span>
+                  <span>Filtres</span>
                   <ChevronDown className="h-4 w-4 text-zinc-400 transition-transform group-open:rotate-180" />
                 </summary>
                 <div className="px-4 pb-4 space-y-3">
-                  <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
-                    <div className="flex items-center justify-between">
-                      <SectionTitle>Genres</SectionTitle>
-                      {selectedGenres.length > 0 && (
-                        <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setSelectedGenres([])}>
-                          Effacer
-                        </button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {GENRES.map((g) => (
-                        <button
-                          key={g}
-                          onClick={() => toggleInArray(g, selectedGenres, setSelectedGenres)}
-                          className={`h-8 rounded-xl border px-2 text-[11px] text-left ${
-                            selectedGenres.includes(g) ? "border-indigo-500 bg-indigo-500 text-white" : "border-white/10 bg-white/5 hover:bg-white/10 text-zinc-100"
-                          }`}
-                        >
-                          {g}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </details>
-
-              <details className="group rounded-2xl border border-white/10 bg-[#141416]/80 backdrop-blur-xl">
-                <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm text-zinc-200">
-                  <span>Tonalites</span>
-                  <ChevronDown className="h-4 w-4 text-zinc-400 transition-transform group-open:rotate-180" />
-                </summary>
-                <div className="px-4 pb-4 space-y-3">
-                  <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
-                    <div className="flex items-center justify-between">
-                      <SectionTitle>Tonalites</SectionTitle>
-                      {selectedKeys.length > 0 && (
-                        <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setSelectedKeys([])}>
-                          Effacer
-                        </button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
-                      {KEYS.map((k) => (
-                        <Chip key={k} active={selectedKeys.includes(k)} onClick={() => toggleInArray(k, selectedKeys, setSelectedKeys)}>
-                          {k}
-                        </Chip>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </details>
-
-              {selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || bpmMax !== BPM_MAX || selectedTag ? (
+                  <FiltersBlocks />
+                  {selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || bpmMax !== BPM_MAX || selectedTag ? (
                     <button
                       onClick={() => {
                         setSelectedGenres([]);
@@ -671,11 +645,13 @@ function CatalogueContent() {
                         setQuery("");
                         setDebounced("");
                       }}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
-                >
-                  Reinitialiser tous les filtres
-                </button>
-              ) : null}
+                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
+                    >
+                      R?initialiser tous les filtres
+                    </button>
+                  ) : null}
+                </div>
+              </details>
             </div>
           </section>
           {/* filters */}
