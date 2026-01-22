@@ -331,9 +331,11 @@ function CatalogueContent() {
   const toggleInArray = (val: string, arr: string[], set: (v: string[]) => void) =>
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
 
+  const BPM_GAP = 5;
+
   const handleBpmMinChange = useCallback(
     (value: number) => {
-      const maxBound = Math.max(bpmMax - 1, BPM_MIN);
+      const maxBound = Math.max(bpmMax - BPM_GAP, BPM_MIN);
       const clamped = Math.min(Math.max(value, BPM_MIN), maxBound);
       setBpmMin(clamped);
     },
@@ -342,7 +344,7 @@ function CatalogueContent() {
 
   const handleBpmMaxChange = useCallback(
     (value: number) => {
-      const minBound = Math.min(bpmMin + 1, BPM_MAX);
+      const minBound = Math.min(bpmMin + BPM_GAP, BPM_MAX);
       const clamped = Math.max(Math.min(value, BPM_MAX), minBound);
       setBpmMax(clamped);
     },
