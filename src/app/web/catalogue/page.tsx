@@ -361,8 +361,6 @@ function CatalogueContent() {
     setFavIds((prev) => (prev.includes(beatId) ? prev.filter((id) => id !== beatId) : [...prev, beatId]));
   };
 
-    const pointerIdRef = useRef<number | null>(null);
-
     const RangeSlider = ({
     min,
     max,
@@ -378,8 +376,9 @@ function CatalogueContent() {
     onChangeMin: (value: number) => void;
     onChangeMax: (value: number) => void;
   }) => {
-    const sliderRef = useRef<HTMLDivElement>(null);
-    const [activeHandle, setActiveHandle] = useState<"min" | "max" | null>(null);
+      const sliderRef = useRef<HTMLDivElement>(null);
+      const pointerIdRef = useRef<number | null>(null);
+      const [activeHandle, setActiveHandle] = useState<"min" | "max" | null>(null);
 
     const getValueFromPointer = useCallback(
       (clientX: number) => {
@@ -391,30 +390,36 @@ function CatalogueContent() {
       [min, max]
     );
 
-    const startDrag = (handle: "min" | "max", clientX: number, pointerId: number) => {
-      const value = getValueFromPointer(clientX);
-      if (value === null) return;
-      setActiveHandle(handle);
-      (handle === "min" ? onChangeMin : onChangeMax)(value);
-      sliderRef.current?.setPointerCapture(pointerId);
-      pointerIdRef.current = pointerId;
-    };
-
-    const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      const value = getValueFromPointer(event.clientX);
-      if (value === null) return;
-      const distanceToMin = Math.abs(value - valueMin);
-      const distanceToMax = Math.abs(value - valueMax);
-      const handle = distanceToMin <= distanceToMax ? "min" : "max";
-      startDrag(handle, event.clientX, event.pointerId);
-    };
-
-    const handleHandlePointerDown =
-      (handle: "min" | "max") => (event: ReactPointerEvent<HTMLDivElement>) => {
-        event.stopPropagation();
-        startDrag(handle, event.clientX, event.pointerId);
+      const startDrag = (
+        handle: "min" | "max",
+        clientX: number,
+        pointerId: number,
+        target: EventTarget | null
+      ) => {
+        const value = getValueFromPointer(clientX);
+        if (value === null) return;
+        setActiveHandle(handle);
+        (handle === "min" ? onChangeMin : onChangeMax)(value);
+        const captureTarget = target instanceof Element ? target : sliderRef.current;
+        captureTarget?.setPointerCapture(pointerId);
+        pointerIdRef.current = pointerId;
       };
+
+      const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        const value = getValueFromPointer(event.clientX);
+        if (value === null) return;
+        const distanceToMin = Math.abs(value - valueMin);
+        const distanceToMax = Math.abs(value - valueMax);
+        const handle = distanceToMin <= distanceToMax ? "min" : "max";
+        startDrag(handle, event.clientX, event.pointerId, event.currentTarget);
+      };
+
+      const handleHandlePointerDown =
+        (handle: "min" | "max") => (event: ReactPointerEvent<HTMLDivElement>) => {
+          event.stopPropagation();
+          startDrag(handle, event.clientX, event.pointerId, event.currentTarget);
+        };
 
     const handleWindowPointerMove = useCallback(
       (event: PointerEvent) => {
@@ -434,9 +439,9 @@ function CatalogueContent() {
       window.addEventListener("pointermove", handleWindowPointerMove);
       const clearActive = () => {
         setActiveHandle(null);
-        if (sliderRef.current && pointerIdRef.current !== null) {
+        if (pointerIdRef.current !== null) {
           try {
-            sliderRef.current.releasePointerCapture(pointerIdRef.current);
+            sliderRef.current?.releasePointerCapture(pointerIdRef.current);
           } catch {
             // ignore if pointer already released
           } finally {
@@ -476,12 +481,14 @@ function CatalogueContent() {
               activeHandle === "min" ? "scale-110" : ""
             }`}
             style={{ left: `${minPercent}%` }}
+            onPointerDown={handleHandlePointerDown("min")}
           />
           <div
             className={`absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 bg-white/90 shadow-lg transition ${
               activeHandle === "max" ? "scale-110" : ""
             }`}
             style={{ left: `${maxPercent}%` }}
+            onPointerDown={handleHandlePointerDown("max")}
           />
         </div>
         <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-zinc-400">
