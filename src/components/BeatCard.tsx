@@ -140,11 +140,13 @@ export default function BeatCard({
               onMore={onMore}
             />
             {tag && showTag && (
-              <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[0.6rem] sm:text-[0.68rem] text-zinc-200">
-                {tag === "Tendance" && <Flame className="h-3 w-3 text-orange-400" />}
-                {tag === "Nouveau" && <Star className="h-3 w-3 text-yellow-300" />}
-                {tag === "Populaire" && <Crown className="h-3 w-3 text-amber-300" />}
-                {tag}
+              <span
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/80"
+                title={tag}
+              >
+                {tag === "Tendance" && <Flame className="h-4 w-4 text-orange-400" />}
+                {tag === "Nouveau" && <Star className="h-4 w-4 text-yellow-300" />}
+                {tag === "Populaire" && <Crown className="h-4 w-4 text-amber-300" />}
               </span>
             )}
           </div>

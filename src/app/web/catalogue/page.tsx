@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Grid3X3, Rows3, SlidersHorizontal, Star, Crown, Flame, ChevronDown } from "lucide-react";
@@ -245,10 +246,7 @@ function CatalogueContent() {
     }
 
     setBpmMin(initialMin);
-    setBpmInput(String(initialMin));
-
     setBpmMax(initialMax);
-    setBpmMaxInput(String(initialMax));
     setSelectedTag(tag);
     setSort(s);
     setViewMode(v);
@@ -389,7 +387,7 @@ function CatalogueContent() {
       [min, max]
     );
 
-    const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
       event.preventDefault();
       const value = getValueFromPointer(event.clientX);
       if (value === null) return;
@@ -444,16 +442,16 @@ function CatalogueContent() {
             }}
           />
           <div
-            className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border border-white/40 bg-white/90 shadow-lg transition ${
+            className={`absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 bg-white/90 shadow-lg transition ${
               activeHandle === "min" ? "scale-110" : ""
             }`}
-            style={{ left: `${minPercent}%`, transform: `translate(-50%, -50%)` }}
+            style={{ left: `${minPercent}%` }}
           />
           <div
-            className={`absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border border-white/40 bg-white/90 shadow-lg transition ${
+            className={`absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 bg-white/90 shadow-lg transition ${
               activeHandle === "max" ? "scale-110" : ""
             }`}
-            style={{ left: `${maxPercent}%`, transform: `translate(-50%, -50%)` }}
+            style={{ left: `${maxPercent}%` }}
           />
         </div>
         <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-zinc-400">
@@ -639,15 +637,13 @@ function CatalogueContent() {
                         setSelectedKeys([]);
                         setBpmMin(BPM_MIN);
                         setBpmMax(BPM_MAX);
-                        setBpmInput(String(BPM_MIN));
-                        setBpmMaxInput(String(BPM_MAX));
                         setSelectedTag(null);
                         setQuery("");
                         setDebounced("");
                       }}
                       className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
                     >
-                      R?initialiser tous les filtres
+                      Réinitialiser tous les filtres
                     </button>
                   ) : null}
                 </div>
@@ -665,8 +661,6 @@ function CatalogueContent() {
                     setSelectedKeys([]);
                     setBpmMin(BPM_MIN);
                     setBpmMax(BPM_MAX);
-                    setBpmInput(String(BPM_MIN));
-                    setBpmMaxInput(String(BPM_MAX));
                     setSelectedTag(null);
                     setQuery("");
                     setDebounced("");
