@@ -361,7 +361,9 @@ function CatalogueContent() {
     setFavIds((prev) => (prev.includes(beatId) ? prev.filter((id) => id !== beatId) : [...prev, beatId]));
   };
 
-  const RangeSlider = ({
+    const pointerIdRef = useRef<number | null>(null);
+
+    const RangeSlider = ({
     min,
     max,
     valueMin,
@@ -389,6 +391,15 @@ function CatalogueContent() {
       [min, max]
     );
 
+    const startDrag = (handle: "min" | "max", clientX: number, pointerId: number) => {
+      const value = getValueFromPointer(clientX);
+      if (value === null) return;
+      setActiveHandle(handle);
+      (handle === "min" ? onChangeMin : onChangeMax)(value);
+      sliderRef.current?.setPointerCapture(pointerId);
+      pointerIdRef.current = pointerId;
+    };
+
     const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
       event.preventDefault();
       const value = getValueFromPointer(event.clientX);
@@ -396,9 +407,14 @@ function CatalogueContent() {
       const distanceToMin = Math.abs(value - valueMin);
       const distanceToMax = Math.abs(value - valueMax);
       const handle = distanceToMin <= distanceToMax ? "min" : "max";
-      setActiveHandle(handle);
-      (handle === "min" ? onChangeMin : onChangeMax)(value);
+      startDrag(handle, event.clientX, event.pointerId);
     };
+
+    const handleHandlePointerDown =
+      (handle: "min" | "max") => (event: ReactPointerEvent<HTMLDivElement>) => {
+        event.stopPropagation();
+        startDrag(handle, event.clientX, event.pointerId);
+      };
 
     const handleWindowPointerMove = useCallback(
       (event: PointerEvent) => {
@@ -416,12 +432,24 @@ function CatalogueContent() {
         setActiveHandle(null);
       };
       window.addEventListener("pointermove", handleWindowPointerMove);
-      window.addEventListener("pointerup", handlePointerUp);
-      window.addEventListener("pointercancel", handlePointerUp);
+      const clearActive = () => {
+        setActiveHandle(null);
+        if (sliderRef.current && pointerIdRef.current !== null) {
+          try {
+            sliderRef.current.releasePointerCapture(pointerIdRef.current);
+          } catch {
+            // ignore if pointer already released
+          } finally {
+            pointerIdRef.current = null;
+          }
+        }
+      };
+      window.addEventListener("pointerup", clearActive);
+      window.addEventListener("pointercancel", clearActive);
       return () => {
         window.removeEventListener("pointermove", handleWindowPointerMove);
-        window.removeEventListener("pointerup", handlePointerUp);
-        window.removeEventListener("pointercancel", handlePointerUp);
+        window.removeEventListener("pointerup", clearActive);
+        window.removeEventListener("pointercancel", clearActive);
       };
     }, [activeHandle, handleWindowPointerMove]);
 
