@@ -273,10 +273,10 @@ function CatalogueContent() {
       lastQSRef.current = qs;
       router.replace(qs ? `?${qs}` : "?", { scroll: false });
     }
-  }, [debounced, selectedGenres, selectedKeys, bpmMin, selectedTag, sort, viewMode, router]);
+  }, [debounced, selectedGenres, selectedKeys, bpmMin, bpmMax, selectedTag, sort, viewMode, router]);
 
   /* reset page on filter change */
-  useEffect(() => setCurrentPage(1), [debounced, selectedGenres, selectedKeys, bpmMin, selectedTag, sort, viewMode]);
+  useEffect(() => setCurrentPage(1), [debounced, selectedGenres, selectedKeys, bpmMin, bpmMax, selectedTag, sort, viewMode]);
 
   // remonter en haut quand la page change (peu importe la direction)
   useEffect(() => {
@@ -299,7 +299,7 @@ function CatalogueContent() {
       const mB = b.bpm >= bpmMin && b.bpm <= bpmMax;
       return mQ && mG && mK && mT && mB;
     });
-  }, [beats, debounced, selectedGenres, selectedKeys, selectedTag, bpmMin]);
+  }, [beats, debounced, selectedGenres, selectedKeys, selectedTag, bpmMin, bpmMax]);
 
   /* sort */
   const sorted = useMemo(() => {
@@ -405,46 +405,88 @@ function CatalogueContent() {
 
       <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
         <div className="flex items-center justify-between">
-          <SectionTitle>BPM (min)</SectionTitle>
-          {bpmMin !== BPM_MIN && (
-            <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setBpmMin(BPM_MIN)}>
+          <SectionTitle>BPM</SectionTitle>
+          {(bpmMin !== BPM_MIN || bpmMax !== BPM_MAX) && (
+            <button
+              className="text-xs text-zinc-400 hover:text-zinc-200"
+              onClick={() => {
+                setBpmMin(BPM_MIN);
+                setBpmMax(BPM_MAX);
+                setBpmInput(String(BPM_MIN));
+                setBpmMaxInput(String(BPM_MAX));
+              }}
+            >
               Effacer
             </button>
           )}
         </div>
-        <div className="mt-2 flex items-center gap-3">
+        <div className="mt-3 space-y-3">
+          <div className="text-[11px] text-zinc-500 uppercase tracking-wide">Min</div>
           <input
             type="range"
             min={BPM_MIN}
-            max={BPM_MAX}
+            max={Math.max(bpmMax - 1, BPM_MIN)}
             step={1}
             value={bpmMin}
-            onChange={(e) => {
-              const v = parseInt(e.target.value, 10);
-              setBpmMin(v);
-              setBpmInput(String(v));
-            }}
-            className="w-full"
+            onChange={(e) => handleBpmMinChange(parseInt(e.target.value, 10))}
+            className="w-full accent-indigo-500"
           />
+          <div className="text-[11px] text-zinc-500 uppercase tracking-wide">Max</div>
           <input
-            type="number"
-            min={BPM_MIN}
+            type="range"
+            min={Math.min(bpmMin + 1, BPM_MAX)}
             max={BPM_MAX}
-            value={bpmInput}
-            onChange={(e) => {
-              const raw = e.target.value;
-              setBpmInput(raw);
-              const v = parseInt(raw, 10);
-              if (!Number.isNaN(v)) setBpmMin(Math.max(BPM_MIN, Math.min(BPM_MAX, v)));
-            }}
-            onBlur={() => {
-              if (bpmInput === "" || Number.isNaN(parseInt(bpmInput, 10))) {
-                setBpmInput(String(BPM_MIN));
-                setBpmMin(BPM_MIN);
-              }
-            }}
-            className="w-[56px] rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center text-xs text-white"
+            step={1}
+            value={bpmMax}
+            onChange={(e) => handleBpmMaxChange(parseInt(e.target.value, 10))}
+            className="w-full accent-indigo-500"
           />
+        </div>
+        <div className="mt-3 flex gap-3 text-[12px]">
+          <label className="flex-1">
+            <span className="block text-[10px] uppercase text-zinc-400">Min</span>
+            <input
+              type="number"
+              min={BPM_MIN}
+              max={BPM_MAX}
+              value={bpmInput}
+              onChange={(e) => {
+                const raw = e.target.value;
+                setBpmInput(raw);
+                const v = parseInt(raw, 10);
+                if (!Number.isNaN(v)) handleBpmMinChange(v);
+              }}
+              onBlur={() => {
+                if (bpmInput === "" || Number.isNaN(parseInt(bpmInput, 10))) {
+                  setBpmInput(String(BPM_MIN));
+                  handleBpmMinChange(BPM_MIN);
+                }
+              }}
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center text-xs text-white"
+            />
+          </label>
+          <label className="flex-1">
+            <span className="block text-[10px] uppercase text-zinc-400">Max</span>
+            <input
+              type="number"
+              min={BPM_MIN}
+              max={BPM_MAX}
+              value={bpmMaxInput}
+              onChange={(e) => {
+                const raw = e.target.value;
+                setBpmMaxInput(raw);
+                const v = parseInt(raw, 10);
+                if (!Number.isNaN(v)) handleBpmMaxChange(v);
+              }}
+              onBlur={() => {
+                if (bpmMaxInput === "" || Number.isNaN(parseInt(bpmMaxInput, 10))) {
+                  setBpmMaxInput(String(BPM_MAX));
+                  handleBpmMaxChange(BPM_MAX);
+                }
+              }}
+              className="w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center text-xs text-white"
+            />
+          </label>
         </div>
       </div>
     </>
@@ -616,62 +658,19 @@ function CatalogueContent() {
                 </div>
               </details>
 
-              <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
-                <div className="flex items-center justify-between">
-                  <SectionTitle>BPM (min)</SectionTitle>
-                  {bpmMin !== BPM_MIN && (
-                    <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={() => setBpmMin(BPM_MIN)}>
-                      Effacer
-                    </button>
-                  )}
-                </div>
-                <div className="mt-2 flex items-center gap-3">
-                  <input
-                    type="range"
-                    min={BPM_MIN}
-                    max={BPM_MAX}
-                    step={1}
-                    value={bpmMin}
-                    onChange={(e) => {
-                      const v = parseInt(e.target.value, 10);
-                      setBpmMin(v);
-                      setBpmInput(String(v));
-                    }}
-                    className="w-full"
-                  />
-                  <input
-                    type="number"
-                    min={BPM_MIN}
-                    max={BPM_MAX}
-                    value={bpmInput}
-                    onChange={(e) => {
-                      const raw = e.target.value;
-                      setBpmInput(raw);
-                      const v = parseInt(raw, 10);
-                      if (!Number.isNaN(v)) setBpmMin(Math.max(BPM_MIN, Math.min(BPM_MAX, v)));
-                    }}
-                    onBlur={() => {
-                      if (bpmInput === "" || Number.isNaN(parseInt(bpmInput, 10))) {
-                        setBpmInput(String(BPM_MIN));
+              {selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || bpmMax !== BPM_MAX || selectedTag ? (
+                    <button
+                      onClick={() => {
+                        setSelectedGenres([]);
+                        setSelectedKeys([]);
                         setBpmMin(BPM_MIN);
-                      }
-                    }}
-                    className="w-[56px] rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-center text-xs text-white"
-                  />
-                </div>
-              </div>
-
-              {selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || selectedTag ? (
-                <button
-                  onClick={() => {
-                    setSelectedGenres([]);
-                    setSelectedKeys([]);
-                    setBpmMin(BPM_MIN);
-                    setBpmInput(String(BPM_MIN));
-                    setSelectedTag(null);
-                    setQuery("");
-                    setDebounced("");
-                  }}
+                        setBpmMax(BPM_MAX);
+                        setBpmInput(String(BPM_MIN));
+                        setBpmMaxInput(String(BPM_MAX));
+                        setSelectedTag(null);
+                        setQuery("");
+                        setDebounced("");
+                      }}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
                 >
                   Reinitialiser tous les filtres
@@ -683,13 +682,15 @@ function CatalogueContent() {
           <aside className="hidden lg:block lg:col-span-3">
             <div className="sticky top-24 space-y-4">
               <FiltersBlocks />
-              {selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || selectedTag ? (
+              {selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || bpmMax !== BPM_MAX || selectedTag ? (
                 <button
                   onClick={() => {
                     setSelectedGenres([]);
                     setSelectedKeys([]);
                     setBpmMin(BPM_MIN);
+                    setBpmMax(BPM_MAX);
                     setBpmInput(String(BPM_MIN));
+                    setBpmMaxInput(String(BPM_MAX));
                     setSelectedTag(null);
                     setQuery("");
                     setDebounced("");
@@ -729,7 +730,7 @@ function CatalogueContent() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                  className="grid grid-cols-2 gap-4 xxs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
                 >
                   {currentBeats.map((b) => (
                     <BeatCard
