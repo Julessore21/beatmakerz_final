@@ -31,7 +31,7 @@ export type BeatCardProps = {
 };
 
 const chipClass =
-  "inline-flex items-center justify-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-0.5 text-[10px] sm:text-[11px] text-zinc-200";
+  "inline-flex items-center justify-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] sm:text-[11px] text-zinc-200 max-w-[65px] whitespace-nowrap overflow-hidden text-ellipsis";
 
 export default function BeatCard({
   id,
