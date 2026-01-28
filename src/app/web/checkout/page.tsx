@@ -1,8 +1,13 @@
+/**
+ * Page de checkout
+ * Utilise le backend pour créer une session Stripe sécurisée
+ */
+
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { apiGet, apiPost } from "@/lib/services/api-client";
+import { AuthService } from "@/lib/auth.service";
 import { useAuth } from "@/context/AuthContext";
 import { CreditCard, Loader2, ArrowLeft } from "lucide-react";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
@@ -36,10 +41,22 @@ export default function CheckoutPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await apiGet<CartResponse>("/me/cart");
+        if (!AuthService.isAuthenticated()) {
+          setError("Vous devez être connecté pour accéder au checkout");
+          return;
+        }
+
+        const response = await AuthService.authenticatedFetch("/me/cart");
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch cart");
+        }
+
+        const data = await response.json();
         setCart(data);
       } catch (e: any) {
         setError("Impossible de charger le panier");
+        console.error("Failed to load cart:", e);
       }
     };
     load();
@@ -47,29 +64,50 @@ export default function CheckoutPage() {
 
   const hasItems = (cart?.items?.length ?? 0) > 0;
 
-  const totals = useMemo(() => {
-    const subtotal = cart?.totalCents ?? 0;
-    const tax = Math.round(subtotal * 0.2);
-    const total = subtotal + tax;
-    return { subtotal, tax, total };
-  }, [cart]);
+  // ✅ Le total est calculé côté serveur (cart.totalCents)
+  // Le backend gère déjà les taxes dans le prix
+  const totalCents = cart?.totalCents ?? 0;
 
   const handleCheckout = async () => {
     if (!user) {
       setShowAuthModal(true);
       return;
     }
+
+    if (!hasItems) {
+      setError("Votre panier est vide");
+      return;
+    }
+
     setError(null);
     setLoading(true);
+
     try {
-      const data = await apiPost<{ url?: string; error?: string }>("/checkout/session", {});
+      // Appeler le backend pour créer une session Stripe
+      const response = await AuthService.authenticatedFetch("/checkout/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to create checkout session");
+      }
+
+      const data = await response.json();
+
       if (data?.url) {
+        // Rediriger vers Stripe Checkout
         window.location.href = data.url;
         return;
       }
+
       throw new Error("URL de redirection manquante");
     } catch (e: any) {
-      setError("Impossible de créer la session de paiement");
+      console.error("Checkout error:", e);
+      setError(e.message || "Impossible de créer la session de paiement");
       setLoading(false);
     }
   };
@@ -113,18 +151,13 @@ export default function CheckoutPage() {
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
             <h2 className="text-lg font-semibold">Paiement Stripe</h2>
             <div className="mt-4 space-y-2 text-sm text-zinc-200">
-              <div className="flex justify-between">
-                <span>Sous-total</span>
-                <span>{fmtPrice(totals.subtotal, cart?.currency)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>TVA (20%)</span>
-                <span>{fmtPrice(totals.tax, cart?.currency)}</span>
-              </div>
               <div className="flex justify-between text-base font-semibold">
                 <span>Total</span>
-                <span>{fmtPrice(totals.total, cart?.currency)}</span>
+                <span>{fmtPrice(totalCents, cart?.currency)}</span>
               </div>
+              <p className="text-xs text-zinc-500">
+                TVA incluse
+              </p>
             </div>
             {error && <p className="mt-3 text-sm text-rose-400">{error}</p>}
             <button

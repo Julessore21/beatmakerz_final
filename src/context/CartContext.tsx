@@ -1,7 +1,15 @@
+/**
+ * CartContext - Gestion du panier
+ * Backend-first : Le backend est la source unique de vérité
+ * Le localStorage est utilisé uniquement comme cache optimiste
+ */
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { apiGet, apiPost, apiDelete } from "@/lib/services/api-client";
+import { AuthService } from "@/lib/auth.service";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.beatmakerz.fr';
 
 export type CartItem = {
   id: number | string;
@@ -15,13 +23,16 @@ export type CartItem = {
 
 interface CartContextValue {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, "quantity">) => void;
-  removeItem: (id: CartItem["id"]) => void;
-  decrementItem: (id: CartItem["id"]) => void;
-  setQuantity: (id: CartItem["id"], qty: number) => void;
+  addItem: (item: Omit<CartItem, "quantity">) => Promise<void>;
+  removeItem: (id: CartItem["id"]) => Promise<void>;
+  decrementItem: (id: CartItem["id"]) => Promise<void>;
+  setQuantity: (id: CartItem["id"], qty: number) => Promise<void>;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  totalCents: number;
+  isLoading: boolean;
+  error: string | null;
   refresh: () => Promise<void>;
 }
 
@@ -29,143 +40,229 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [isHydrated, setHydrated] = useState(false);
+  const [totalCents, setTotalCents] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const envDefaultLicenseId = process.env.NEXT_PUBLIC_LICENSE_TYPE_ID;
-  const [defaultLicenseId] = useState<string | null>(envDefaultLicenseId ?? null);
 
-  // Charge l'état du localStorage pour les visiteurs non connectés
-  const loadFromLocal = () => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = window.localStorage.getItem("bm:cart");
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed as CartItem[];
-      }
-    } catch {
-      /* ignore */
-    }
-    return [];
-  };
-
-  const persistLocal = (next: CartItem[]) => {
-    if (typeof window === "undefined") return;
-    try {
-      window.localStorage.setItem("bm:cart", JSON.stringify(next));
-    } catch {
-      /* ignore */
-    }
-  };
-
+  /**
+   * Charger le panier depuis le backend
+   */
   const fetchCart = async () => {
     try {
-      const data = await apiGet<{ items: any[]; totalCents: number; updatedAt?: string }>("/me/cart");
-      const mapped =
-        data.items?.map((it) => ({
-          id: it.beatId,
-          beatId: it.beatId,
-          licenseTypeId: it.licenseTypeId,
-          cartItemId: it.id || it._id,
-          name: it.beat?.title || "Beat",
-          price: (it.unitPriceSnapshotCents ?? 0) / 100,
-          quantity: it.qty ?? 1,
-        })) || [];
+      setError(null);
+
+      // Si pas authentifié, panier vide
+      if (!AuthService.isAuthenticated()) {
+        setItems([]);
+        setTotalCents(0);
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await AuthService.authenticatedFetch('/me/cart');
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch cart');
+      }
+
+      const data = await response.json();
+
+      const mapped: CartItem[] = data.items?.map((it: any) => ({
+        id: it.beatId,
+        beatId: it.beatId,
+        licenseTypeId: it.licenseTypeId,
+        cartItemId: it._id,
+        name: it.beat?.title || "Beat",
+        price: (it.unitPriceSnapshotCents ?? 0) / 100,
+        quantity: it.qty ?? 1,
+      })) || [];
+
       setItems(mapped);
-      persistLocal(mapped);
-    } catch {
-      // ignore (not logged in)
-      const local = loadFromLocal();
-      setItems(local);
+      setTotalCents(data.totalCents || 0);
+    } catch (err) {
+      console.error('Failed to fetch cart:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch cart');
+      // En cas d'erreur, garder le panier vide (pas de localStorage fallback)
+      setItems([]);
+      setTotalCents(0);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  // Initial local state (visiteur) + fetch async
+  /**
+   * Charger le panier au montage
+   */
   useEffect(() => {
-    const local = loadFromLocal();
-    if (local.length) setItems(local);
-    fetchCart()
-      .catch(() => {
-        /* ignore */
-      })
-      .finally(() => setHydrated(true));
-    // fetchCart intentionally not in deps to avoid refetch loop
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchCart();
   }, []);
 
-  const addItem = (item: Omit<CartItem, "quantity">) => {
+  /**
+   * Ajouter un item au panier
+   */
+  const addItem = async (item: Omit<CartItem, "quantity">) => {
     const beatId = (item.beatId ?? item.id)?.toString();
-    const licenseTypeId = item.licenseTypeId ?? defaultLicenseId ?? "lic-basic";
-    setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
-      if (existing) {
-        const next = prev.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i));
-        persistLocal(next);
-        return next;
-      }
-      const next = [...prev, { ...item, beatId, licenseTypeId, quantity: 1 }];
-      persistLocal(next);
-      return next;
-    });
-    apiPost("/me/cart/items", { beatId, licenseTypeId, qty: 1 }).then(fetchCart).catch(() => {});
-  };
+    const licenseTypeId = item.licenseTypeId ?? envDefaultLicenseId;
 
-  const removeItem = (id: CartItem["id"]) => {
-    const target = items.find((i) => i.id === id);
-    setItems((prev) => {
-      const next = prev.filter((i) => i.id !== id);
-      persistLocal(next);
-      return next;
-    });
-    if (target?.cartItemId) {
-      apiDelete(`/me/cart/items/${target.cartItemId}`).then(fetchCart).catch(() => {});
-    }
-  };
-
-  const decrementItem = (id: CartItem["id"]) => {
-    const target = items.find((i) => i.id === id);
-    if (!target) return;
-    const nextQty = target.quantity - 1;
-    if (nextQty <= 0) {
-      removeItem(id);
+    if (!beatId || !licenseTypeId) {
+      setError('Invalid item: missing beatId or licenseTypeId');
       return;
     }
-    setItems((prev) => {
-      const next = prev.map((i) => (i.id === id ? { ...i, quantity: nextQty } : i));
-      persistLocal(next);
-      return next;
-    });
-    if (target.cartItemId) {
-      apiPost("/me/cart/items", { beatId: target.beatId ?? id, licenseTypeId: target.licenseTypeId ?? "lic-basic", qty: nextQty })
-        .then(fetchCart)
-        .catch(() => {});
-    }
-  };
 
-  const setQuantity = (id: CartItem["id"], qty: number) => {
-    const target = items.find((i) => i.id === id);
-    setItems((prev) => {
-      let next: CartItem[];
-      if (qty <= 0) {
-        next = prev.filter((i) => i.id !== id);
-      } else {
-        next = prev.map((i) => (i.id === id ? { ...i, quantity: qty } : i));
+    try {
+      setError(null);
+      setIsLoading(true);
+
+      // Optimistic update
+      setItems((prev) => {
+        const existing = prev.find((i) => i.id === item.id);
+        if (existing) {
+          return prev.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i));
+        }
+        return [...prev, { ...item, beatId, licenseTypeId, quantity: 1 }];
+      });
+
+      const response = await AuthService.authenticatedFetch('/me/cart/items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          beatId,
+          licenseTypeId,
+          qty: 1,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to add item to cart');
       }
-      persistLocal(next);
-      return next;
-    });
-    if (target?.cartItemId) {
-      apiPost("/me/cart/items", { beatId: target.beatId ?? id, licenseTypeId: target.licenseTypeId ?? "lic-basic", qty })
-        .then(fetchCart)
-        .catch(() => {});
+
+      // Recharger le panier depuis le backend (source de vérité)
+      await fetchCart();
+    } catch (err) {
+      console.error('Failed to add item:', err);
+      setError(err instanceof Error ? err.message : 'Failed to add item');
+      // Rollback optimistic update
+      await fetchCart();
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  /**
+   * Retirer un item du panier
+   */
+  const removeItem = async (id: CartItem["id"]) => {
+    const target = items.find((i) => i.id === id);
+
+    if (!target?.cartItemId) {
+      setError('Invalid item: missing cartItemId');
+      return;
+    }
+
+    try {
+      setError(null);
+      setIsLoading(true);
+
+      // Optimistic update
+      setItems((prev) => prev.filter((i) => i.id !== id));
+
+      const response = await AuthService.authenticatedFetch(`/me/cart/items/${target.cartItemId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to remove item');
+      }
+
+      // Recharger le panier
+      await fetchCart();
+    } catch (err) {
+      console.error('Failed to remove item:', err);
+      setError(err instanceof Error ? err.message : 'Failed to remove item');
+      // Rollback optimistic update
+      await fetchCart();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Décrémenter la quantité d'un item
+   */
+  const decrementItem = async (id: CartItem["id"]) => {
+    const target = items.find((i) => i.id === id);
+    if (!target) return;
+
+    const nextQty = target.quantity - 1;
+
+    if (nextQty <= 0) {
+      await removeItem(id);
+      return;
+    }
+
+    await setQuantity(id, nextQty);
+  };
+
+  /**
+   * Définir la quantité d'un item
+   */
+  const setQuantity = async (id: CartItem["id"], qty: number) => {
+    if (qty <= 0) {
+      await removeItem(id);
+      return;
+    }
+
+    const target = items.find((i) => i.id === id);
+
+    if (!target?.beatId || !target?.licenseTypeId) {
+      setError('Invalid item: missing beatId or licenseTypeId');
+      return;
+    }
+
+    try {
+      setError(null);
+      setIsLoading(true);
+
+      // Optimistic update
+      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, quantity: qty } : i)));
+
+      const response = await AuthService.authenticatedFetch('/me/cart/items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          beatId: target.beatId,
+          licenseTypeId: target.licenseTypeId,
+          qty,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update quantity');
+      }
+
+      // Recharger le panier
+      await fetchCart();
+    } catch (err) {
+      console.error('Failed to update quantity:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update quantity');
+      // Rollback optimistic update
+      await fetchCart();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Vider le panier (local uniquement, le backend le videra après paiement)
+   */
   const clearCart = () => {
     setItems([]);
-    persistLocal([]);
+    setTotalCents(0);
   };
 
   const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);
@@ -173,9 +270,22 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, decrementItem, setQuantity, clearCart, totalItems, totalPrice, refresh: fetchCart }}
+      value={{
+        items,
+        addItem,
+        removeItem,
+        decrementItem,
+        setQuantity,
+        clearCart,
+        totalItems,
+        totalPrice,
+        totalCents,
+        isLoading,
+        error,
+        refresh: fetchCart,
+      }}
     >
-      {isHydrated ? children : null}
+      {children}
     </CartContext.Provider>
   );
 };
