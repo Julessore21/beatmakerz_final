@@ -1,16 +1,14 @@
-import type { Metadata } from "next";
+/**
+ * Layout pour la page profil
+ * Force le rendu dynamique pour éviter l'erreur useSearchParams
+ */
 
-export const metadata: Metadata = {
-  title: "Connexion / Inscription",
-  description: "Connecte-toi ou crée un compte Beatmakerz en quelques secondes.",
-  alternates: { canonical: "/web/profil" },
-  openGraph: {
-    title: "Profil | Beatmakerz",
-    url: "/web/profil",
-  },
-};
+export const dynamic = 'force-dynamic';
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function ProfilLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return <>{children}</>;
 }
-

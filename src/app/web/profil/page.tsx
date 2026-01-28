@@ -6,11 +6,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
+// Forcer le rendu dynamique pour éviter l'erreur useSearchParams
+export const dynamic = 'force-dynamic';
+
 const Profil: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, signup, user: currentUser } = useAuth();
+  const { login, register, user: currentUser } = useAuth();
 
   useEffect(() => {
     const mode = searchParams.get("mode");
@@ -57,12 +60,15 @@ const Profil: React.FC = () => {
     setLoginErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
-    const success = await login(loginData.email, loginData.password);
-    if (success) {
+    try {
+      await login({
+        email: loginData.email,
+        password: loginData.password,
+      });
       router.replace("/web/account");
       router.refresh();
-    } else {
-      setLoginErrors({ general: "Identifiants invalides" });
+    } catch (error: any) {
+      setLoginErrors({ general: error.message || "Identifiants invalides" });
     }
   };
 
@@ -77,12 +83,16 @@ const Profil: React.FC = () => {
     setSignupErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
-    const success = await signup(signupData.email, signupData.password);
-    if (success) {
+    try {
+      await register({
+        email: signupData.email,
+        password: signupData.password,
+        displayName: signupData.email.split('@')[0], // Utilise la partie avant @ comme nom
+      });
       router.replace("/web/account");
       router.refresh();
-    } else {
-      setSignupErrors({ general: "Cet email est deja utilise ou invalide" });
+    } catch (error: any) {
+      setSignupErrors({ general: error.message || "Cet email est deja utilise ou invalide" });
     }
   };
 

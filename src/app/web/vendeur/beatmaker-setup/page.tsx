@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 
 export default function BeatmakerSetup() {
-  const { user, login, signup } = useAuth();
+  const { user, login, register } = useAuth();
   const [mode, setMode] = useState<"create" | "link">(user ? "link" : "create");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -23,31 +23,43 @@ export default function BeatmakerSetup() {
     if (mode === "link") {
       if (user) {
         try {
-          localStorage.setItem("isBeatmaker:" + user, "true");
+          const userId = typeof user === 'string' ? user : user.userId;
+          localStorage.setItem("isBeatmaker:" + userId, "true");
         } catch {
           // ignore
         }
         alert("Ton compte est maintenant configure comme beatmaker.");
         return;
       }
-      const ok = await login(username, password);
-      if (ok) {
+      try {
+        await login({ email: username, password });
         try {
           localStorage.setItem("isBeatmaker:" + username.trim(), "true");
         } catch {
           // ignore
         }
+        alert("Compte lie avec succes.");
+      } catch {
+        alert("Identifiants invalides.");
       }
-      alert(ok ? "Compte lie avec succes." : "Identifiants invalides.");
     } else {
-      const ok = await signup(username, password);
-      alert(ok ? "Compte cree et connecte." : "Utilisateur deja existant.");
+      try {
+        await register({
+          email: username,
+          password,
+          displayName: username.split('@')[0],
+        });
+        alert("Compte cree et connecte.");
+      } catch {
+        alert("Utilisateur deja existant.");
+      }
     }
   };
 
   const handleProfile = (event: React.FormEvent) => {
     event.preventDefault();
-    const keyUser = user || username;
+    // Extraire l'userId si user est un objet, sinon utiliser username
+    const keyUser = user ? (typeof user === 'string' ? user : user.userId) : username;
     if (!keyUser) {
       alert("Connecte-toi ou cree un compte d'abord.");
       return;
