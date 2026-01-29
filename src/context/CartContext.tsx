@@ -9,7 +9,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { AuthService } from "@/lib/auth.service";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.beatmakerz.fr';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://beatmakerz-api.onrender.com';
 
 export type CartItem = {
   id: number | string;
