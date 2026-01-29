@@ -40,6 +40,11 @@ export default function Home() {
   );
 
   useEffect(() => {
+    // Disable custom wheel-based scroll hijacking on touch/mobile devices
+    const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const isSmallScreen = window.innerWidth < 768;
+    if (isTouchDevice || isSmallScreen) return;
+
     const handleScroll = (event: WheelEvent) => {
       if (isScrolling.current) return;
       isScrolling.current = true;
@@ -139,11 +144,11 @@ export default function Home() {
               <source src={`/videos/videotest${index}.mp4`} type="video/mp4" />
             </video>
             <div className="absolute top-0 left-0 w-full h-full bg-black opacity-50 z-0"></div>
-            <div className="absolute bottom-16 left-6 sm:left-10 lg:left-16 z-10 max-w-[92%] sm:max-w-lg lg:max-w-xl flex flex-col space-y-3 sm:space-y-4 items-start">
-              <span className="uppercase text-xs sm:text-sm font-semibold tracking-wider opacity-70 ml-1">
+            <div className="absolute bottom-16 left-4 right-4 sm:left-10 sm:right-auto lg:left-16 z-10 sm:max-w-lg lg:max-w-xl flex flex-col space-y-3 sm:space-y-4 items-start">
+              <span className="uppercase text-[10px] xs:text-xs sm:text-sm font-semibold tracking-wider opacity-70 ml-1">
                 {subtitle}
               </span>
-              <h1 className="text-4xl xs:text-5xl sm:text-6xl lg:text-8xl font-bold leading-tight sm:whitespace-nowrap">
+              <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold leading-tight lg:whitespace-nowrap">
                 {title}
               </h1>
               <Link

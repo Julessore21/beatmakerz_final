@@ -177,8 +177,8 @@ const NavBar = () => {
           isHome ? "bg-transparent" : "bg-gradient-to-b from-[#0b0b14]/95 via-[#0b0b14]/80 to-transparent backdrop-blur-xl"
         }`}
       >
-        {/* Toggle menu */}
-        <div className="flex items-center m-2 space-x-2 cursor-pointer">
+        {/* Toggle menu — mobile only */}
+        <div className="flex items-center m-2 space-x-2 cursor-pointer lg:hidden">
           <AnimatedTwoBarsToggle isOpen={isOpen} toggle={toggleMenu} />
           <UnderlineLink text="MENU" onClick={toggleMenu} href="#" />
         </div>
@@ -191,7 +191,7 @@ const NavBar = () => {
           </Link>
         </div>
 
-        <div className="flex items-center space-x-2 md:hidden">
+        <div className="flex items-center space-x-2 lg:hidden">
           <button
             onClick={(e) => {
               e.preventDefault();
@@ -215,7 +215,7 @@ const NavBar = () => {
           </Link>
         </div>
 
-        <div className="hidden md:flex items-center justify-between">
+        <div className="hidden lg:flex items-center justify-between">
           <div className="flex items-center space-x-6">
             <UnderlineLink href="/catalogue" text="CATALOGUE" />
             <UnderlineLink href="/abonnements" text="ABONNEMENTS" />

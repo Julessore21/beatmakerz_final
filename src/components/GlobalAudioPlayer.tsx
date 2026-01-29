@@ -87,61 +87,65 @@ const GlobalAudioPlayer: React.FC = () => {
           />
         </div>
 
-        <div className="flex items-center gap-4 px-4 py-3">
+        <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-4 py-2.5 sm:py-3">
           {/* Close button */}
           <button
             onClick={() => {
               setDismissed(true);
               pause();
             }}
-            className="rounded-md p-1.5 hover:bg-white/10 text-white"
+            className="rounded-md p-1 sm:p-1.5 hover:bg-white/10 text-white shrink-0"
             aria-label="Fermer le lecteur"
           >
             <X size={14} />
           </button>
 
-          <div className=" text-white flex h-12 w-12 items-center justify-center rounded-lg border white border-white/10 bg-white/5">
-            <Music2 size={18} />
+          <div className="hidden xs:flex text-white h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-lg border border-white/10 bg-white/5 shrink-0">
+            <Music2 size={16} className="sm:hidden" />
+            <Music2 size={18} className="hidden sm:block" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <div className="truncate text-white text-sm font-semibold">
+            <div className="truncate text-white text-xs sm:text-sm font-semibold">
               {track?.name || "Aucun titre"}
             </div>
-            <div className="truncate text-xs text-zinc-400">
+            <div className="truncate text-[10px] sm:text-xs text-zinc-400">
               {track?.artist || "—"}
             </div>
           </div>
 
-          <div className="hidden md:block text-[11px] text-zinc-400 tabular-nums">
+          <div className="hidden md:block text-[11px] text-zinc-400 tabular-nums shrink-0">
             {fmt(currentTime)} / {fmt(duration)}
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <button
               onClick={prev}
-              className="rounded-full p-2 text-white hover:bg-white/10"
+              className="hidden xs:block rounded-full p-1.5 sm:p-2 text-white hover:bg-white/10"
               aria-label="Précédent"
             >
-              <SkipBack size={18} />
+              <SkipBack size={16} className="sm:hidden" />
+              <SkipBack size={18} className="hidden sm:block" />
             </button>
             <button
               onClick={toggle}
-              className="rounded-full p-2 px-3 font-semibold text-white hover:bg-white/10"
+              className="rounded-full p-1.5 px-2 sm:p-2 sm:px-3 font-semibold text-white hover:bg-white/10"
               aria-label={isPlaying ? "Pause" : "Lecture"}
             >
-              {isPlaying ? <Pause size={18} /> : <Play size={18} />}
+              {isPlaying ? <Pause size={16} className="sm:hidden" /> : <Play size={16} className="sm:hidden" />}
+              {isPlaying ? <Pause size={18} className="hidden sm:block" /> : <Play size={18} className="hidden sm:block" />}
             </button>
             <button
               onClick={next}
-              className="rounded-full p-2 text-white hover:bg-white/10"
+              className="hidden xs:block rounded-full p-1.5 sm:p-2 text-white hover:bg-white/10"
               aria-label="Suivant"
             >
-              <SkipForward size={18} />
+              <SkipForward size={16} className="sm:hidden" />
+              <SkipForward size={18} className="hidden sm:block" />
             </button>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 w-36">
+          <div className="hidden sm:flex items-center gap-2 w-28 lg:w-36 shrink-0">
             <button
               onClick={() => setVolume(muted ? 0.8 : 0)}
               className="rounded-md p-1 hover:bg-white/10"
@@ -163,7 +167,7 @@ const GlobalAudioPlayer: React.FC = () => {
           {/* Collapse button (arrow down) */}
           <button
             onClick={() => setCollapsed(true)}
-            className="ml-1 rounded-md p-1 hover:bg-white/10 text-white"
+            className="rounded-md p-1 hover:bg-white/10 text-white shrink-0"
             aria-label="Réduire"
           >
             <ChevronDown size={16} />

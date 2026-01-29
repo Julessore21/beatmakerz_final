@@ -586,52 +586,53 @@ function CatalogueContent() {
 
         {/* tools sticky */}
         <div className="mt-6 sticky top-20 z-40 rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="inline-flex items-center gap-2 text-sm text-zinc-400">
               <SlidersHorizontal className="h-4 w-4" />
-              Filtres rapides
+              <span className="hidden xs:inline">Filtres rapides</span>
+              <span className="xs:hidden">Filtres</span>
             </div>
             {/* Badges icônes: Tendance, Nouveaux, Populaire */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 -mx-1 px-1">
               <button
                 onClick={() => setSelectedTag(selectedTag === "Tendance" ? null : "Tendance")}
-                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm ${selectedTag === "Tendance" ? "border-orange-400 bg-orange-400/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+                className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs sm:text-sm shrink-0 ${selectedTag === "Tendance" ? "border-orange-400 bg-orange-400/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
               >
-                <Flame className="h-4 w-4 text-orange-400" /> Top
+                <Flame className="h-3.5 w-3.5 text-orange-400" /> Top
               </button>
               <button
                 onClick={() => setSelectedTag(selectedTag === "Nouveau" ? null : "Nouveau")}
-                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm ${selectedTag === "Nouveau" ? "border-yellow-300 bg-yellow-300/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+                className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs sm:text-sm shrink-0 ${selectedTag === "Nouveau" ? "border-yellow-300 bg-yellow-300/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
               >
-                <Star className="h-4 w-4 text-yellow-300" /> Nouveaux
+                <Star className="h-3.5 w-3.5 text-yellow-300" /> Nouveaux
               </button>
               <button
                 onClick={() => setSelectedTag(selectedTag === "Populaire" ? null : "Populaire")}
-                className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-sm ${selectedTag === "Populaire" ? "border-amber-400 bg-amber-400/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+                className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs sm:text-sm shrink-0 ${selectedTag === "Populaire" ? "border-amber-400 bg-amber-400/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
               >
-                <Crown className="h-4 w-4 text-amber-300" /> Populaire
+                <Crown className="h-3.5 w-3.5 text-amber-300" /> Populaire
               </button>
             </div>
 
-            <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:ml-auto">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${viewMode === "grid" ? "border-indigo-500 text-white bg-indigo-500" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs sm:text-sm ${viewMode === "grid" ? "border-indigo-500 text-white bg-indigo-500" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
               >
-                <Grid3X3 className="h-4 w-4" /> Grille
+                <Grid3X3 className="h-3.5 w-3.5" /> Grille
               </button>
               <button
                 onClick={() => setViewMode("table")}
-                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${viewMode === "table" ? "border-indigo-500 text-white bg-indigo-500" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs sm:text-sm ${viewMode === "table" ? "border-indigo-500 text-white bg-indigo-500" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
               >
-                <Rows3 className="h-4 w-4" /> Tableau
+                <Rows3 className="h-3.5 w-3.5" /> Tableau
               </button>
 
               <div className="relative">
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as (typeof SORTS)[number])}
-                  className="appearance-none rounded-full border border-white/10 bg-[#0e0e12]/80 px-6 pr-8 py-2 h-9 text-sm outline-none text-center leading-none"
+                  className="appearance-none rounded-full border border-white/10 bg-[#0e0e12]/80 px-4 pr-7 py-1.5 h-8 text-xs sm:text-sm outline-none text-center leading-none"
                 >
                   {SORTS.map((s) => (
                     <option key={s} value={s} className="text-center">
@@ -639,7 +640,7 @@ function CatalogueContent() {
                     </option>
                   ))}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
               </div>
             </div>
           </div>
@@ -739,7 +740,7 @@ function CatalogueContent() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="grid grid-cols-2 gap-4 xxs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                  className="grid grid-cols-1 gap-4 xs:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
                 >
                   {currentBeats.map((b) => (
                     <BeatCard

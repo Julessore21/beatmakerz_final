@@ -288,7 +288,7 @@ function Abonnements() {
         </div>
       )}
 
-      <div className="mt-8 max-w-6xl w-full grid grid-cols-1 md:grid-cols-[repeat(3,250px)] gap-[24px] justify-center mx-auto">
+      <div className="mt-8 max-w-6xl w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 justify-center mx-auto px-2 sm:px-4">
         {PLAN_DEFINITIONS.map((plan, idx) => {
           const monthlyPrice = parsePrice(plan.monthly);
           const yearlyPrice = parsePrice(plan.yearly);
@@ -319,7 +319,7 @@ function Abonnements() {
           const cardClassName = [
             "relative flex flex-col items-center text-center cursor-pointer",
             borderClass,
-            "border rounded-2xl p-6 bg-[#141416]/90 backdrop-blur-xl w-full h-[410px] hover:-translate-y-2 transition-transform duration-300 shadow-[0_10px_40px_rgba(0,0,0,.35)]",
+            "border rounded-2xl p-5 sm:p-6 bg-[#141416]/90 backdrop-blur-xl w-full min-h-[360px] sm:min-h-[410px] hover:-translate-y-2 transition-transform duration-300 shadow-[0_10px_40px_rgba(0,0,0,.35)]",
           ].join(" ");
 
           const labelBaseClass = "absolute -top-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase";

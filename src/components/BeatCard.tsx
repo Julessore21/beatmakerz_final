@@ -31,7 +31,7 @@ export type BeatCardProps = {
 };
 
 const chipClass =
-  "inline-flex items-center justify-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] sm:text-[11px] text-zinc-200 max-w-[65px] whitespace-nowrap overflow-hidden text-ellipsis";
+  "inline-flex items-center justify-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] sm:text-[11px] text-zinc-200 max-w-[80px] sm:max-w-[90px] whitespace-nowrap overflow-hidden text-ellipsis";
 
 export default function BeatCard({
   id,
@@ -109,7 +109,7 @@ export default function BeatCard({
       )}
       <div className="absolute inset-0 bg-black/50" />
 
-      <div className="relative flex h-full flex-col justify-between p-4 sm:p-5">
+      <div className="relative flex h-full flex-col justify-between p-3 xs:p-4 sm:p-5">
         <div className="flex items-start justify-end">
           <span className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-xs font-semibold text-white">
             {price.toFixed(2)} EUR
@@ -119,7 +119,7 @@ export default function BeatCard({
         <div className="min-w-0">
           <h3 className="truncate text-sm sm:text-base font-semibold text-white">{name}</h3>
           <div className="truncate text-[11px] sm:text-xs text-zinc-300/90">{artist}</div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-2 sm:mt-3 flex flex-wrap items-center gap-1.5 sm:gap-2">
             <span className={`${chipClass} whitespace-nowrap`}>
               <Music2 className="h-3 w-3" />
               {genre}
@@ -128,7 +128,7 @@ export default function BeatCard({
             <span className={`${chipClass} whitespace-nowrap`}>{keySig}</span>
           </div>
 
-          <div className="mt-4 flex items-center justify-between gap-3">
+          <div className="mt-3 sm:mt-4 flex items-center justify-between gap-2 sm:gap-3">
             <ActionBar
               size="sm"
               isCurrent={isCurrent}

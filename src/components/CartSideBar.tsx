@@ -65,16 +65,25 @@ const CartSideBar = ({ isOpen, onClose }: Props) => {
                       key={item.id}
                       className="rounded-xl border border-white/10 bg-white/[0.04] p-3"
                     >
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="truncate text-sm font-semibold text-white">
-                            {item.name}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate text-sm font-semibold text-white">
+                              {item.name}
+                            </div>
+                            <div className="text-[11px] text-zinc-400">
+                              {priceValue.toFixed(2)} EUR / unite
+                            </div>
                           </div>
-                          <div className="text-[11px] text-zinc-400">
-                            {priceValue.toFixed(2)} EUR / unite
-                          </div>
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="shrink-0 rounded-md border border-white/10 p-1.5 text-zinc-200 transition-colors hover:bg-white/10"
+                            aria-label="Supprimer"
+                          >
+                            <Trash2 size={14} />
+                          </button>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1">
                             <button
                               onClick={() => decrementItem(item.id)}
@@ -94,16 +103,9 @@ const CartSideBar = ({ isOpen, onClose }: Props) => {
                               +
                             </button>
                           </div>
-                          <div className="w-16 text-right text-sm font-semibold text-white">
+                          <div className="text-sm font-semibold text-white">
                             {itemTotal} EUR
                           </div>
-                          <button
-                            onClick={() => removeItem(item.id)}
-                            className="ml-2 rounded-md border border-white/10 p-2 text-zinc-200 transition-colors hover:bg-white/10"
-                            aria-label="Supprimer"
-                          >
-                            <Trash2 size={14} />
-                          </button>
                         </div>
                       </div>
                     </div>

@@ -193,7 +193,7 @@ function HeroFull({
           initial={{ opacity: 0, y: "0.5rem" }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1 }}
-          className="text-balance text-5xl md:text-6xl font-semibold tracking-tight leading-[1.38] md:leading-[1.32] min-h-[3.8rem] md:min-h-[4.8rem]"
+          className="text-balance text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight leading-[1.38] md:leading-[1.32] min-h-[2.4rem] xs:min-h-[2.8rem] sm:min-h-[3.8rem] md:min-h-[4.8rem]"
         >
           <span className="relative inline-block align-top">
             <span className="invisible select-none">{longest}</span>
@@ -215,7 +215,7 @@ function HeroFull({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.1, duration: 1 }}
-          className="mt-4 text-xl text-zinc-300"
+          className="mt-4 text-sm sm:text-base md:text-xl text-zinc-300"
         >
           Ta vision • Notre expertise • Ta prod prête en 48 h • Révisions illimitées
         </motion.p>
@@ -235,21 +235,21 @@ function HeroFull({
           ))}
         </ul>
 
-        <div className="mt-10 flex items-center justify-center gap-3">
+        <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
           <motion.button
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             onClick={onCreate}
-            className="rounded-xl bg-white px-6 py-3 font-semibold text-black shadow-sm hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+            className="w-full sm:w-auto rounded-xl bg-white px-6 py-3 font-semibold text-black shadow-sm hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
           >
             Créer ma prod
-          </motion.button>  
+          </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             onClick={onSeeSamples}
-            className="rounded-xl border border-white/20 px-6 py-3 font-semibold text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+            className="w-full sm:w-auto rounded-xl border border-white/20 px-6 py-3 font-semibold text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
           >
             Écouter des exemples
           </motion.button>
@@ -363,13 +363,13 @@ const StepsSection = React.forwardRef<HTMLElement, {
   const railTopPx = 40; // correspond à top-10
   const trackHeight = Math.max(0, Math.min(contentHeight, lastStepBottomRel) - railTopPx);
   return (
-    <section ref={ref} id="steps" className="mx-auto max-w-3xl px-6 py-20 overflow-anchor-none">
-      <header className="mb-10 text-center">
-        <h2 className="text-3xl md:text-4xl font-semibold tracking-tight">Le processus en 3 étapes</h2>
-        <p className="mt-3 text-zinc-300">Simple, rapide et clair.</p>
+    <section ref={ref} id="steps" className="mx-auto max-w-3xl px-4 sm:px-6 py-12 sm:py-20 overflow-anchor-none">
+      <header className="mb-8 sm:mb-10 text-center">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-semibold tracking-tight">Le processus en 3 étapes</h2>
+        <p className="mt-2 sm:mt-3 text-sm sm:text-base text-zinc-300">Simple, rapide et clair.</p>
       </header>
 
-      <div className="grid grid-cols-[1px_80px_1fr] gap-0 items-stretch">
+      <div className="grid grid-cols-[1px_24px_1fr] sm:grid-cols-[1px_80px_1fr] gap-0 items-stretch">
         {/* rail (1px) + offset 20px avant le contenu */}
         <div className="relative pointer-events-none" style={{ height: contentHeight }}>
           <div
