@@ -2,7 +2,7 @@
  * Service pour récupérer les beats depuis le backend
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.beatmakerz.fr';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://beatmakerz-api.onrender.com';
 
 export interface Beat {
   _id: string;
