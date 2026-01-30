@@ -1,43 +1,53 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-type UploadField = "previewUrl" | "coverUrl" | "audioUrl";
+type Artist = {
+  _id: string;
+  name: string;
+  verified?: boolean;
+};
+
+type Asset = {
+  _id: string;
+  type: "preview" | "mp3" | "wav" | "stems" | "project";
+  storageKey: string;
+};
 
 type AdminBeat = {
   _id: string;
+  artistId: string;
   title: string;
   bpm?: number;
   key?: string;
   genres?: string[];
   moods?: string[];
   status?: "draft" | "published";
-  visibility?: "public" | "private";
-  previewUrl?: string;
+  visibility?: "public" | "unlisted";
   coverUrl?: string;
-  audioUrl?: string;
+  artist?: Artist;
+  assets?: Asset[];
   updatedAt?: string;
 };
 
 type FormState = {
   id: string;
+  artistId: string;
   title: string;
   bpm: string;
   key: string;
   genres: string;
   moods: string;
   status: "draft" | "published";
-  visibility: "public" | "private";
-  previewUrl: string;
-  coverUrl: string;
-  audioUrl: string;
+  visibility: "public" | "unlisted";
 };
 
 const STATUS_OPTIONS: FormState["status"][] = ["draft", "published"];
-const VISIBILITY_OPTIONS: FormState["visibility"][] = ["public", "private"];
+const VISIBILITY_OPTIONS: FormState["visibility"][] = ["public", "unlisted"];
 
 const initialFormState: FormState = {
   id: "",
+  artistId: "5138a0fa-def1-4330-b668-3efd949b8485", // BeatMaster par défaut
   title: "",
   bpm: "",
   key: "",
@@ -45,9 +55,6 @@ const initialFormState: FormState = {
   moods: "",
   status: "draft",
   visibility: "public",
-  previewUrl: "",
-  coverUrl: "",
-  audioUrl: "",
 };
 
 const splitList = (value: string) =>
@@ -58,14 +65,13 @@ const splitList = (value: string) =>
 
 export default function AdminCataloguePage() {
   const [beats, setBeats] = useState<AdminBeat[]>([]);
+  const [artists, setArtists] = useState<Artist[]>([]);
   const [form, setForm] = useState(initialFormState);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [uploadState, setUploadState] = useState<Record<UploadField, boolean>>({
-    previewUrl: false,
-    coverUrl: false,
-    audioUrl: false,
-  });
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingPreview, setUploadingPreview] = useState(false);
+  const [uploadingMp3, setUploadingMp3] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
@@ -85,8 +91,27 @@ export default function AdminCataloguePage() {
     }
   };
 
+  const loadArtists = async () => {
+    try {
+      const res = await fetch("/api/admin/artists");
+      if (!res.ok) throw new Error("Impossible de charger les artistes.");
+      const data = (await res.json()) as Artist[];
+      setArtists(data);
+    } catch (err) {
+      console.error(err);
+      setArtists([
+        {
+          _id: "5138a0fa-def1-4330-b668-3efd949b8485",
+          name: "BeatMaster",
+          verified: true,
+        },
+      ]);
+    }
+  };
+
   useEffect(() => {
     loadBeats();
+    loadArtists();
   }, []);
 
   const resetForm = () => {
@@ -98,6 +123,7 @@ export default function AdminCataloguePage() {
   const handleSelectBeat = (beat: AdminBeat) => {
     setForm({
       id: beat._id,
+      artistId: beat.artistId,
       title: beat.title,
       bpm: beat.bpm ? String(beat.bpm) : "",
       key: beat.key || "",
@@ -105,45 +131,68 @@ export default function AdminCataloguePage() {
       moods: (beat.moods || []).join(", "),
       status: beat.status || "draft",
       visibility: beat.visibility || "public",
-      previewUrl: beat.previewUrl || "",
-      coverUrl: beat.coverUrl || "",
-      audioUrl: beat.audioUrl || "",
     });
     setError(null);
     setInfo(null);
   };
 
-  const handleUpload = async (field: UploadField, file?: File | null) => {
-    if (!file) return;
-    setUploadState((prev) => ({ ...prev, [field]: true }));
+  const uploadCover = async (beatId: string, file: File) => {
+    setUploadingCover(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/admin/upload", {
+
+      const res = await fetch(`/api/admin/beats/${beatId}/cover`, {
         method: "POST",
         body: formData,
       });
-      if (!res.ok) throw new Error("Upload échoué.");
+
+      if (!res.ok) throw new Error("Upload cover échoué.");
+
       const data = await res.json();
-      setForm((prev) => ({ ...prev, [field]: data.downloadLink || "" }));
-      setInfo("Upload réussi. Pense à sauvegarder le beat.");
+      setInfo(`Cover uploadée: ${data.coverUrl}`);
+      await loadBeats();
     } catch (err: any) {
       console.error(err);
-      setError("L'upload n'a pas pu être réalisé.");
+      setError("L'upload de la cover n'a pas pu être réalisé.");
     } finally {
-      setUploadState((prev) => ({ ...prev, [field]: false }));
+      setUploadingCover(false);
+    }
+  };
+
+  const uploadAsset = async (
+    beatId: string,
+    type: "preview" | "mp3" | "wav" | "stems",
+    file: File
+  ) => {
+    const setUploading = type === "preview" ? setUploadingPreview : setUploadingMp3;
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`/api/admin/beats/${beatId}/assets/${type}`, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error(`Upload ${type} échoué.`);
+
+      const data = await res.json();
+      setInfo(`${type.toUpperCase()} uploadé avec succès!`);
+      await loadBeats();
+    } catch (err: any) {
+      console.error(err);
+      setError(`L'upload du ${type} n'a pas pu être réalisé.`);
+    } finally {
+      setUploading(false);
     }
   };
 
   const validateForm = () => {
-    if (form.status === "published" && !form.previewUrl) {
-      return "Un preview est requis pour publier le beat.";
-    }
-    const isVendable = form.status === "published" && form.visibility === "public";
-    if (isVendable && !form.audioUrl) {
-      return "Le beat vendable doit contenir la version complète (audioUrl).";
-    }
     if (!form.title.trim()) return "Le titre est obligatoire.";
+    if (!form.artistId) return "L'artiste est obligatoire.";
     return null;
   };
 
@@ -157,6 +206,7 @@ export default function AdminCataloguePage() {
     }
 
     const payload = {
+      artistId: form.artistId,
       title: form.title.trim(),
       bpm: form.bpm ? Number(form.bpm) : undefined,
       key: form.key.trim() || undefined,
@@ -164,9 +214,6 @@ export default function AdminCataloguePage() {
       moods: splitList(form.moods),
       status: form.status,
       visibility: form.visibility,
-      previewUrl: form.previewUrl || undefined,
-      coverUrl: form.coverUrl || undefined,
-      audioUrl: form.audioUrl || undefined,
     };
 
     try {
@@ -178,15 +225,21 @@ export default function AdminCataloguePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Impossible d'enregistrer le beat.");
-      await loadBeats();
-      setInfo("Beat enregistré avec succès.");
-      if (!form.id) {
-        resetForm();
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Impossible d'enregistrer le beat.");
       }
-    } catch (err) {
+      const savedBeat = await res.json();
+      await loadBeats();
+      setInfo("Beat enregistré avec succès. Vous pouvez maintenant uploader des fichiers.");
+
+      // Si c'est un nouveau beat, on met l'ID dans le formulaire pour permettre l'upload
+      if (!form.id) {
+        setForm((prev) => ({ ...prev, id: savedBeat._id }));
+      }
+    } catch (err: any) {
       console.error(err);
-      setError("Enregistrement impossible.");
+      setError(err.message || "Enregistrement impossible.");
     } finally {
       setSaving(false);
     }
@@ -208,14 +261,7 @@ export default function AdminCataloguePage() {
 
   const handleToggleStatus = async (beat: AdminBeat) => {
     const nextStatus = beat.status === "published" ? "draft" : "published";
-    if (nextStatus === "published" && !beat.previewUrl) {
-      setError("Un preview est requis pour publier.");
-      return;
-    }
-    if (nextStatus === "published" && beat.visibility === "public" && !beat.audioUrl) {
-      setError("Le beat vendable doit contenir la version complète (audioUrl).");
-      return;
-    }
+
     try {
       const res = await fetch(`/api/admin/beats/${beat._id}`, {
         method: "PUT",
@@ -237,22 +283,22 @@ export default function AdminCataloguePage() {
     return "Inconnu";
   };
 
-  const readyBeats = useMemo(() => beats, [beats]);
+  const currentBeat = beats.find((b) => b._id === form.id);
 
   return (
     <div className="min-h-screen bg-[#040410] text-white px-4 py-10">
-      <div className="mx-auto max-w-6xl space-y-8">
+      <div className="mx-auto max-w-7xl space-y-8">
         <header className="space-y-1">
           <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Admin</p>
-          <h1 className="text-3xl font-semibold">Catalogue contrôlé</h1>
+          <h1 className="text-3xl font-semibold">Catalogue - FileUp Integration</h1>
           <p className="text-sm text-zinc-400">
-            Gère les uploads FileUp, publie des beats et sécurise l’accès aux versions complètes.
+            Gère les beats, uploads vers FileUp, et contrôle la publication.
           </p>
         </header>
 
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_80px_rgba(0,0,0,.35)] backdrop-blur-xl">
           <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-lg font-semibold">Beat / Méta</h2>
+            <h2 className="text-lg font-semibold">Beat / Métadonnées</h2>
             <button
               onClick={resetForm}
               className="rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-wide text-zinc-300 transition hover:border-white/40"
@@ -265,6 +311,21 @@ export default function AdminCataloguePage() {
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <label className="text-sm font-medium text-zinc-200">
+              Artiste
+              <select
+                value={form.artistId}
+                onChange={(e) => setForm((prev) => ({ ...prev, artistId: e.target.value }))}
+                className="mt-1 w-full rounded-2xl border border-white/10 bg-[#08080f]/70 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {artists.map((artist) => (
+                  <option key={artist._id} value={artist._id}>
+                    {artist.name} {artist.verified ? "✓" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="text-sm font-medium text-zinc-200">
               Titre
               <input
                 type="text"
@@ -274,6 +335,7 @@ export default function AdminCataloguePage() {
                 placeholder="Titre du beat"
               />
             </label>
+
             <label className="text-sm font-medium text-zinc-200">
               BPM
               <input
@@ -286,6 +348,7 @@ export default function AdminCataloguePage() {
                 placeholder="120"
               />
             </label>
+
             <label className="text-sm font-medium text-zinc-200">
               Gamme / clé
               <input
@@ -296,6 +359,7 @@ export default function AdminCataloguePage() {
                 placeholder="Am, Fm..."
               />
             </label>
+
             <label className="text-sm font-medium text-zinc-200">
               Genres (virgules)
               <input
@@ -306,6 +370,7 @@ export default function AdminCataloguePage() {
                 placeholder="Trap, Drill..."
               />
             </label>
+
             <label className="text-sm font-medium text-zinc-200">
               Moods (virgules)
               <input
@@ -316,6 +381,7 @@ export default function AdminCataloguePage() {
                 placeholder="Dark, Chill..."
               />
             </label>
+
             <label className="text-sm font-medium text-zinc-200">
               Statut
               <select
@@ -335,6 +401,7 @@ export default function AdminCataloguePage() {
                 ))}
               </select>
             </label>
+
             <label className="text-sm font-medium text-zinc-200">
               Visibilité
               <select
@@ -356,34 +423,6 @@ export default function AdminCataloguePage() {
             </label>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {(["previewUrl", "coverUrl", "audioUrl"] as UploadField[]).map((field) => (
-              <div key={field} className="rounded-2xl border border-white/10 bg-[#04040c]/70 p-4">
-                <div className="flex items-center justify-between text-sm uppercase tracking-[0.2em] text-zinc-400">
-                  <span>{field === "previewUrl" ? "Preview" : field === "coverUrl" ? "Cover" : "Version complète"}</span>
-                  {uploadState[field] && <span className="text-xs text-amber-300">uploading…</span>}
-                </div>
-                <input
-                  type="text"
-                  value={form[field]}
-                  readOnly
-                  className="mt-2 w-full rounded-md border border-white/10 bg-transparent px-3 py-2 text-sm text-white placeholder:text-white/30"
-                  placeholder="Aucun lien"
-                />
-                <label className="mt-3 flex cursor-pointer items-center justify-between rounded-2xl border border-dashed border-white/30 px-3 py-2 text-sm text-white/70 transition hover:border-white/60">
-                  <span>Uploader depuis FileUp</span>
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept={field === "coverUrl" ? "image/*" : "audio/*"}
-                    onChange={(event) => handleUpload(field, event.target.files?.[0])}
-                  />
-                  <span className="text-xs text-white/70">Choisir</span>
-                </label>
-              </div>
-            ))}
-          </div>
-
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               onClick={handleSave}
@@ -403,11 +442,128 @@ export default function AdminCataloguePage() {
           </div>
         </section>
 
+        {form.id && currentBeat && (
+          <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_80px_rgba(0,0,0,.35)] backdrop-blur-xl">
+            <h2 className="text-lg font-semibold">Upload Fichiers (FileUp)</h2>
+            <p className="text-xs text-zinc-400 mt-1">
+              Les fichiers sont uploadés vers FileUp et stockés en tant qu'assets MongoDB
+            </p>
+
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {/* Cover */}
+              <div className="rounded-2xl border border-white/10 bg-[#04040c]/70 p-4">
+                <div className="flex items-center justify-between text-sm uppercase tracking-[0.2em] text-zinc-400">
+                  <span>Cover Image</span>
+                  {uploadingCover && <span className="text-xs text-amber-300">uploading…</span>}
+                </div>
+                {currentBeat.coverUrl && (
+                  <div className="mt-2">
+                    <img
+                      src={currentBeat.coverUrl}
+                      alt="Cover"
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <a
+                      href={currentBeat.coverUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-indigo-300 underline mt-1 block"
+                    >
+                      Voir
+                    </a>
+                  </div>
+                )}
+                <label className="mt-3 flex cursor-pointer items-center justify-between rounded-2xl border border-dashed border-white/30 px-3 py-2 text-sm text-white/70 transition hover:border-white/60">
+                  <span>Upload Cover</span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && form.id) uploadCover(form.id, file);
+                    }}
+                  />
+                  <span className="text-xs text-white/70">Choisir</span>
+                </label>
+              </div>
+
+              {/* Preview */}
+              <div className="rounded-2xl border border-white/10 bg-[#04040c]/70 p-4">
+                <div className="flex items-center justify-between text-sm uppercase tracking-[0.2em] text-zinc-400">
+                  <span>Preview (30s)</span>
+                  {uploadingPreview && <span className="text-xs text-amber-300">uploading…</span>}
+                </div>
+                {currentBeat.assets?.find((a) => a.type === "preview") && (
+                  <div className="mt-2">
+                    <p className="text-xs text-emerald-300">✓ Preview uploadé</p>
+                    <a
+                      href={currentBeat.assets.find((a) => a.type === "preview")?.storageKey}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-indigo-300 underline"
+                    >
+                      Écouter
+                    </a>
+                  </div>
+                )}
+                <label className="mt-3 flex cursor-pointer items-center justify-between rounded-2xl border border-dashed border-white/30 px-3 py-2 text-sm text-white/70 transition hover:border-white/60">
+                  <span>Upload Preview MP3</span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="audio/mp3,audio/mpeg"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && form.id) uploadAsset(form.id, "preview", file);
+                    }}
+                  />
+                  <span className="text-xs text-white/70">Choisir</span>
+                </label>
+              </div>
+
+              {/* MP3 Full */}
+              <div className="rounded-2xl border border-white/10 bg-[#04040c]/70 p-4">
+                <div className="flex items-center justify-between text-sm uppercase tracking-[0.2em] text-zinc-400">
+                  <span>MP3 Complet</span>
+                  {uploadingMp3 && <span className="text-xs text-amber-300">uploading…</span>}
+                </div>
+                {currentBeat.assets?.find((a) => a.type === "mp3") && (
+                  <div className="mt-2">
+                    <p className="text-xs text-emerald-300">✓ MP3 uploadé</p>
+                    <a
+                      href={currentBeat.assets.find((a) => a.type === "mp3")?.storageKey}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-indigo-300 underline"
+                    >
+                      Télécharger
+                    </a>
+                  </div>
+                )}
+                <label className="mt-3 flex cursor-pointer items-center justify-between rounded-2xl border border-dashed border-white/30 px-3 py-2 text-sm text-white/70 transition hover:border-white/60">
+                  <span>Upload MP3 Full</span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="audio/mp3,audio/mpeg"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && form.id) uploadAsset(form.id, "mp3", file);
+                    }}
+                  />
+                  <span className="text-xs text-white/70">Choisir</span>
+                </label>
+              </div>
+            </div>
+          </section>
+        )}
+
         <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_80px_rgba(0,0,0,.35)] backdrop-blur-xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Bakstage</h2>
+            <h2 className="text-lg font-semibold">Backstage</h2>
             <div className="text-xs uppercase tracking-[0.3em] text-zinc-400">
-              {loading ? "Chargement…" : `${readyBeats.length} beats`}
+              {loading ? "Chargement…" : `${beats.length} beats`}
             </div>
           </div>
           <div className="mt-4">
@@ -416,15 +572,16 @@ export default function AdminCataloguePage() {
                 <thead className="bg-white/5 text-zinc-300">
                   <tr>
                     <th className="px-4 py-3 text-left">Titre</th>
+                    <th className="px-4 py-3 text-left">Artiste</th>
                     <th className="px-4 py-3 text-center">Statut</th>
-                    <th className="px-4 py-3 text-center">Visibilité</th>
+                    <th className="px-4 py-3 text-center">Cover</th>
                     <th className="px-4 py-3 text-center">Preview</th>
-                    <th className="px-4 py-3 text-center">Audio</th>
+                    <th className="px-4 py-3 text-center">MP3</th>
                     <th className="px-4 py-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5 bg-[#03030a] text-zinc-200">
-                  {readyBeats.map((beat) => (
+                  {beats.map((beat) => (
                     <tr key={beat._id} className="hover:bg-white/5">
                       <td className="px-4 py-3">
                         <button
@@ -434,31 +591,33 @@ export default function AdminCataloguePage() {
                           {beat.title}
                         </button>
                       </td>
+                      <td className="px-4 py-3 text-sm text-zinc-300">
+                        {beat.artist?.name || "N/A"}
+                      </td>
                       <td className="px-4 py-3 text-center">
                         <span className="rounded-full border border-white/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-zinc-300">
                           {statusLabel(beat.status)}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center text-sm text-zinc-300">{beat.visibility}</td>
                       <td className="px-4 py-3 text-center">
-                        {beat.previewUrl ? (
-                          <a
-                            href={beat.previewUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs text-indigo-300 underline"
-                          >
-                            Voir
-                          </a>
+                        {beat.coverUrl ? (
+                          <span className="text-[11px] text-emerald-300">✓</span>
                         ) : (
-                          <span className="text-[11px] text-red-400">manquant</span>
+                          <span className="text-[11px] text-red-400">✗</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {beat.audioUrl ? (
-                          <span className="text-[11px] text-emerald-300">prêt</span>
+                        {beat.assets?.find((a) => a.type === "preview") ? (
+                          <span className="text-[11px] text-emerald-300">✓</span>
                         ) : (
-                          <span className="text-[11px] text-red-400">absent</span>
+                          <span className="text-[11px] text-red-400">✗</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {beat.assets?.find((a) => a.type === "mp3") ? (
+                          <span className="text-[11px] text-emerald-300">✓</span>
+                        ) : (
+                          <span className="text-[11px] text-red-400">✗</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -473,21 +632,21 @@ export default function AdminCataloguePage() {
                             onClick={() => handleToggleStatus(beat)}
                             className="rounded-full border border-white/10 px-3 py-1 text-[11px] tracking-[0.2em] text-white transition hover:border-emerald-300 hover:text-emerald-300"
                           >
-                            {beat.status === "published" ? "Brouillon" : "Publier"}
+                            {beat.status === "published" ? "Draft" : "Publish"}
                           </button>
                           <button
                             onClick={() => handleDelete(beat._id)}
                             className="rounded-full border border-white/10 px-3 py-1 text-[11px] tracking-[0.2em] text-white transition hover:border-rose-300 hover:text-rose-300"
                           >
-                            Supprimer
+                            Del
                           </button>
                         </div>
                       </td>
                     </tr>
                   ))}
-                  {readyBeats.length === 0 && (
+                  {beats.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-4 py-6 text-center text-sm text-zinc-500">
+                      <td colSpan={7} className="px-4 py-6 text-center text-sm text-zinc-500">
                         Aucun beat trouvé.
                       </td>
                     </tr>
