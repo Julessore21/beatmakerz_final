@@ -11,12 +11,13 @@ export default function FooterHome() {
   return (
     <footer className="w-full border-t border-white/10 bg-gradient-to-r from-[#080810] via-[#0a0a12] to-[#080810] text-white/90">
       <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-10">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+        {/* Branding + Social */}
+        <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
           <div>
             <div className="text-base sm:text-lg font-semibold tracking-wide text-white">BEATMAKERZ</div>
-            <div className="mt-1 text-xs text-zinc-400">Plateforme franÇõaise pour artistes & beatmakers</div>
+            <div className="mt-1 text-xs text-zinc-400">Plateforme française pour artistes & beatmakers</div>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-white/80">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-white/80">
             <SocialLink href="https://www.instagram.com/beatmakerz_pro/" label="Instagram">
               <FaInstagram />
             </SocialLink>
@@ -33,10 +34,12 @@ export default function FooterHome() {
           </div>
         </div>
 
+        {/* Separator */}
         <div className="mt-6 h-px w-full bg-white/10" />
 
-        <div className="mt-6 grid grid-cols-1 gap-4 text-xs sm:text-sm text-zinc-300">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        {/* Legal links */}
+        <div className="mt-6 text-xs sm:text-sm text-zinc-300">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 sm:justify-start sm:gap-x-4">
             {LEGAL_LINKS.map((item, idx) => (
               <React.Fragment key={item.href}>
                 <Link className="hover:text-white transition-colors" href={item.href}>
@@ -48,11 +51,13 @@ export default function FooterHome() {
           </div>
         </div>
 
+        {/* Separator */}
         <div className="mt-6 h-px w-full bg-white/10" />
 
-        <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs text-zinc-400">
-          <span>¶¸ {new Date().getFullYear()} Beatmakerz. Tous droits rÇ¸servÇ¸s.</span>
-          <div className="mt-2 sm:mt-0 flex items-center gap-3">
+        {/* Copyright + utilities */}
+        <div className="mt-4 flex flex-col items-center gap-2 text-center text-xs text-zinc-400 sm:flex-row sm:justify-between sm:text-left">
+          <span>© {new Date().getFullYear()} Beatmakerz. Tous droits réservés.</span>
+          <div className="flex items-center gap-3">
             <span className="h-[1px] w-6 bg-white/20" />
             <Link href="/web/politique#cookies" className="hover:text-white">
               Cookies

@@ -177,8 +177,8 @@ const NavBar = () => {
           isHome ? "bg-transparent" : "bg-gradient-to-b from-[#0b0b14]/95 via-[#0b0b14]/80 to-transparent backdrop-blur-xl"
         }`}
       >
-        {/* Toggle menu — mobile only */}
-        <div className="flex items-center m-2 space-x-2 cursor-pointer lg:hidden">
+        {/* Toggle menu — toujours visible */}
+        <div className="flex items-center m-2 space-x-2 cursor-pointer">
           <AnimatedTwoBarsToggle isOpen={isOpen} toggle={toggleMenu} />
           <UnderlineLink text="MENU" onClick={toggleMenu} href="#" />
         </div>
@@ -263,16 +263,7 @@ const NavBar = () => {
                 ref={overlayRef}
                 className="absolute top-0 left-0 h-screen w-full max-w-[360px] bg-black/80 backdrop-blur-3xl text-white shadow-[10px_0_50px_rgba(0,0,0,0.6)] flex flex-col border-r border-white/5"
               >
-                <div className="flex items-center justify-end border-b border-white/10 px-5 pt-6 pb-4">
-                  <button
-                    type="button"
-                    onClick={toggleMenu}
-                    aria-label="Fermer le menu"
-                    className="text-white/80 transition hover:text-white"
-                  >
-                    ×
-                  </button>
-                </div>
+                <div className="border-b border-white/10 px-5 pt-6 pb-4" />
 
                 <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
                   <div className="space-y-1">
