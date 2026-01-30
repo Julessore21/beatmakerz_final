@@ -102,6 +102,13 @@ export default function AccountPage() {
   }, [authUser]);
 
   const isGuest = !authUser;
+
+  useEffect(() => {
+    if (isGuest) {
+      router.replace("/web/profil");
+    }
+  }, [isGuest, router]);
+
   const u: any = authUser;
   const displayName = typeof authUser === "string" ? authUser : u?.displayName || u?.email || "Invite";
   const email = typeof authUser === "string" ? authUser : u?.email || "";
@@ -187,9 +194,7 @@ export default function AccountPage() {
     <div className="relative min-h-[100svh] bg-[#0A0A12] text-white">
       <AnimatedAmbient />
       <main className="relative z-10 mx-auto w-full max-w-6xl px-4 pb-20 pt-28">
-        {isGuest ? (
-          <GuestView onLogin={() => router.push("/web/profil")} onSignup={() => router.push("/web/profil?mode=signup")} />
-        ) : (
+        {isGuest ? null : (
           <>
             <Header currentUserName={displayName} currentUserEmail={email} onLogout={logout} />
 
@@ -530,24 +535,6 @@ export default function AccountPage() {
       </main>
 
       {loading && !isGuest && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 text-sm text-white">Chargement...</div>}
-    </div>
-  );
-}
-
-function GuestView({ onLogin, onSignup }: { onLogin: () => void; onSignup: () => void }) {
-  return (
-    <div className="min-h-[60vh] bg-[#0A0A12] text-white flex flex-col items-center justify-center">
-      <AnimatedAmbient />
-      <div className="relative z-10 max-w-md text-center space-y-3 px-4">
-        <h1 className="text-3xl font-bold">Espace compte</h1>
-        <p className="text-sm text-zinc-300">Connecte-toi pour acceder a ton tableau de bord, retrouver tes achats et tes favoris.</p>
-        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <Button onClick={onLogin}>Se connecter</Button>
-          <Button variant="secondary" onClick={onSignup}>
-            Creer un compte
-          </Button>
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 type Artist = {
   _id: string;
@@ -446,7 +447,7 @@ export default function AdminCataloguePage() {
           <section className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-[0_20px_80px_rgba(0,0,0,.35)] backdrop-blur-xl">
             <h2 className="text-lg font-semibold">Upload Fichiers (FileUp)</h2>
             <p className="text-xs text-zinc-400 mt-1">
-              Les fichiers sont uploadés vers FileUp et stockés en tant qu'assets MongoDB
+              Les fichiers sont uploadés vers FileUp et stockés comme assets MongoDB
             </p>
 
             <div className="mt-6 grid gap-4 md:grid-cols-3">
@@ -457,11 +458,12 @@ export default function AdminCataloguePage() {
                   {uploadingCover && <span className="text-xs text-amber-300">uploading…</span>}
                 </div>
                 {currentBeat.coverUrl && (
-                  <div className="mt-2">
-                    <img
+                  <div className="mt-2 relative w-full h-32">
+                    <Image
                       src={currentBeat.coverUrl}
                       alt="Cover"
-                      className="w-full h-32 object-cover rounded-lg"
+                      fill
+                      className="object-cover rounded-lg"
                     />
                     <a
                       href={currentBeat.coverUrl}

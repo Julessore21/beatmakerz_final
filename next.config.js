@@ -4,6 +4,20 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["react-icons", "framer-motion"],
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'file-up.fr',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.file-up.fr',
+        pathname: '/**',
+      },
+    ],
+  },
   async headers() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     const csp = [
