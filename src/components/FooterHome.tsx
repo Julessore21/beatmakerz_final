@@ -3,69 +3,79 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { FaInstagram, FaTiktok, FaYoutube, FaXTwitter } from "react-icons/fa6";
-import { LEGAL_LINKS } from "./Footer";
+
+const NAV_SECTIONS = {
+  explore: [
+    { label: "Catalogue", href: "/web/catalogue" },
+    { label: "Marketplace", href: "/web/marketplace" },
+    { label: "Prod sur mesure", href: "/web/prodsurmesure" },
+  ],
+  account: [
+    { label: "Abonnements", href: "/web/abonnements" },
+    { label: "Cartes cadeau", href: "/web/cartes-cadeau" },
+    { label: "Mon compte", href: "/web/account" },
+  ],
+  legal: [
+    { label: "Mentions legales", href: "/web/mentions" },
+    { label: "CGV", href: "/web/cgv" },
+    { label: "CGU", href: "/web/cgu" },
+    { label: "Confidentialite", href: "/web/politique" },
+  ],
+  support: [
+    { label: "Contact", href: "/web/contact" },
+    { label: "FAQ", href: "/web/faq" },
+  ],
+};
 
 export default function FooterHome() {
   const [lang, setLang] = useState<"FR" | "EN">("FR");
 
   return (
-    <footer className="w-full border-t border-white/10 bg-gradient-to-r from-[#080810] via-[#0a0a12] to-[#080810] text-white/90">
-      <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8 py-10">
-        {/* Branding + Social */}
-        <div className="flex flex-col items-center gap-5 text-center sm:flex-row sm:items-center sm:justify-between sm:text-left">
-          <div>
-            <div className="text-base sm:text-lg font-semibold tracking-wide text-white">BEATMAKERZ</div>
-            <div className="mt-1 text-xs text-zinc-400">Plateforme française pour artistes & beatmakers</div>
+    <footer className="relative w-full text-white">
+      {/* Top separator line with glow */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+      {/* Main content */}
+      <div className="mx-auto w-full max-w-6xl px-6 lg:px-8 pt-16 pb-8">
+        {/* Grid layout */}
+        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:grid-cols-5">
+          {/* Brand column */}
+          <div className="col-span-2 sm:col-span-4 lg:col-span-1 lg:pr-8">
+            <div className="text-xl font-bold tracking-[0.25em] text-white">BEATMAKERZ</div>
+            <p className="mt-3 text-xs leading-relaxed text-white/40">
+              Plateforme francaise pour artistes & beatmakers
+            </p>
+            {/* Social icons */}
+            <div className="mt-6 flex items-center gap-3">
+              <SocialIcon href="https://www.instagram.com/beatmakerz_pro/" label="Instagram">
+                <FaInstagram className="h-4 w-4" />
+              </SocialIcon>
+              <SocialIcon href="https://www.tiktok.com/@beatmakerz.pro" label="TikTok">
+                <FaTiktok className="h-4 w-4" />
+              </SocialIcon>
+              <SocialIcon href="https://www.youtube.com/@BEATMAKERZ-PRO" label="YouTube">
+                <FaYoutube className="h-4 w-4" />
+              </SocialIcon>
+              <SocialIcon href="https://x.com" label="X">
+                <FaXTwitter className="h-4 w-4" />
+              </SocialIcon>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center justify-center gap-3 text-white/80">
-            <SocialLink href="https://www.instagram.com/beatmakerz_pro/" label="Instagram">
-              <FaInstagram />
-            </SocialLink>
-            <SocialLink href="https://www.tiktok.com/@beatmakerz.pro" label="TikTok">
-              <FaTiktok />
-            </SocialLink>
-            <SocialLink href="https://www.youtube.com/@BEATMAKERZ-PRO" label="YouTube">
-              <FaYoutube />
-            </SocialLink>
-            <SocialLink href="https://x.com" label="X">
-              <FaXTwitter />
-            </SocialLink>
+
+          {/* Navigation columns */}
+          <NavColumn title="Explorer" links={NAV_SECTIONS.explore} />
+          <NavColumn title="Compte" links={NAV_SECTIONS.account} />
+          <NavColumn title="Legal" links={NAV_SECTIONS.legal} />
+          <NavColumn title="Support" links={NAV_SECTIONS.support} />
+        </div>
+
+        {/* Bottom bar */}
+        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
+          <p className="text-xs text-white/30">
+            © {new Date().getFullYear()} Beatmakerz. Tous droits reserves.
+          </p>
+          <div className="flex items-center gap-6">
             <LangSwitch lang={lang} setLang={setLang} />
-          </div>
-        </div>
-
-        {/* Separator */}
-        <div className="mt-6 h-px w-full bg-white/10" />
-
-        {/* Legal links */}
-        <div className="mt-6 text-xs sm:text-sm text-zinc-300">
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 sm:justify-start sm:gap-x-4">
-            {LEGAL_LINKS.map((item, idx) => (
-              <React.Fragment key={item.href}>
-                <Link className="hover:text-white transition-colors" href={item.href}>
-                  {item.label}
-                </Link>
-                {idx < LEGAL_LINKS.length - 1 ? <span className="text-white/30">/</span> : null}
-              </React.Fragment>
-            ))}
-          </div>
-        </div>
-
-        {/* Separator */}
-        <div className="mt-6 h-px w-full bg-white/10" />
-
-        {/* Copyright + utilities */}
-        <div className="mt-4 flex flex-col items-center gap-2 text-center text-xs text-zinc-400 sm:flex-row sm:justify-between sm:text-left">
-          <span>© {new Date().getFullYear()} Beatmakerz. Tous droits réservés.</span>
-          <div className="flex items-center gap-3">
-            <span className="h-[1px] w-6 bg-white/20" />
-            <Link href="/web/politique#cookies" className="hover:text-white">
-              Cookies
-            </Link>
-            <span className="h-[1px] w-6 bg-white/20" />
-            <Link href="/web/contact" className="hover:text-white">
-              Support
-            </Link>
           </div>
         </div>
       </div>
@@ -73,14 +83,34 @@ export default function FooterHome() {
   );
 }
 
-function SocialLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
+function NavColumn({ title, links }: { title: string; links: { label: string; href: string }[] }) {
+  return (
+    <div>
+      <h3 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/50">{title}</h3>
+      <ul className="mt-4 space-y-2.5">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link
+              href={link.href}
+              className="text-sm text-white/70 transition-colors hover:text-white"
+            >
+              {link.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SocialIcon({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noreferrer"
       aria-label={label}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/80 transition hover:bg-white/10 hover:text-white"
+      className="flex h-8 w-8 items-center justify-center text-white/50 transition-colors hover:text-white"
     >
       {children}
     </a>
@@ -89,7 +119,7 @@ function SocialLink({ href, label, children }: { href: string; label: string; ch
 
 function LangSwitch({ lang, setLang }: { lang: "FR" | "EN"; setLang: (l: "FR" | "EN") => void }) {
   return (
-    <div className="flex items-center rounded-full border border-white/10 bg-white/5 text-xs overflow-hidden">
+    <div className="flex items-center gap-3 text-xs">
       {(["FR", "EN"] as const).map((code) => {
         const active = lang === code;
         return (
@@ -97,8 +127,7 @@ function LangSwitch({ lang, setLang }: { lang: "FR" | "EN"; setLang: (l: "FR" | 
             key={code}
             type="button"
             onClick={() => setLang(code)}
-            className={`px-3 py-1 transition ${active ? "bg-white text-black font-semibold" : "text-white/80 hover:bg-white/10"}`}
-            aria-pressed={active}
+            className={`transition-colors ${active ? "text-white font-medium" : "text-white/40 hover:text-white/70"}`}
           >
             {code}
           </button>
