@@ -151,13 +151,15 @@ function CatalogueContent() {
 
   const [beats, setBeats] = useState<Beat[]>([]);
   const [favIds, setFavIds] = useState<string[]>([]);
+  const [errorBeats, setErrorBeats] = useState<string | null>(null);
+
   useEffect(() => {
     const load = async () => {
       try {
         const items = await fetchFileUpCatalogue();
         const mapped =
           items.map((b, idx) => ({
-            id: b.id ?? `beat-${idx}`,
+            id: b._id || b.id || `beat-${idx}`,
             name: b.title || b.name || "Beat",
             artist: typeof b.artist === "string" ? b.artist : b.artist?.name || "Beatmaker",
             genre: b.genres?.[0] || b.genre || "Beat",
@@ -165,14 +167,14 @@ function CatalogueContent() {
             key: b.key || "Am",
             tag: null as Tag | null,
             audio:
+              b.assets?.find((a) => a.type === "preview")?.storageKey ||
               b.previewUrl ||
               b.audioUrl ||
-              b.assets?.find((a) => a.type === "preview")?.url ||
-              b.assets?.find((a) => a.type === "preview")?.storageKey ||
               TEST_AUDIO,
             price: typeof b.price === "number" ? b.price : (b.priceCents ?? 1999) / 100,
           })) || [];
         setBeats(mapped);
+        setErrorBeats(null);
       } catch {
         setBeats([]); setErrorBeats("Impossible de charger le catalogue");
       }
@@ -702,6 +704,11 @@ function CatalogueContent() {
 
           {/* list + header de résultats */}
           <section className="lg:col-span-9">
+            {errorBeats && (
+              <div className="mb-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
+                {errorBeats}
+              </div>
+            )}
             <div className="mb-3 flex items-center justify-between text-sm text-zinc-400">
               <span>{sorted.length} résultats</span>
               <div className="inline-flex items-center gap-2">
