@@ -104,20 +104,7 @@ const COLLECTIONS: {
 const BPM_MIN = 60;
 const BPM_MAX = 200;
 
-const generateRandomBeats = (count: number): Beat[] => {
-  const artists = ["Metro Boomin", "Kendrick Lamar", "Drake", "J. Cole", "Nas", "Travis Scott", "The Weeknd"];
-  return Array.from({ length: count }, (_, i) => ({
-    id: i + 1,
-    name: `Beat ${i + 1}`,
-    artist: `${artists[Math.floor(Math.random() * artists.length)]} Type Beat`,
-    genre: GENRES[Math.floor(Math.random() * GENRES.length)],
-    bpm: 80 + Math.floor(Math.random() * 80),
-    key: KEYS[Math.floor(Math.random() * KEYS.length)],
-    tag: QUICK_TAGS[Math.floor(Math.random() * QUICK_TAGS.length)] ?? null,
-    audio: TEST_AUDIO,
-    price: Math.random() > 0.5 ? 9.99 : 19.99,
-  }));
-};
+
 
 /* -------------------------------- helpers -------------------------------- */
 
@@ -187,7 +174,7 @@ function CatalogueContent() {
           })) || [];
         setBeats(mapped);
       } catch {
-        setBeats(generateRandomBeats(96));
+        setBeats([]); setErrorBeats("Impossible de charger le catalogue");
       }
     };
     load();
