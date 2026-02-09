@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { Minus, Plus, Trash2, ShieldCheck, CreditCard, PackageSearch, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { apiPost } from "@/lib/services/api-client";
+import { AuthService } from "@/lib/auth.service";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
 
 const SummaryRow = ({ label, value, bold = false }: { label: string; value: string; bold?: boolean }) => (
@@ -47,7 +47,28 @@ const Panier: React.FC = () => {
     setMessage(null);
 
     try {
-      const data = await apiPost<{ url?: string; error?: string }>("/checkout/session", {});
+      // Récupérer le token d'authentification
+      const accessToken = AuthService.getAccessToken();
+
+      // Appel via notre API route qui gère l'authentification
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (accessToken) {
+        headers["Authorization"] = `Bearer ${accessToken}`;
+      }
+
+      const response = await fetch("/api/checkout/session", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({}),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: "Erreur inconnue" }));
+        throw new Error(errorData.error || `Erreur ${response.status}`);
+      }
+
+      const data = await response.json();
+
       if (data?.url) {
         setStatus("success");
         setMessage("Redirection vers Stripe...");
