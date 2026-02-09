@@ -23,7 +23,8 @@ export type FileUpCatalogueItem = {
 export const fetchFileUpCatalogue = async (): Promise<FileUpCatalogueItem[]> => {
   try {
     // Appel à notre API route qui proxy vers le backend
-    const res = await fetch("/api/beats?limit=100", {
+    // Note: Le backend limite à 50 beats max par requête
+    const res = await fetch("/api/beats?limit=50", {
       cache: "no-store",
     });
 

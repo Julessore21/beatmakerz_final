@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
     if (searchParams.has("query")) params.set("query", searchParams.get("query")!);
 
     const url = `${API_URL}/beats?${params.toString()}`;
+    console.log(`[API /beats] Calling backend: ${url}`);
 
     const response = await fetch(url, {
       headers: {
@@ -27,18 +28,23 @@ export async function GET(request: NextRequest) {
       cache: "no-store",
     });
 
+    console.log(`[API /beats] Backend response status: ${response.status}`);
+
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      const errorText = await response.text().catch(() => "Could not read error");
+      console.error(`[API /beats] Backend error: ${response.status} - ${errorText}`);
+      throw new Error(`Backend API error: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log(`[API /beats] Success, returned ${data.items?.length || 0} beats`);
 
     // Le backend retourne { items: Beat[], cursor: string | null }
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("Error fetching beats:", error);
+  } catch (error: any) {
+    console.error("[API /beats] Error:", error.message, error);
     return NextResponse.json(
-      { error: "Failed to fetch beats", items: [] },
+      { error: error.message || "Failed to fetch beats", items: [] },
       { status: 500 }
     );
   }
