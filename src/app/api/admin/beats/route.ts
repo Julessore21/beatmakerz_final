@@ -10,7 +10,10 @@ export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get("accessToken")?.value;
 
+  console.log("[API /admin/beats] Access token present:", !!accessToken);
+
   if (!accessToken) {
+    console.error("[API /admin/beats] No access token found in cookies");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
