@@ -24,9 +24,8 @@ export async function GET(request: NextRequest) {
 
   try {
     // Appel à l'API backend pour récupérer les beats
-    // Note: On récupère TOUS les beats (drafts + published) car on est admin
-    // Le backend limite à 50 beats max par requête
-    const url = `${API_URL}/beats?limit=50&status=all`;
+    // Note: Le backend limite à 50 beats max par requête
+    const url = `${API_URL}/beats?limit=50`;
     console.log("[API /admin/beats] Calling:", url);
 
     const response = await fetch(url, {
