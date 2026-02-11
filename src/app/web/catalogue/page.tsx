@@ -103,6 +103,7 @@ const COLLECTIONS: {
 // plages de BPM
 const BPM_MIN = 60;
 const BPM_MAX = 200;
+const BPM_RANGE_SIZE = 20; // Taille fixe de la zone BPM (ex: 120-140)
 
 
 
@@ -140,8 +141,9 @@ function CatalogueContent() {
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
-  const [bpmMin, setBpmMin] = useState<number>(BPM_MIN);
-  const [bpmMax, setBpmMax] = useState<number>(BPM_MAX);
+  const [bpmStart, setBpmStart] = useState<number>(BPM_MIN); // Point de départ de la zone
+  const bpmMin = bpmStart;
+  const bpmMax = Math.min(bpmStart + BPM_RANGE_SIZE, BPM_MAX);
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Prix ↑");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -215,27 +217,12 @@ function CatalogueContent() {
     setDebounced(q);
     setSelectedGenres(g);
     setSelectedKeys(k);
-    let initialMin = BPM_MIN;
-    let initialMax = BPM_MAX;
+    let initialStart = BPM_MIN;
     if (!Number.isNaN(bpmMinUrl)) {
-      initialMin = Math.max(BPM_MIN, Math.min(BPM_MAX, bpmMinUrl));
+      // Clamp pour que la zone ne dépasse pas BPM_MAX
+      initialStart = Math.max(BPM_MIN, Math.min(BPM_MAX - BPM_RANGE_SIZE, bpmMinUrl));
     }
-    if (!Number.isNaN(bpmMaxUrl)) {
-      initialMax = Math.max(BPM_MIN, Math.min(BPM_MAX, bpmMaxUrl));
-    }
-
-    if (initialMin >= initialMax) {
-      if (!Number.isNaN(bpmMaxUrl)) {
-        initialMax = Math.min(BPM_MAX, initialMin + 1);
-      } else if (!Number.isNaN(bpmMinUrl)) {
-        initialMin = Math.max(BPM_MIN, initialMax - 1);
-      } else {
-        initialMax = Math.max(initialMin + 1, initialMax);
-      }
-    }
-
-    setBpmMin(initialMin);
-    setBpmMax(initialMax);
+    setBpmStart(initialStart);
     setSelectedTag(tag);
     setSort(s);
     setViewMode(v);
@@ -320,24 +307,13 @@ function CatalogueContent() {
   const toggleInArray = (val: string, arr: string[], set: (v: string[]) => void) =>
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
 
-  const BPM_GAP = 5;
-
-  const handleBpmMinChange = useCallback(
+  const handleBpmStartChange = useCallback(
     (value: number) => {
-      const maxBound = Math.max(bpmMax - BPM_GAP, BPM_MIN);
-      const clamped = Math.min(Math.max(value, BPM_MIN), maxBound);
-      setBpmMin(clamped);
+      // Clamp pour que la zone reste dans les limites
+      const clamped = Math.max(BPM_MIN, Math.min(BPM_MAX - BPM_RANGE_SIZE, value));
+      setBpmStart(clamped);
     },
-    [bpmMax]
-  );
-
-  const handleBpmMaxChange = useCallback(
-    (value: number) => {
-      const minBound = Math.min(bpmMin + BPM_GAP, BPM_MAX);
-      const clamped = Math.max(Math.min(value, BPM_MAX), minBound);
-      setBpmMax(clamped);
-    },
-    [bpmMin]
+    []
   );
 
   const onPlay = (b: Beat) => (track?.id === b.id && isPlaying ? toggle() : play(b, currentBeats));
@@ -350,139 +326,130 @@ function CatalogueContent() {
     setFavIds((prev) => (prev.includes(beatId) ? prev.filter((id) => id !== beatId) : [...prev, beatId]));
   };
 
-    const RangeSlider = ({
+  const ZoneSlider = ({
     min,
     max,
-    valueMin,
-    valueMax,
-    onChangeMin,
-    onChangeMax,
+    rangeSize,
+    value,
+    onChange,
   }: {
     min: number;
     max: number;
-    valueMin: number;
-    valueMax: number;
-    onChangeMin: (value: number) => void;
-    onChangeMax: (value: number) => void;
+    rangeSize: number;
+    value: number;
+    onChange: (value: number) => void;
   }) => {
-      const sliderRef = useRef<HTMLDivElement>(null);
-      const pointerIdRef = useRef<number | null>(null);
-      const [activeHandle, setActiveHandle] = useState<"min" | "max" | null>(null);
+    const sliderRef = useRef<HTMLDivElement>(null);
+    const pointerIdRef = useRef<number | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const dragOffsetRef = useRef<number>(0);
 
     const getValueFromPointer = useCallback(
-      (clientX: number) => {
+      (clientX: number, offset = 0) => {
         const rect = sliderRef.current?.getBoundingClientRect();
         if (!rect) return null;
-        const ratio = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
-        return Math.round(min + ratio * (max - min));
+        const ratio = Math.min(Math.max((clientX - rect.left - offset) / rect.width, 0), 1);
+        // Le max effectif est (max - rangeSize) pour que la zone ne dépasse pas
+        const effectiveMax = max - rangeSize;
+        return Math.round(min + ratio * (effectiveMax - min));
       },
-      [min, max]
+      [min, max, rangeSize]
     );
 
-      const startDrag = (
-        handle: "min" | "max",
-        clientX: number,
-        pointerId: number,
-        target: EventTarget | null
-      ) => {
-        const value = getValueFromPointer(clientX);
-        if (value === null) return;
-        setActiveHandle(handle);
-        (handle === "min" ? onChangeMin : onChangeMax)(value);
-        const captureTarget = target instanceof Element ? target : sliderRef.current;
-        captureTarget?.setPointerCapture(pointerId);
-        pointerIdRef.current = pointerId;
-      };
+    const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      const rect = sliderRef.current?.getBoundingClientRect();
+      if (!rect) return;
 
-      const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-        event.preventDefault();
-        const value = getValueFromPointer(event.clientX);
-        if (value === null) return;
-        const distanceToMin = Math.abs(value - valueMin);
-        const distanceToMax = Math.abs(value - valueMax);
-        const handle = distanceToMin <= distanceToMax ? "min" : "max";
-        startDrag(handle, event.clientX, event.pointerId, event.currentTarget);
-      };
+      // Calcul de la position de la zone
+      const effectiveMax = max - rangeSize;
+      const totalRange = effectiveMax - min;
+      const zoneStartPercent = totalRange > 0 ? ((value - min) / totalRange) * 100 : 0;
+      const zoneWidthPercent = totalRange > 0 ? (rangeSize / (max - min)) * 100 : 0;
 
-      const handleHandlePointerDown =
-        (handle: "min" | "max") => (event: ReactPointerEvent<HTMLDivElement>) => {
-          event.stopPropagation();
-          startDrag(handle, event.clientX, event.pointerId, event.currentTarget);
-        };
+      const clickX = event.clientX - rect.left;
+      const clickPercent = (clickX / rect.width) * 100;
+
+      // Vérifie si on clique sur la zone
+      const zoneEndPercent = zoneStartPercent + zoneWidthPercent;
+      if (clickPercent >= zoneStartPercent && clickPercent <= zoneEndPercent) {
+        // On glisse la zone - calcul de l'offset depuis le début de la zone
+        const zoneStartPx = (zoneStartPercent / 100) * rect.width;
+        dragOffsetRef.current = clickX - zoneStartPx;
+      } else {
+        // Clic en dehors de la zone - centre la zone sur le clic
+        dragOffsetRef.current = ((rangeSize / 2) / (max - min)) * rect.width;
+        const newValue = getValueFromPointer(event.clientX, dragOffsetRef.current);
+        if (newValue !== null) onChange(newValue);
+      }
+
+      setIsDragging(true);
+      event.currentTarget.setPointerCapture(event.pointerId);
+      pointerIdRef.current = event.pointerId;
+    };
 
     const handleWindowPointerMove = useCallback(
       (event: PointerEvent) => {
-        if (!activeHandle) return;
-        const value = getValueFromPointer(event.clientX);
-        if (value === null) return;
-        (activeHandle === "min" ? onChangeMin : onChangeMax)(value);
+        if (!isDragging) return;
+        const newValue = getValueFromPointer(event.clientX, dragOffsetRef.current);
+        if (newValue !== null) onChange(newValue);
       },
-      [activeHandle, getValueFromPointer, onChangeMax, onChangeMin]
+      [isDragging, getValueFromPointer, onChange]
     );
 
     useEffect(() => {
-      if (!activeHandle) return;
-      const handlePointerUp = () => {
-        setActiveHandle(null);
-      };
-      window.addEventListener("pointermove", handleWindowPointerMove);
-      const clearActive = () => {
-        setActiveHandle(null);
+      if (!isDragging) return;
+      const clearDragging = () => {
+        setIsDragging(false);
         if (pointerIdRef.current !== null) {
           try {
             sliderRef.current?.releasePointerCapture(pointerIdRef.current);
           } catch {
-            // ignore if pointer already released
+            // ignore
           } finally {
             pointerIdRef.current = null;
           }
         }
       };
-      window.addEventListener("pointerup", clearActive);
-      window.addEventListener("pointercancel", clearActive);
+      window.addEventListener("pointermove", handleWindowPointerMove);
+      window.addEventListener("pointerup", clearDragging);
+      window.addEventListener("pointercancel", clearDragging);
       return () => {
         window.removeEventListener("pointermove", handleWindowPointerMove);
-        window.removeEventListener("pointerup", clearActive);
-        window.removeEventListener("pointercancel", clearActive);
+        window.removeEventListener("pointerup", clearDragging);
+        window.removeEventListener("pointercancel", clearDragging);
       };
-    }, [activeHandle, handleWindowPointerMove]);
+    }, [isDragging, handleWindowPointerMove]);
 
-    const totalRange = max - min;
-    const minPercent = totalRange > 0 ? ((valueMin - min) / totalRange) * 100 : 0;
-    const maxPercent = totalRange > 0 ? ((valueMax - min) / totalRange) * 100 : 100;
+    // Calcul des positions pour l'affichage
+    const effectiveMax = max - rangeSize;
+    const totalRange = effectiveMax - min;
+    const zoneStartPercent = totalRange > 0 ? ((value - min) / totalRange) * 100 : 0;
+    const zoneWidthPercent = (rangeSize / (max - min)) * 100;
+
+    const displayMin = value;
+    const displayMax = value + rangeSize;
 
     return (
       <div className="space-y-2">
         <div
           ref={sliderRef}
-          className="relative h-3 cursor-pointer rounded-full bg-white/10"
+          className="relative h-3 cursor-grab rounded-full bg-white/10"
           onPointerDown={handlePointerDown}
+          style={{ cursor: isDragging ? "grabbing" : "grab" }}
         >
           <div
-            className="absolute inset-y-0 rounded-full bg-gradient-to-r from-[#7c5cff] to-[#c43eff]"
+            className={`absolute inset-y-0 rounded-full bg-gradient-to-r from-[#7c5cff] to-[#c43eff] transition-shadow ${
+              isDragging ? "shadow-lg shadow-violet-500/30" : ""
+            }`}
             style={{
-              left: `${Math.min(minPercent, maxPercent)}%`,
-              right: `${100 - Math.max(minPercent, maxPercent)}%`,
+              left: `${zoneStartPercent}%`,
+              width: `${zoneWidthPercent}%`,
             }}
           />
-          <div
-            className={`absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 bg-white/90 shadow-lg transition ${
-              activeHandle === "min" ? "scale-110" : ""
-            }`}
-            style={{ left: `${minPercent}%` }}
-            onPointerDown={handleHandlePointerDown("min")}
-          />
-          <div
-            className={`absolute top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/40 bg-white/90 shadow-lg transition ${
-              activeHandle === "max" ? "scale-110" : ""
-            }`}
-            style={{ left: `${maxPercent}%` }}
-            onPointerDown={handleHandlePointerDown("max")}
-          />
         </div>
-        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.3em] text-zinc-400">
-          <span>Min {valueMin} BPM</span>
-          <span>Max {valueMax} BPM</span>
+        <div className="flex items-center justify-center text-[11px] uppercase tracking-[0.3em] text-zinc-400">
+          <span>{displayMin} - {displayMax} BPM</span>
         </div>
       </div>
     );
@@ -532,13 +499,12 @@ function CatalogueContent() {
         </div>
       </div>
 
-      <RangeSlider
+      <ZoneSlider
         min={BPM_MIN}
         max={BPM_MAX}
-        valueMin={bpmMin}
-        valueMax={bpmMax}
-        onChangeMin={handleBpmMinChange}
-        onChangeMax={handleBpmMaxChange}
+        rangeSize={BPM_RANGE_SIZE}
+        value={bpmStart}
+        onChange={handleBpmStartChange}
       />
     </>
   );
@@ -659,13 +625,12 @@ function CatalogueContent() {
                 </summary>
                 <div className="px-4 pb-4 space-y-3">
                   <FiltersBlocks />
-                  {selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || bpmMax !== BPM_MAX || selectedTag ? (
+                  {selectedGenres.length || selectedKeys.length || bpmStart !== BPM_MIN || selectedTag ? (
                     <button
                       onClick={() => {
                         setSelectedGenres([]);
                         setSelectedKeys([]);
-                        setBpmMin(BPM_MIN);
-                        setBpmMax(BPM_MAX);
+                        setBpmStart(BPM_MIN);
                         setSelectedTag(null);
                         setQuery("");
                         setDebounced("");
@@ -683,7 +648,7 @@ function CatalogueContent() {
           <aside className="hidden lg:block lg:col-span-3">
             <div className="sticky top-24 space-y-4">
               <FiltersBlocks />
-              {selectedGenres.length || selectedKeys.length || bpmMin !== BPM_MIN || bpmMax !== BPM_MAX || selectedTag ? (
+              {selectedGenres.length || selectedKeys.length || bpmStart !== BPM_MIN || selectedTag ? (
                 <button
                   onClick={() => {
                     setSelectedGenres([]);
