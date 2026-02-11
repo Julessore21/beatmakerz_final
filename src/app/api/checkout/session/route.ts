@@ -17,14 +17,11 @@ export async function POST(request: NextRequest) {
     const accessToken = cookieToken || headerToken;
 
     if (!accessToken) {
-      console.error("[API /checkout/session] No access token found in cookies or headers");
       return NextResponse.json(
         { error: "Unauthorized - Please login first" },
         { status: 401 }
       );
     }
-
-    console.log("[API /checkout/session] Creating Stripe checkout session");
 
     const response = await fetch(`${API_URL}/checkout/session`, {
       method: "POST",
@@ -35,11 +32,8 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({}),
     });
 
-    console.log(`[API /checkout/session] Backend response status: ${response.status}`);
-
     if (!response.ok) {
       const errorText = await response.text().catch(() => "Could not read error");
-      console.error(`[API /checkout/session] Backend error: ${response.status} - ${errorText}`);
 
       if (response.status === 401) {
         return NextResponse.json(
@@ -52,7 +46,6 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    console.log("[API /checkout/session] Success, returning checkout URL");
 
     return NextResponse.json(data);
   } catch (error: any) {

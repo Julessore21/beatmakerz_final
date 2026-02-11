@@ -15,18 +15,12 @@ export async function GET(request: NextRequest) {
 
   const accessToken = cookieToken || headerToken;
 
-  console.log("[API /admin/beats] Access token present:", !!accessToken);
-
   if (!accessToken) {
-    console.error("[API /admin/beats] No access token found");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // Appel à l'API backend pour récupérer les beats
-    // Note: Le backend limite à 50 beats max par requête
     const url = `${API_URL}/beats?limit=50`;
-    console.log("[API /admin/beats] Calling:", url);
 
     const response = await fetch(url, {
       headers: {
@@ -34,16 +28,12 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log("[API /admin/beats] Response status:", response.status);
-
     if (!response.ok) {
       const errorText = await response.text().catch(() => "Could not read error");
-      console.error("[API /admin/beats] Backend error:", response.status, errorText);
       throw new Error(`API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log("[API /admin/beats] Success, got", data.items?.length || 0, "beats");
 
     // Retourner directement les items du catalogue
     return NextResponse.json(data.items || []);

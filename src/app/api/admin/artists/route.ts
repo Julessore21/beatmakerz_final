@@ -15,10 +15,7 @@ export async function GET(request: NextRequest) {
 
   const accessToken = cookieToken || headerToken;
 
-  console.log("[API /admin/artists] Access token present:", !!accessToken);
-
   if (!accessToken) {
-    console.error("[API /admin/artists] No access token found");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

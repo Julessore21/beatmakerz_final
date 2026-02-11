@@ -40,16 +40,14 @@ export async function POST(request: NextRequest) {
     // Stocker le token dans un cookie HTTP-only
     const cookieStore = await cookies();
 
-    console.log("[API /auth/login] Setting accessToken cookie");
     cookieStore.set("accessToken", data.tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 15 * 60, // 15 minutes (durée du token)
+      maxAge: 15 * 60, // 15 minutes (duree du token)
       path: "/",
     });
 
-    console.log("[API /auth/login] Setting refreshToken cookie");
     cookieStore.set("refreshToken", data.tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -57,8 +55,6 @@ export async function POST(request: NextRequest) {
       maxAge: 30 * 24 * 60 * 60, // 30 jours
       path: "/",
     });
-
-    console.log("[API /auth/login] Cookies set successfully for user:", data.email);
 
     // Retourner les infos utilisateur ET les tokens pour sessionStorage
     return NextResponse.json({

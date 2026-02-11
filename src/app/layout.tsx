@@ -2,6 +2,7 @@ import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
 import { CartProvider } from "@/context/CartContext";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 import GlobalAudioPlayer from "@/components/GlobalAudioPlayer";
 import NavBar from "@/components/Navbar";
 import { AuthProvider } from "@/context/AuthContext";
@@ -72,16 +73,18 @@ export default function RootLayout({
       <body className="font-sans flex min-h-screen flex-col bg-transparent">
         <CartProvider>
           <AuthProvider>
-            <AudioPlayerProvider>
-              <header>
-                <NavBar />
-              </header>
-              <main className="flex-1 w-full">
-                {children}
-              </main>
-              <FooterWrapper />
-              <GlobalAudioPlayer />
-            </AudioPlayerProvider>
+            <FavoritesProvider>
+              <AudioPlayerProvider>
+                <header>
+                  <NavBar />
+                </header>
+                <main className="flex-1 w-full">
+                  {children}
+                </main>
+                <FooterWrapper />
+                <GlobalAudioPlayer />
+              </AudioPlayerProvider>
+            </FavoritesProvider>
           </AuthProvider>
         </CartProvider>
       </body>

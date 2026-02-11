@@ -51,12 +51,9 @@ export async function POST(
     // Créer un nouveau FormData pour l'envoyer au backend
     const backendFormData = new FormData();
     backendFormData.append("file", file);
-    backendFormData.append("generatePreview", "true"); // Flag pour générer la preview automatiquement
+    backendFormData.append("generatePreview", "true"); // Flag pour generer la preview automatiquement
 
-    console.log(`[API /admin/beats/${id}/audio] Uploading audio file:`, file.name, `(${(file.size / 1024 / 1024).toFixed(2)} MB)`);
-
-    // Appel au backend pour upload avec génération de preview
-    // Note: Le backend doit avoir un endpoint qui supporte generatePreview=true
+    // Appel au backend pour upload avec generation de preview
     const response = await fetch(`${API_URL}/beats/${id}/upload-audio`, {
       method: "POST",
       headers: {
@@ -67,14 +64,12 @@ export async function POST(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: "Upload failed" }));
-      console.error(`[API /admin/beats/${id}/audio] Backend error:`, error);
       throw new Error(error.message || `API error: ${response.status}`);
     }
 
     const data = await response.json();
-    console.log(`[API /admin/beats/${id}/audio] Success:`, data);
 
-    // Le backend devrait retourner les deux assets créés: preview et mp3
+    // Le backend devrait retourner les deux assets crees: preview et mp3
     return NextResponse.json(data);
   } catch (error: any) {
     console.error(`Error uploading audio:`, error);

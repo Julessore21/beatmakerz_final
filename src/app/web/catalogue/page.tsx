@@ -141,7 +141,8 @@ function CatalogueContent() {
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
-  const [bpmStart, setBpmStart] = useState<number>(BPM_MIN); // Point de départ de la zone
+  const [bpmFilterActive, setBpmFilterActive] = useState(false); // Filtre BPM désactivé par défaut
+  const [bpmStart, setBpmStart] = useState<number>(100); // Valeur par défaut centrale (100-120)
   const bpmMin = bpmStart;
   const bpmMax = Math.min(bpmStart + BPM_RANGE_SIZE, BPM_MAX);
   const [sort, setSort] = useState<(typeof SORTS)[number]>("Prix ↑");
@@ -217,12 +218,12 @@ function CatalogueContent() {
     setDebounced(q);
     setSelectedGenres(g);
     setSelectedKeys(k);
-    let initialStart = BPM_MIN;
+    // Active le filtre BPM uniquement si présent dans l'URL
     if (!Number.isNaN(bpmMinUrl)) {
-      // Clamp pour que la zone ne dépasse pas BPM_MAX
-      initialStart = Math.max(BPM_MIN, Math.min(BPM_MAX - BPM_RANGE_SIZE, bpmMinUrl));
+      const initialStart = Math.max(BPM_MIN, Math.min(BPM_MAX - BPM_RANGE_SIZE, bpmMinUrl));
+      setBpmStart(initialStart);
+      setBpmFilterActive(true);
     }
-    setBpmStart(initialStart);
     setSelectedTag(tag);
     setSort(s);
     setViewMode(v);
@@ -235,8 +236,7 @@ function CatalogueContent() {
     if (debounced) p.set("q", debounced);
     if (selectedGenres.length) p.set("genres", selectedGenres.join(","));
     if (selectedKeys.length) p.set("keys", selectedKeys.join(","));
-    if (bpmMin !== BPM_MIN) p.set("bpmMin", String(bpmMin));
-    if (bpmMax !== BPM_MAX) p.set("bpmMax", String(bpmMax));
+    if (bpmFilterActive) p.set("bpmMin", String(bpmMin));
     if (selectedTag) p.set("tag", selectedTag);
     p.set("sort", sort);
     p.set("view", viewMode);
@@ -245,10 +245,10 @@ function CatalogueContent() {
       lastQSRef.current = qs;
       router.replace(qs ? `?${qs}` : "?", { scroll: false });
     }
-  }, [debounced, selectedGenres, selectedKeys, bpmMin, bpmMax, selectedTag, sort, viewMode, router]);
+  }, [debounced, selectedGenres, selectedKeys, bpmFilterActive, bpmMin, selectedTag, sort, viewMode, router]);
 
   /* reset page on filter change */
-  useEffect(() => setCurrentPage(1), [debounced, selectedGenres, selectedKeys, bpmMin, bpmMax, selectedTag, sort, viewMode]);
+  useEffect(() => setCurrentPage(1), [debounced, selectedGenres, selectedKeys, bpmFilterActive, bpmMin, selectedTag, sort, viewMode]);
 
   // remonter en haut quand la page change (peu importe la direction)
   useEffect(() => {
@@ -268,10 +268,10 @@ function CatalogueContent() {
       const mG = selectedGenres.length ? selectedGenres.includes(b.genre) : true;
       const mK = selectedKeys.length ? selectedKeys.includes(b.key) : true;
       const mT = selectedTag ? b.tag === selectedTag : true;
-      const mB = b.bpm >= bpmMin && b.bpm <= bpmMax;
+      const mB = bpmFilterActive ? (b.bpm >= bpmMin && b.bpm <= bpmMax) : true;
       return mQ && mG && mK && mT && mB;
     });
-  }, [beats, debounced, selectedGenres, selectedKeys, selectedTag, bpmMin, bpmMax]);
+  }, [beats, debounced, selectedGenres, selectedKeys, selectedTag, bpmFilterActive, bpmMin, bpmMax]);
 
   /* sort */
   const sorted = useMemo(() => {
@@ -312,6 +312,7 @@ function CatalogueContent() {
       // Clamp pour que la zone reste dans les limites
       const clamped = Math.max(BPM_MIN, Math.min(BPM_MAX - BPM_RANGE_SIZE, value));
       setBpmStart(clamped);
+      setBpmFilterActive(true); // Active le filtre dès qu'on interagit
     },
     []
   );
@@ -332,12 +333,16 @@ function CatalogueContent() {
     rangeSize,
     value,
     onChange,
+    isActive,
+    onToggleActive,
   }: {
     min: number;
     max: number;
     rangeSize: number;
     value: number;
     onChange: (value: number) => void;
+    isActive: boolean;
+    onToggleActive: () => void;
   }) => {
     const sliderRef = useRef<HTMLDivElement>(null);
     const pointerIdRef = useRef<number | null>(null);
@@ -432,15 +437,27 @@ function CatalogueContent() {
 
     return (
       <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <SectionTitle>Tempo (BPM)</SectionTitle>
+          {isActive && (
+            <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={onToggleActive}>
+              Désactiver
+            </button>
+          )}
+        </div>
         <div
           ref={sliderRef}
-          className="relative h-3 cursor-grab rounded-full bg-white/10"
+          className={`relative h-3 rounded-full transition-colors ${
+            isActive ? "cursor-grab bg-white/10" : "cursor-pointer bg-white/5"
+          }`}
           onPointerDown={handlePointerDown}
-          style={{ cursor: isDragging ? "grabbing" : "grab" }}
+          style={{ cursor: isDragging ? "grabbing" : isActive ? "grab" : "pointer" }}
         >
           <div
-            className={`absolute inset-y-0 rounded-full bg-gradient-to-r from-[#7c5cff] to-[#c43eff] transition-shadow ${
-              isDragging ? "shadow-lg shadow-violet-500/30" : ""
+            className={`absolute inset-y-0 rounded-full transition-all ${
+              isActive
+                ? `bg-gradient-to-r from-[#7c5cff] to-[#c43eff] ${isDragging ? "shadow-lg shadow-violet-500/30" : ""}`
+                : "bg-white/20"
             }`}
             style={{
               left: `${zoneStartPercent}%`,
@@ -449,7 +466,11 @@ function CatalogueContent() {
           />
         </div>
         <div className="flex items-center justify-center text-[11px] uppercase tracking-[0.3em] text-zinc-400">
-          <span>{displayMin} - {displayMax} BPM</span>
+          {isActive ? (
+            <span>{displayMin} - {displayMax} BPM</span>
+          ) : (
+            <span className="text-zinc-500">Cliquez pour filtrer par BPM</span>
+          )}
         </div>
       </div>
     );
@@ -505,6 +526,8 @@ function CatalogueContent() {
         rangeSize={BPM_RANGE_SIZE}
         value={bpmStart}
         onChange={handleBpmStartChange}
+        isActive={bpmFilterActive}
+        onToggleActive={() => setBpmFilterActive(false)}
       />
     </>
   );
@@ -625,12 +648,12 @@ function CatalogueContent() {
                 </summary>
                 <div className="px-4 pb-4 space-y-3">
                   <FiltersBlocks />
-                  {selectedGenres.length || selectedKeys.length || bpmStart !== BPM_MIN || selectedTag ? (
+                  {selectedGenres.length || selectedKeys.length || bpmFilterActive || selectedTag ? (
                     <button
                       onClick={() => {
                         setSelectedGenres([]);
                         setSelectedKeys([]);
-                        setBpmStart(BPM_MIN);
+                        setBpmFilterActive(false);
                         setSelectedTag(null);
                         setQuery("");
                         setDebounced("");
@@ -648,12 +671,12 @@ function CatalogueContent() {
           <aside className="hidden lg:block lg:col-span-3">
             <div className="sticky top-24 space-y-4">
               <FiltersBlocks />
-              {selectedGenres.length || selectedKeys.length || bpmStart !== BPM_MIN || selectedTag ? (
+              {selectedGenres.length || selectedKeys.length || bpmFilterActive || selectedTag ? (
                 <button
                   onClick={() => {
                     setSelectedGenres([]);
                     setSelectedKeys([]);
-                    setBpmStart(BPM_MIN);
+                    setBpmFilterActive(false);
                     setSelectedTag(null);
                     setQuery("");
                     setDebounced("");
