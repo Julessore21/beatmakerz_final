@@ -139,9 +139,7 @@ export default function AdminCataloguePage() {
   const [form, setForm] = useState(initialFormState);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [uploadingCover, setUploadingCover] = useState(false);
-  const [uploadingPreview, setUploadingPreview] = useState(false);
-  const [uploadingMp3, setUploadingMp3] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
@@ -238,51 +236,37 @@ export default function AdminCataloguePage() {
     setInfo(null);
   };
 
-  const uploadCover = async (beatId: string, file: File) => {
-    setUploadingCover(true);
+  const uploadAudio = async (beatId: string, file: File) => {
+    setUploadingAudio(true);
+    setError(null);
+    setInfo(null);
     try {
       const formData = new FormData();
       formData.append("file", file);
       const token = sessionStorage.getItem("access_token");
-      const res = await fetch(`/api/admin/beats/${beatId}/cover`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Upload cover échoué.");
-      const data = await res.json();
-      setInfo(`Cover uploadée: ${data.coverUrl}`);
-      await loadBeats();
-    } catch (err: unknown) {
-      console.error(err);
-      setError("L&apos;upload de la cover n&apos;a pas pu être réalisé.");
-    } finally {
-      setUploadingCover(false);
-    }
-  };
 
-  const uploadAsset = async (beatId: string, type: "preview" | "mp3" | "wav" | "stems", file: File) => {
-    const setUploading = type === "preview" ? setUploadingPreview : setUploadingMp3;
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const token = sessionStorage.getItem("access_token");
-      const res = await fetch(`/api/admin/beats/${beatId}/assets/${type}`, {
+      setInfo(`Upload en cours... (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+
+      const res = await fetch(`/api/admin/beats/${beatId}/audio`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
         credentials: "include",
       });
-      if (!res.ok) throw new Error(`Upload ${type} échoué.`);
-      setInfo(`${type.toUpperCase()} uploadé avec succès!`);
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ error: "Upload échoué" }));
+        throw new Error(errorData.error || "Upload échoué");
+      }
+
+      const data = await res.json();
+      setInfo(`Audio uploadé! Preview (45s) et version complète générées automatiquement.`);
       await loadBeats();
     } catch (err: unknown) {
       console.error(err);
-      setError(`L&apos;upload du ${type} n&apos;a pas pu être réalisé.`);
+      setError((err as Error).message || "L&apos;upload de l&apos;audio n&apos;a pas pu être réalisé.");
     } finally {
-      setUploading(false);
+      setUploadingAudio(false);
     }
   };
 
@@ -634,45 +618,55 @@ export default function AdminCataloguePage() {
         {/* Upload Section - Compact */}
         {form.id && currentBeat && (
           <section className="relative z-0 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-300 mb-3">Fichiers</h2>
-            <div className="grid gap-3 md:grid-cols-3">
-              {/* Cover */}
-              <div className="rounded-xl border border-white/10 bg-[#04040c]/70 p-3">
-                <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-zinc-500">
-                  <span>Cover</span>
-                  {uploadingCover && <span className="text-amber-300">...</span>}
-                  {currentBeat.coverUrl && <span className="text-emerald-400">✓</span>}
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-300 mb-3">Fichiers Audio</h2>
+            <div className="space-y-3">
+              {/* Status des fichiers */}
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-400">Preview (45s):</span>
+                  {currentBeat.assets?.find((a) => a.type === "preview") ? (
+                    <span className="text-emerald-400 font-medium">✓ Disponible</span>
+                  ) : (
+                    <span className="text-zinc-600">Non uploadé</span>
+                  )}
                 </div>
-                <label className="mt-2 flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/20 py-2 text-xs text-zinc-400 hover:border-white/40 hover:text-white">
-                  <input type="file" className="hidden" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file && form.id) uploadCover(form.id, file); }} />
-                  {currentBeat.coverUrl ? "Remplacer" : "Upload"}
-                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-400">Version complète:</span>
+                  {currentBeat.assets?.find((a) => a.type === "mp3") ? (
+                    <span className="text-emerald-400 font-medium">✓ Disponible</span>
+                  ) : (
+                    <span className="text-zinc-600">Non uploadé</span>
+                  )}
+                </div>
               </div>
 
-              {/* Preview */}
-              <div className="rounded-xl border border-white/10 bg-[#04040c]/70 p-3">
-                <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-zinc-500">
-                  <span>Preview</span>
-                  {uploadingPreview && <span className="text-amber-300">...</span>}
-                  {currentBeat.assets?.find((a) => a.type === "preview") && <span className="text-emerald-400">✓</span>}
+              {/* Upload button */}
+              <div className="rounded-xl border border-white/10 bg-[#04040c]/70 p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm font-medium text-white">Upload Audio</p>
+                    <p className="text-[10px] text-zinc-500 mt-0.5">
+                      Upload UN fichier audio. La preview (45s) et la version complète seront générées automatiquement.
+                    </p>
+                  </div>
+                  {uploadingAudio && <span className="text-amber-300 text-xs">Traitement en cours...</span>}
                 </div>
-                <label className="mt-2 flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/20 py-2 text-xs text-zinc-400 hover:border-white/40 hover:text-white">
-                  <input type="file" className="hidden" accept="audio/mp3,audio/mpeg" onChange={(e) => { const file = e.target.files?.[0]; if (file && form.id) uploadAsset(form.id, "preview", file); }} />
-                  {currentBeat.assets?.find((a) => a.type === "preview") ? "Remplacer" : "Upload"}
+                <label className="mt-2 flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-indigo-500/30 bg-indigo-500/5 py-3 text-sm font-medium text-indigo-300 hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-colors">
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="audio/mp3,audio/mpeg,audio/wav"
+                    disabled={uploadingAudio}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file && form.id) uploadAudio(form.id, file);
+                    }}
+                  />
+                  {uploadingAudio ? "Upload en cours..." : (currentBeat.assets?.find((a) => a.type === "mp3") ? "Remplacer l'audio" : "Choisir un fichier audio")}
                 </label>
-              </div>
-
-              {/* MP3 */}
-              <div className="rounded-xl border border-white/10 bg-[#04040c]/70 p-3">
-                <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-zinc-500">
-                  <span>MP3</span>
-                  {uploadingMp3 && <span className="text-amber-300">...</span>}
-                  {currentBeat.assets?.find((a) => a.type === "mp3") && <span className="text-emerald-400">✓</span>}
-                </div>
-                <label className="mt-2 flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-white/20 py-2 text-xs text-zinc-400 hover:border-white/40 hover:text-white">
-                  <input type="file" className="hidden" accept="audio/mp3,audio/mpeg" onChange={(e) => { const file = e.target.files?.[0]; if (file && form.id) uploadAsset(form.id, "mp3", file); }} />
-                  {currentBeat.assets?.find((a) => a.type === "mp3") ? "Remplacer" : "Upload"}
-                </label>
+                <p className="text-[10px] text-zinc-600 mt-2">
+                  Formats acceptés: MP3, WAV • La cover sera générée automatiquement selon le genre
+                </p>
               </div>
             </div>
           </section>

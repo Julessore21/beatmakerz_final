@@ -4,14 +4,17 @@ import { cookies } from "next/headers";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
 /**
- * POST /api/admin/beats/[id]/assets/[type] - Upload beat audio asset
- * Types: preview, mp3, wav, stems, project
+ * POST /api/admin/beats/[id]/audio - Upload beat audio (génère automatiquement preview + full track)
+ *
+ * Cette route upload UN SEUL fichier audio et le backend génère automatiquement:
+ * - Une preview de 45 secondes (début du track)
+ * - Le fichier complet
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; type: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id, type } = await params;
+  const { id } = await params;
 
   // Récupérer le token depuis les cookies OU depuis le header Authorization
   const cookieStore = await cookies();
@@ -25,15 +28,6 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Valider le type d'asset
-  const validTypes = ["preview", "mp3", "wav", "stems", "project"];
-  if (!validTypes.includes(type)) {
-    return NextResponse.json(
-      { error: `Invalid asset type. Must be one of: ${validTypes.join(", ")}` },
-      { status: 400 }
-    );
-  }
-
   try {
     // Récupérer le fichier du FormData
     const formData = await request.formData();
@@ -41,7 +35,15 @@ export async function POST(
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
-        { error: "No file provided" },
+        { error: "No audio file provided" },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier que c'est bien un fichier audio
+    if (!file.type.includes("audio")) {
+      return NextResponse.json(
+        { error: "File must be an audio file (MP3, WAV, etc.)" },
         { status: 400 }
       );
     }
@@ -49,15 +51,13 @@ export async function POST(
     // Créer un nouveau FormData pour l'envoyer au backend
     const backendFormData = new FormData();
     backendFormData.append("file", file);
+    backendFormData.append("generatePreview", "true"); // Flag pour générer la preview automatiquement
 
-    // Optionnel: ajouter la durée si fournie
-    const durationSec = formData.get("durationSec");
-    if (durationSec) {
-      backendFormData.append("durationSec", durationSec.toString());
-    }
+    console.log(`[API /admin/beats/${id}/audio] Uploading audio file:`, file.name, `(${(file.size / 1024 / 1024).toFixed(2)} MB)`);
 
-    // Appel au backend
-    const response = await fetch(`${API_URL}/beats/${id}/assets/${type}`, {
+    // Appel au backend pour upload avec génération de preview
+    // Note: Le backend doit avoir un endpoint qui supporte generatePreview=true
+    const response = await fetch(`${API_URL}/beats/${id}/upload-audio`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -67,15 +67,19 @@ export async function POST(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: "Upload failed" }));
+      console.error(`[API /admin/beats/${id}/audio] Backend error:`, error);
       throw new Error(error.message || `API error: ${response.status}`);
     }
 
     const data = await response.json();
+    console.log(`[API /admin/beats/${id}/audio] Success:`, data);
+
+    // Le backend devrait retourner les deux assets créés: preview et mp3
     return NextResponse.json(data);
   } catch (error: any) {
-    console.error(`Error uploading ${type} asset:`, error);
+    console.error(`Error uploading audio:`, error);
     return NextResponse.json(
-      { error: error.message || `Failed to upload ${type} asset` },
+      { error: error.message || "Failed to upload audio" },
       { status: 500 }
     );
   }

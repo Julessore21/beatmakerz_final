@@ -11,8 +11,14 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // Récupérer le token depuis les cookies OU depuis le header Authorization
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
+  const cookieToken = cookieStore.get("accessToken")?.value;
+  const authHeader = request.headers.get("Authorization");
+  const headerToken = authHeader?.replace("Bearer ", "");
+
+  const accessToken = cookieToken || headerToken;
 
   if (!accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -64,8 +70,14 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // Récupérer le token depuis les cookies OU depuis le header Authorization
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
+  const cookieToken = cookieStore.get("accessToken")?.value;
+  const authHeader = request.headers.get("Authorization");
+  const headerToken = authHeader?.replace("Bearer ", "");
+
+  const accessToken = cookieToken || headerToken;
 
   if (!accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

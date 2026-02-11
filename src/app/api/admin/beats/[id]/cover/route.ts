@@ -4,33 +4,43 @@ import { cookies } from "next/headers";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
 /**
- * POST /api/admin/beats/[id]/cover - Upload cover image pour un beat
+ * POST /api/admin/beats/[id]/cover - Upload beat cover image
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+
+  // Récupérer le token depuis les cookies OU depuis le header Authorization
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
+  const cookieToken = cookieStore.get("accessToken")?.value;
+  const authHeader = request.headers.get("Authorization");
+  const headerToken = authHeader?.replace("Bearer ", "");
+
+  const accessToken = cookieToken || headerToken;
 
   if (!accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
+    // Récupérer le fichier du FormData
     const formData = await request.formData();
-    const file = formData.get("file") as File;
+    const file = formData.get("file");
 
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    if (!file || !(file instanceof File)) {
+      return NextResponse.json(
+        { error: "No file provided" },
+        { status: 400 }
+      );
     }
 
-    // Créer un nouveau FormData pour envoyer au backend
+    // Créer un nouveau FormData pour l'envoyer au backend
     const backendFormData = new FormData();
     backendFormData.append("file", file);
 
-    // Upload vers le backend qui uploadera vers FileUp
+    // Appel au backend
     const response = await fetch(`${API_URL}/beats/${id}/cover`, {
       method: "POST",
       headers: {
@@ -40,8 +50,8 @@ export async function POST(
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || `Upload failed: ${response.status}`);
+      const error = await response.json().catch(() => ({ message: "Upload failed" }));
+      throw new Error(error.message || `API error: ${response.status}`);
     }
 
     const data = await response.json();
