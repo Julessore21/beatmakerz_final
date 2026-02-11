@@ -36,6 +36,11 @@ export default function AdminLoginPage() {
         throw new Error("Access denied: Admin role required");
       }
 
+      // Stocker le token dans sessionStorage (même système que les users publics)
+      if (data.tokens?.accessToken) {
+        sessionStorage.setItem("access_token", data.tokens.accessToken);
+      }
+
       // Rediriger vers le dashboard
       router.push("/admin/catalogue");
     } catch (err: any) {

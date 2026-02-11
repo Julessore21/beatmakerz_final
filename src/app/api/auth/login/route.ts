@@ -60,13 +60,17 @@ export async function POST(request: NextRequest) {
 
     console.log("[API /auth/login] Cookies set successfully for user:", data.email);
 
-    // Retourner les infos utilisateur (sans les tokens)
+    // Retourner les infos utilisateur ET les tokens pour sessionStorage
     return NextResponse.json({
       user: {
         id: data.userId,
         email: data.email,
         displayName: data.displayName,
         role: data.role,
+      },
+      tokens: {
+        accessToken: data.tokens.accessToken,
+        refreshToken: data.tokens.refreshToken,
       },
     });
   } catch (error: any) {

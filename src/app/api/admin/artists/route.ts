@@ -7,13 +7,18 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onren
  * GET /api/admin/artists - Liste tous les artistes
  */
 export async function GET(request: NextRequest) {
+  // Récupérer le token depuis les cookies OU depuis le header Authorization
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
+  const cookieToken = cookieStore.get("accessToken")?.value;
+  const authHeader = request.headers.get("Authorization");
+  const headerToken = authHeader?.replace("Bearer ", "");
+
+  const accessToken = cookieToken || headerToken;
 
   console.log("[API /admin/artists] Access token present:", !!accessToken);
 
   if (!accessToken) {
-    console.error("[API /admin/artists] No access token found in cookies");
+    console.error("[API /admin/artists] No access token found");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

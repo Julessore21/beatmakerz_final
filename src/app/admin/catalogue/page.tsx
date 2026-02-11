@@ -162,10 +162,20 @@ export default function AdminCataloguePage() {
   const genresBtnRef = useRef<HTMLButtonElement>(null);
   const moodsBtnRef = useRef<HTMLButtonElement>(null);
 
+  // Helper pour ajouter le token aux requêtes
+  const getAuthHeaders = () => {
+    const token = sessionStorage.getItem("access_token");
+    return {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  };
+
   const loadBeats = async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/admin/beats", {
+        headers: getAuthHeaders(),
         credentials: "include",
       });
       if (!res.ok) throw new Error("Impossible de charger les beats.");
@@ -183,6 +193,7 @@ export default function AdminCataloguePage() {
   const loadArtists = async () => {
     try {
       const res = await fetch("/api/admin/artists", {
+        headers: getAuthHeaders(),
         credentials: "include",
       });
       if (!res.ok) throw new Error("Impossible de charger les artistes.");
@@ -232,8 +243,10 @@ export default function AdminCataloguePage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      const token = sessionStorage.getItem("access_token");
       const res = await fetch(`/api/admin/beats/${beatId}/cover`, {
         method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
         credentials: "include",
       });
@@ -255,8 +268,10 @@ export default function AdminCataloguePage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      const token = sessionStorage.getItem("access_token");
       const res = await fetch(`/api/admin/beats/${beatId}/assets/${type}`, {
         method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
         credentials: "include",
       });
@@ -303,7 +318,7 @@ export default function AdminCataloguePage() {
       const path = form.id ? `/api/admin/beats/${form.id}` : "/api/admin/beats";
       const res = await fetch(path, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify(payload),
         credentials: "include",
       });
@@ -330,6 +345,7 @@ export default function AdminCataloguePage() {
     try {
       const res = await fetch(`/api/admin/beats/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
         credentials: "include",
       });
       if (!res.ok) throw new Error("Suppression impossible.");
@@ -347,7 +363,7 @@ export default function AdminCataloguePage() {
     try {
       const res = await fetch(`/api/admin/beats/${beat._id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ status: nextStatus }),
         credentials: "include",
       });

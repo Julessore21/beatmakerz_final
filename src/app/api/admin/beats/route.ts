@@ -7,13 +7,18 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onren
  * GET /api/admin/beats - Liste tous les beats (admin)
  */
 export async function GET(request: NextRequest) {
+  // Récupérer le token depuis les cookies OU depuis le header Authorization
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
+  const cookieToken = cookieStore.get("accessToken")?.value;
+  const authHeader = request.headers.get("Authorization");
+  const headerToken = authHeader?.replace("Bearer ", "");
+
+  const accessToken = cookieToken || headerToken;
 
   console.log("[API /admin/beats] Access token present:", !!accessToken);
 
   if (!accessToken) {
-    console.error("[API /admin/beats] No access token found in cookies");
+    console.error("[API /admin/beats] No access token found");
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -47,8 +52,13 @@ export async function GET(request: NextRequest) {
  * POST /api/admin/beats - Créer un nouveau beat
  */
 export async function POST(request: NextRequest) {
+  // Récupérer le token depuis les cookies OU depuis le header Authorization
   const cookieStore = await cookies();
-  const accessToken = cookieStore.get("accessToken")?.value;
+  const cookieToken = cookieStore.get("accessToken")?.value;
+  const authHeader = request.headers.get("Authorization");
+  const headerToken = authHeader?.replace("Bearer ", "");
+
+  const accessToken = cookieToken || headerToken;
 
   if (!accessToken) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
