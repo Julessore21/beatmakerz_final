@@ -653,8 +653,7 @@ function CatalogueContent() {
                   onClick={() => {
                     setSelectedGenres([]);
                     setSelectedKeys([]);
-                    setBpmMin(BPM_MIN);
-                    setBpmMax(BPM_MAX);
+                    setBpmStart(BPM_MIN);
                     setSelectedTag(null);
                     setQuery("");
                     setDebounced("");
