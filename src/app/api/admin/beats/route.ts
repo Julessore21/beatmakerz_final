@@ -26,17 +26,25 @@ export async function GET(request: NextRequest) {
     // Appel à l'API backend pour récupérer les beats
     // Note: On récupère TOUS les beats (drafts + published) car on est admin
     // Le backend limite à 50 beats max par requête
-    const response = await fetch(`${API_URL}/beats?limit=50&status=all`, {
+    const url = `${API_URL}/beats?limit=50&status=all`;
+    console.log("[API /admin/beats] Calling:", url);
+
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     });
 
+    console.log("[API /admin/beats] Response status:", response.status);
+
     if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+      const errorText = await response.text().catch(() => "Could not read error");
+      console.error("[API /admin/beats] Backend error:", response.status, errorText);
+      throw new Error(`API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    console.log("[API /admin/beats] Success, got", data.items?.length || 0, "beats");
 
     // Retourner directement les items du catalogue
     return NextResponse.json(data.items || []);
