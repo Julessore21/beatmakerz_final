@@ -165,7 +165,9 @@ export default function AdminCataloguePage() {
   const loadBeats = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/beats");
+      const res = await fetch("/api/admin/beats", {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Impossible de charger les beats.");
       const data = (await res.json()) as AdminBeat[];
       setBeats(data);
@@ -180,7 +182,9 @@ export default function AdminCataloguePage() {
 
   const loadArtists = async () => {
     try {
-      const res = await fetch("/api/admin/artists");
+      const res = await fetch("/api/admin/artists", {
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Impossible de charger les artistes.");
       const data = (await res.json()) as Artist[];
       setArtists(data);
@@ -231,6 +235,7 @@ export default function AdminCataloguePage() {
       const res = await fetch(`/api/admin/beats/${beatId}/cover`, {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Upload cover échoué.");
       const data = await res.json();
@@ -253,6 +258,7 @@ export default function AdminCataloguePage() {
       const res = await fetch(`/api/admin/beats/${beatId}/assets/${type}`, {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
       if (!res.ok) throw new Error(`Upload ${type} échoué.`);
       setInfo(`${type.toUpperCase()} uploadé avec succès!`);
@@ -299,6 +305,7 @@ export default function AdminCataloguePage() {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        credentials: "include",
       });
       if (!res.ok) {
         const errorData = await res.json();
@@ -321,7 +328,10 @@ export default function AdminCataloguePage() {
   const handleDelete = async (id: string) => {
     if (!confirm("Supprimer ce beat ?")) return;
     try {
-      const res = await fetch(`/api/admin/beats/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/beats/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
       if (!res.ok) throw new Error("Suppression impossible.");
       await loadBeats();
       if (form.id === id) resetForm();
@@ -339,6 +349,7 @@ export default function AdminCataloguePage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: nextStatus }),
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Impossible de changer le statut.");
       await loadBeats();
