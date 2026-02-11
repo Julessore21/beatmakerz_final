@@ -137,9 +137,9 @@ export default function AdminCataloguePage() {
   const [beats, setBeats] = useState<AdminBeat[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
   const [form, setForm] = useState(initialFormState);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [uploadingAudio, setUploadingAudio] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
 
@@ -216,6 +216,7 @@ export default function AdminCataloguePage() {
 
   const resetForm = () => {
     setForm(initialFormState);
+    setAudioFile(null);
     setError(null);
     setInfo(null);
   };
@@ -236,16 +237,11 @@ export default function AdminCataloguePage() {
     setInfo(null);
   };
 
-  const uploadAudio = async (beatId: string, file: File) => {
-    setUploadingAudio(true);
-    setError(null);
-    setInfo(null);
+  const uploadAudioForBeat = async (beatId: string, file: File) => {
     try {
       const formData = new FormData();
       formData.append("file", file);
       const token = sessionStorage.getItem("access_token");
-
-      setInfo(`Upload en cours... (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
 
       const res = await fetch(`/api/admin/beats/${beatId}/audio`, {
         method: "POST",
@@ -255,18 +251,14 @@ export default function AdminCataloguePage() {
       });
 
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ error: "Upload échoué" }));
-        throw new Error(errorData.error || "Upload échoué");
+        const errorData = await res.json().catch(() => ({ error: "Upload audio échoué" }));
+        throw new Error(errorData.error || "Upload audio échoué");
       }
 
-      const data = await res.json();
-      setInfo(`Audio uploadé! Preview (45s) et version complète générées automatiquement.`);
-      await loadBeats();
+      return await res.json();
     } catch (err: unknown) {
       console.error(err);
-      setError((err as Error).message || "L&apos;upload de l&apos;audio n&apos;a pas pu être réalisé.");
-    } finally {
-      setUploadingAudio(false);
+      throw new Error((err as Error).message || "L&apos;upload de l&apos;audio n&apos;a pas pu être réalisé.");
     }
   };
 
@@ -298,6 +290,8 @@ export default function AdminCataloguePage() {
 
     try {
       setSaving(true);
+
+      // Étape 1: Créer ou mettre à jour le beat
       const method = form.id ? "PUT" : "POST";
       const path = form.id ? `/api/admin/beats/${form.id}` : "/api/admin/beats";
       const res = await fetch(path, {
@@ -311,11 +305,25 @@ export default function AdminCataloguePage() {
         throw new Error(errorData.error || "Impossible d&apos;enregistrer le beat.");
       }
       const savedBeat = await res.json();
+
+      // Étape 2: Si un fichier audio est sélectionné, l'uploader
+      if (audioFile && savedBeat._id) {
+        setInfo(`Beat créé! Upload audio en cours... (${(audioFile.size / 1024 / 1024).toFixed(2)} MB)`);
+        await uploadAudioForBeat(savedBeat._id, audioFile);
+        setInfo("Beat créé et audio uploadé avec succès! Preview générée automatiquement.");
+      } else {
+        setInfo("Beat enregistré avec succès.");
+      }
+
       await loadBeats();
-      setInfo("Beat enregistré avec succès. Vous pouvez maintenant uploader des fichiers.");
+
+      // Mettre à jour le formulaire avec le beat créé
       if (!form.id) {
         setForm((prev) => ({ ...prev, id: savedBeat._id }));
       }
+
+      // Reset le fichier audio après upload
+      setAudioFile(null);
     } catch (err: unknown) {
       console.error(err);
       setError((err as Error).message || "Enregistrement impossible.");
@@ -597,6 +605,51 @@ export default function AdminCataloguePage() {
               </div>
             </div>
 
+            {/* Audio File Upload */}
+            <div>
+              <label className="text-xs font-medium text-zinc-400">Fichier Audio</label>
+              <div className="mt-1">
+                <label className="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-indigo-500/30 bg-indigo-500/5 py-3 px-4 transition hover:border-indigo-500/50 hover:bg-indigo-500/10">
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="audio/mp3,audio/mpeg,audio/wav"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setAudioFile(file);
+                        setInfo(`Fichier sélectionné: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+                      }
+                    }}
+                  />
+                  <div className="text-center">
+                    {audioFile ? (
+                      <div>
+                        <p className="text-sm font-medium text-indigo-300">{audioFile.name}</p>
+                        <p className="text-[10px] text-zinc-500 mt-1">{(audioFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-sm font-medium text-indigo-300">Choisir un fichier audio</p>
+                        <p className="text-[10px] text-zinc-500 mt-1">MP3, WAV • La preview (45s) sera générée automatiquement</p>
+                      </div>
+                    )}
+                  </div>
+                </label>
+                {audioFile && (
+                  <button
+                    onClick={() => {
+                      setAudioFile(null);
+                      setInfo(null);
+                    }}
+                    className="mt-1 text-xs text-zinc-400 hover:text-white"
+                  >
+                    Supprimer le fichier
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Submit buttons inline */}
             <div className="flex items-center gap-2 pt-1">
               <button
@@ -604,7 +657,7 @@ export default function AdminCataloguePage() {
                 disabled={saving}
                 className="rounded-lg bg-indigo-500 px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/30 transition hover:bg-indigo-400 disabled:cursor-wait disabled:opacity-60"
               >
-                {form.id ? "Mettre à jour" : "Créer"}
+                {saving ? "Enregistrement..." : (form.id ? "Mettre à jour" : "Créer")}
               </button>
               {form.id && (
                 <button onClick={resetForm} className="rounded-lg border border-white/20 px-3 py-1.5 text-xs text-white/60 hover:border-white/40">
@@ -614,63 +667,6 @@ export default function AdminCataloguePage() {
             </div>
           </div>
         </section>
-
-        {/* Upload Section - Compact */}
-        {form.id && currentBeat && (
-          <section className="relative z-0 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-300 mb-3">Fichiers Audio</h2>
-            <div className="space-y-3">
-              {/* Status des fichiers */}
-              <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="text-zinc-400">Preview (45s):</span>
-                  {currentBeat.assets?.find((a) => a.type === "preview") ? (
-                    <span className="text-emerald-400 font-medium">✓ Disponible</span>
-                  ) : (
-                    <span className="text-zinc-600">Non uploadé</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-zinc-400">Version complète:</span>
-                  {currentBeat.assets?.find((a) => a.type === "mp3") ? (
-                    <span className="text-emerald-400 font-medium">✓ Disponible</span>
-                  ) : (
-                    <span className="text-zinc-600">Non uploadé</span>
-                  )}
-                </div>
-              </div>
-
-              {/* Upload button */}
-              <div className="rounded-xl border border-white/10 bg-[#04040c]/70 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <p className="text-sm font-medium text-white">Upload Audio</p>
-                    <p className="text-[10px] text-zinc-500 mt-0.5">
-                      Upload UN fichier audio. La preview (45s) et la version complète seront générées automatiquement.
-                    </p>
-                  </div>
-                  {uploadingAudio && <span className="text-amber-300 text-xs">Traitement en cours...</span>}
-                </div>
-                <label className="mt-2 flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-indigo-500/30 bg-indigo-500/5 py-3 text-sm font-medium text-indigo-300 hover:border-indigo-500/50 hover:bg-indigo-500/10 transition-colors">
-                  <input
-                    type="file"
-                    className="hidden"
-                    accept="audio/mp3,audio/mpeg,audio/wav"
-                    disabled={uploadingAudio}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file && form.id) uploadAudio(form.id, file);
-                    }}
-                  />
-                  {uploadingAudio ? "Upload en cours..." : (currentBeat.assets?.find((a) => a.type === "mp3") ? "Remplacer l'audio" : "Choisir un fichier audio")}
-                </label>
-                <p className="text-[10px] text-zinc-600 mt-2">
-                  Formats acceptés: MP3, WAV • La cover sera générée automatiquement selon le genre
-                </p>
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* Backstage Table - Compact */}
         <section className="relative z-0 rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-xl">

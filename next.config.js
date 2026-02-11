@@ -4,6 +4,13 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ["react-icons", "framer-motion"],
   },
+  // Augmenter la limite pour les uploads audio
+  api: {
+    bodyParser: {
+      sizeLimit: '100mb',
+    },
+    responseLimit: '100mb',
+  },
   images: {
     remotePatterns: [
       {
