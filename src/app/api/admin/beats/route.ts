@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
   try {
     // Appel à l'API backend pour récupérer les beats
     // Note: On récupère TOUS les beats (drafts + published) car on est admin
-    const response = await fetch(`${API_URL}/beats?limit=100&status=all`, {
+    // Le backend limite à 50 beats max par requête
+    const response = await fetch(`${API_URL}/beats?limit=50&status=all`, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
