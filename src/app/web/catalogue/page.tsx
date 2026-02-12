@@ -103,7 +103,7 @@ const COLLECTIONS: {
 // plages de BPM
 const BPM_MIN = 60;
 const BPM_MAX = 200;
-const BPM_RANGE_SIZE = 20; // Taille fixe de la zone BPM (ex: 120-140)
+const BPM_RANGE_SIZE = 30; // Taille fixe de la zone BPM (ex: 100-130)
 
 
 
@@ -346,59 +346,76 @@ function CatalogueContent() {
   }) => {
     const sliderRef = useRef<HTMLDivElement>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const dragStartRef = useRef<{ startX: number; startValue: number } | null>(null);
+    const dragDataRef = useRef<{ startX: number; startValue: number } | null>(null);
 
     // Calcul des dimensions
     const totalRange = max - min;
     const zoneWidthPercent = (rangeSize / totalRange) * 100;
     const zoneStartPercent = ((value - min) / totalRange) * 100;
 
-    const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-      event.preventDefault();
+    // Mouse move handler - écoute sur window pour capturer le drag même hors de l'élément
+    useEffect(() => {
+      if (!isDragging) return;
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!dragDataRef.current || !sliderRef.current) return;
+
+        const rect = sliderRef.current.getBoundingClientRect();
+        const deltaX = e.clientX - dragDataRef.current.startX;
+        const deltaPercent = (deltaX / rect.width) * 100;
+        const deltaValue = (deltaPercent / 100) * totalRange;
+
+        const newValue = Math.round(dragDataRef.current.startValue + deltaValue);
+        const clampedValue = Math.max(min, Math.min(max - rangeSize, newValue));
+
+        onChange(clampedValue);
+      };
+
+      const handleMouseUp = () => {
+        setIsDragging(false);
+        dragDataRef.current = null;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      };
+
+      // Écoute sur window pour capturer les mouvements partout
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mouseup", handleMouseUp);
+
+      // Empêche la sélection de texte pendant le drag
+      document.body.style.cursor = "grabbing";
+      document.body.style.userSelect = "none";
+
+      return () => {
+        window.removeEventListener("mousemove", handleMouseMove);
+        window.removeEventListener("mouseup", handleMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      };
+    }, [isDragging, min, max, rangeSize, totalRange, onChange]);
+
+    const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+      e.preventDefault();
       const rect = sliderRef.current?.getBoundingClientRect();
       if (!rect) return;
 
-      const clickX = event.clientX - rect.left;
+      const clickX = e.clientX - rect.left;
       const clickPercent = (clickX / rect.width) * 100;
 
       // Vérifie si on clique sur la zone
       const zoneEnd = zoneStartPercent + zoneWidthPercent;
 
-      if (clickPercent >= zoneStartPercent && clickPercent <= zoneEnd) {
-        // Clic sur la zone - on commence le drag
-        dragStartRef.current = { startX: event.clientX, startValue: value };
-      } else {
+      let startValue = value;
+      if (clickPercent < zoneStartPercent || clickPercent > zoneEnd) {
         // Clic en dehors - on centre la zone sur le clic
         const newPercent = clickPercent - zoneWidthPercent / 2;
         const clampedPercent = Math.max(0, Math.min(100 - zoneWidthPercent, newPercent));
-        const newValue = Math.round(min + (clampedPercent / 100) * totalRange);
-        onChange(newValue);
-        dragStartRef.current = { startX: event.clientX, startValue: newValue };
+        startValue = Math.round(min + (clampedPercent / 100) * totalRange);
+        onChange(startValue);
       }
 
+      dragDataRef.current = { startX: e.clientX, startValue };
       setIsDragging(true);
-      event.currentTarget.setPointerCapture(event.pointerId);
-    };
-
-    const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!isDragging || !dragStartRef.current || !sliderRef.current) return;
-
-      const rect = sliderRef.current.getBoundingClientRect();
-      const deltaX = event.clientX - dragStartRef.current.startX;
-      const deltaPercent = (deltaX / rect.width) * 100;
-      const deltaValue = (deltaPercent / 100) * totalRange;
-
-      const newValue = Math.round(dragStartRef.current.startValue + deltaValue);
-      const clampedValue = Math.max(min, Math.min(max - rangeSize, newValue));
-
-      if (clampedValue !== value) {
-        onChange(clampedValue);
-      }
-    };
-
-    const handlePointerUp = () => {
-      setIsDragging(false);
-      dragStartRef.current = null;
     };
 
     const displayMin = value;
@@ -416,14 +433,10 @@ function CatalogueContent() {
         </div>
         <div
           ref={sliderRef}
-          className={`relative h-4 rounded-full transition-colors touch-none select-none ${
+          onMouseDown={handleMouseDown}
+          className={`relative h-5 rounded-full transition-colors select-none ${
             isActive ? "cursor-grab bg-white/10" : "cursor-pointer bg-white/5"
-          }`}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerCancel={handlePointerUp}
-          style={{ cursor: isDragging ? "grabbing" : isActive ? "grab" : "pointer" }}
+          } ${isDragging ? "cursor-grabbing" : ""}`}
         >
           <div
             className={`absolute inset-y-0 rounded-full transition-colors ${
