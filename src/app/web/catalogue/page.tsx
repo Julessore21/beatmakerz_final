@@ -1,8 +1,8 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { PointerEvent as ReactPointerEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import * as SliderPrimitive from "@radix-ui/react-slider";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Grid3X3, Rows3, SlidersHorizontal, Star, Crown, Flame, ChevronDown } from "lucide-react";
 
@@ -144,85 +144,23 @@ const ZoneSlider = ({
   isActive: boolean;
   onToggleActive: () => void;
 }) => {
-  const sliderRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragDataRef = useRef<{ startX: number; startValue: number } | null>(null);
+  // Le slider va de min à (max - rangeSize) car value représente le début de la zone
+  const effectiveMax = max - rangeSize;
 
-  // Calcul des dimensions
-  const totalRange = max - min;
-  const zoneWidthPercent = (rangeSize / totalRange) * 100;
-  const zoneStartPercent = ((value - min) / totalRange) * 100;
-
-  // Mouse move handler - écoute sur window pour capturer le drag même hors de l'élément
-  useEffect(() => {
-    if (!isDragging) return;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!dragDataRef.current || !sliderRef.current) return;
-
-      const rect = sliderRef.current.getBoundingClientRect();
-      const deltaX = e.clientX - dragDataRef.current.startX;
-      const deltaPercent = (deltaX / rect.width) * 100;
-      const deltaValue = (deltaPercent / 100) * totalRange;
-
-      const newValue = Math.round(dragDataRef.current.startValue + deltaValue);
-      const clampedValue = Math.max(min, Math.min(max - rangeSize, newValue));
-
-      onChange(clampedValue);
-    };
-
-    const handleMouseUp = () => {
-      setIsDragging(false);
-      dragDataRef.current = null;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-
-    // Écoute sur window pour capturer les mouvements partout
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-
-    // Empêche la sélection de texte pendant le drag
-    document.body.style.cursor = "grabbing";
-    document.body.style.userSelect = "none";
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-  }, [isDragging, min, max, rangeSize, totalRange, onChange]);
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const rect = sliderRef.current?.getBoundingClientRect();
-    if (!rect) return;
-
-    const clickX = e.clientX - rect.left;
-    const clickPercent = (clickX / rect.width) * 100;
-
-    // Vérifie si on clique sur la zone
-    const zoneEnd = zoneStartPercent + zoneWidthPercent;
-
-    let startValue = value;
-    if (clickPercent < zoneStartPercent || clickPercent > zoneEnd) {
-      // Clic en dehors - on centre la zone sur le clic
-      const newPercent = clickPercent - zoneWidthPercent / 2;
-      const clampedPercent = Math.max(0, Math.min(100 - zoneWidthPercent, newPercent));
-      startValue = Math.round(min + (clampedPercent / 100) * totalRange);
-      onChange(startValue);
-    }
-
-    dragDataRef.current = { startX: e.clientX, startValue };
-    setIsDragging(true);
+  const handleValueChange = (newValues: number[]) => {
+    onChange(newValues[0]);
   };
 
   const displayMin = value;
   const displayMax = value + rangeSize;
 
+  // Calcul de la position de la zone pour l'affichage
+  const totalRange = max - min;
+  const zoneStartPercent = ((value - min) / totalRange) * 100;
+  const zoneWidthPercent = (rangeSize / totalRange) * 100;
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div className="flex items-center justify-between">
         <SectionTitle>Tempo (BPM)</SectionTitle>
         {isActive && (
@@ -231,17 +169,14 @@ const ZoneSlider = ({
           </button>
         )}
       </div>
-      <div
-        ref={sliderRef}
-        onMouseDown={handleMouseDown}
-        className={`relative h-5 rounded-full transition-colors select-none ${
-          isActive ? "cursor-grab bg-white/10" : "cursor-pointer bg-white/5"
-        } ${isDragging ? "cursor-grabbing" : ""}`}
-      >
+
+      {/* Container avec la zone colorée en arrière-plan */}
+      <div className="relative">
+        {/* Zone colorée - affichée derrière le slider */}
         <div
-          className={`absolute inset-y-0 rounded-full transition-colors ${
+          className={`absolute top-0 h-5 rounded-full pointer-events-none transition-colors ${
             isActive
-              ? `bg-gradient-to-r from-[#7c5cff] to-[#c43eff] ${isDragging ? "shadow-lg shadow-violet-500/30" : ""}`
+              ? "bg-gradient-to-r from-[#7c5cff] to-[#c43eff]"
               : "bg-white/20"
           }`}
           style={{
@@ -249,12 +184,38 @@ const ZoneSlider = ({
             width: `${zoneWidthPercent}%`,
           }}
         />
+
+        {/* Slider Radix - un seul thumb pour le début de la zone */}
+        <SliderPrimitive.Root
+          className="relative flex w-full touch-none select-none items-center"
+          value={[value]}
+          onValueChange={handleValueChange}
+          min={min}
+          max={effectiveMax}
+          step={1}
+        >
+          <SliderPrimitive.Track
+            className={`relative h-5 w-full grow overflow-hidden rounded-full ${
+              isActive ? "bg-white/10" : "bg-white/5"
+            }`}
+          >
+            {/* Range invisible car on utilise notre propre zone colorée */}
+            <SliderPrimitive.Range className="absolute h-full opacity-0" />
+          </SliderPrimitive.Track>
+
+          {/* Thumb principal - début de la zone */}
+          <SliderPrimitive.Thumb
+            className="block h-6 w-4 cursor-grab rounded-md border-2 border-white/50 bg-white shadow-lg transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 active:cursor-grabbing active:scale-105"
+            aria-label="Position BPM"
+          />
+        </SliderPrimitive.Root>
       </div>
+
       <div className="flex items-center justify-center text-[11px] uppercase tracking-[0.3em] text-zinc-400">
         {isActive ? (
           <span>{displayMin} - {displayMax} BPM</span>
         ) : (
-          <span className="text-zinc-500">Cliquez pour filtrer par BPM</span>
+          <span className="text-zinc-500">Glissez pour filtrer par BPM</span>
         )}
       </div>
     </div>
