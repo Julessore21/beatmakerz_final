@@ -36,7 +36,7 @@ interface FavoritesProviderProps {
  * A placer dans le layout, apres AuthProvider
  */
 export function FavoritesProvider({ children }: FavoritesProviderProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [favIds, setFavIds] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,7 +45,8 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
    * Charger les favoris depuis le backend
    */
   const refresh = useCallback(async () => {
-    if (!isAuthenticated) {
+    // Ne pas charger si auth pas encore prete ou non connecte
+    if (authLoading || !isAuthenticated) {
       setFavIds([]);
       return;
     }
@@ -56,14 +57,19 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
     try {
       const items = await fetchFavorites();
       setFavIds(items.map((f) => f.beatId));
-    } catch (err) {
+    } catch (err: any) {
+      // Ignorer silencieusement les erreurs 401 (non authentifie)
+      if (err?.message?.includes('401')) {
+        setFavIds([]);
+        return;
+      }
       console.error('Failed to fetch favorites:', err);
       setError('Impossible de charger les favoris');
       setFavIds([]);
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authLoading]);
 
   /**
    * Charger les favoris au montage et quand l'auth change

@@ -1,10 +1,11 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
-const ACCESS_TOKEN_KEY = "bm:accessToken";
+const ACCESS_TOKEN_KEY = "access_token"; // Aligne avec auth.service.ts
 
 const getToken = () => {
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem(ACCESS_TOKEN_KEY);
+    // sessionStorage comme auth.service.ts
+    return window.sessionStorage.getItem(ACCESS_TOKEN_KEY);
   } catch {
     return null;
   }
@@ -14,9 +15,9 @@ const setToken = (token: string | null) => {
   if (typeof window === "undefined") return;
   try {
     if (token) {
-      window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
+      window.sessionStorage.setItem(ACCESS_TOKEN_KEY, token);
     } else {
-      window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+      window.sessionStorage.removeItem(ACCESS_TOKEN_KEY);
     }
   } catch {
     /* ignore */
