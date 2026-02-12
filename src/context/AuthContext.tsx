@@ -52,32 +52,57 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Charger l'utilisateur au montage
+   * Charger l'utilisateur depuis le token en memoire
    */
   const refreshUser = () => {
-    try {
-      const currentUser = AuthService.getCurrentUser();
-      setUser(currentUser);
-    } catch (err) {
-      console.error('Failed to load user:', err);
-      setUser(null);
-    } finally {
-      setIsLoading(false);
-    }
+    const currentUser = AuthService.getCurrentUser();
+    setUser(currentUser);
   };
 
+  /**
+   * Initialiser l'authentification au montage
+   * Si pas de token en memoire, tente un refresh via le cookie httpOnly
+   * Permet de rester connecte meme apres fermeture du navigateur (30 jours)
+   */
   useEffect(() => {
-    refreshUser();
+    const initAuth = async () => {
+      // D'abord verifier si on a deja un token valide en memoire
+      const existingUser = AuthService.getCurrentUser();
+      if (existingUser) {
+        setUser(existingUser);
+        setIsLoading(false);
+        return;
+      }
+
+      // Sinon, tenter un refresh avec le cookie httpOnly (valide 30 jours)
+      try {
+        const response = await AuthService.refresh();
+        const userData: AuthUser = {
+          userId: response.userId,
+          email: response.email,
+          displayName: response.displayName,
+          role: response.role,
+        };
+        setUser(userData);
+      } catch {
+        // Pas de session valide, l'utilisateur devra se reconnecter
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   /**
    * Rafraîchir automatiquement le token avant qu'il n'expire
-   * Les access tokens expirent après 15 minutes
+   * Les access tokens expirent après 1 heure
    */
   useEffect(() => {
     if (!user) return;
 
-    // Rafraîchir le token toutes les 10 minutes (avant expiration de 15min)
+    // Rafraîchir le token toutes les 50 minutes (avant expiration de 1h)
     const refreshInterval = setInterval(
       async () => {
         try {
@@ -89,8 +114,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(null);
         }
       },
-      10 * 60 * 1000,
-    ); // 10 minutes
+      50 * 60 * 1000,
+    ); // 50 minutes
 
     return () => clearInterval(refreshInterval);
   }, [user]);
