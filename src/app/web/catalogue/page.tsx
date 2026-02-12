@@ -345,92 +345,61 @@ function CatalogueContent() {
     onToggleActive: () => void;
   }) => {
     const sliderRef = useRef<HTMLDivElement>(null);
-    const pointerIdRef = useRef<number | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const dragOffsetRef = useRef<number>(0);
+    const dragStartRef = useRef<{ startX: number; startValue: number } | null>(null);
 
-    const getValueFromPointer = useCallback(
-      (clientX: number, offset = 0) => {
-        const rect = sliderRef.current?.getBoundingClientRect();
-        if (!rect) return null;
-        const ratio = Math.min(Math.max((clientX - rect.left - offset) / rect.width, 0), 1);
-        // Le max effectif est (max - rangeSize) pour que la zone ne dépasse pas
-        const effectiveMax = max - rangeSize;
-        return Math.round(min + ratio * (effectiveMax - min));
-      },
-      [min, max, rangeSize]
-    );
+    // Calcul des dimensions
+    const totalRange = max - min;
+    const zoneWidthPercent = (rangeSize / totalRange) * 100;
+    const zoneStartPercent = ((value - min) / totalRange) * 100;
 
     const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
       event.preventDefault();
       const rect = sliderRef.current?.getBoundingClientRect();
       if (!rect) return;
 
-      // Calcul de la position de la zone
-      const effectiveMax = max - rangeSize;
-      const totalRange = effectiveMax - min;
-      const zoneStartPercent = totalRange > 0 ? ((value - min) / totalRange) * 100 : 0;
-      const zoneWidthPercent = totalRange > 0 ? (rangeSize / (max - min)) * 100 : 0;
-
       const clickX = event.clientX - rect.left;
       const clickPercent = (clickX / rect.width) * 100;
 
       // Vérifie si on clique sur la zone
-      const zoneEndPercent = zoneStartPercent + zoneWidthPercent;
-      if (clickPercent >= zoneStartPercent && clickPercent <= zoneEndPercent) {
-        // On glisse la zone - calcul de l'offset depuis le début de la zone
-        const zoneStartPx = (zoneStartPercent / 100) * rect.width;
-        dragOffsetRef.current = clickX - zoneStartPx;
+      const zoneEnd = zoneStartPercent + zoneWidthPercent;
+
+      if (clickPercent >= zoneStartPercent && clickPercent <= zoneEnd) {
+        // Clic sur la zone - on commence le drag
+        dragStartRef.current = { startX: event.clientX, startValue: value };
       } else {
-        // Clic en dehors de la zone - centre la zone sur le clic
-        dragOffsetRef.current = ((rangeSize / 2) / (max - min)) * rect.width;
-        const newValue = getValueFromPointer(event.clientX, dragOffsetRef.current);
-        if (newValue !== null) onChange(newValue);
+        // Clic en dehors - on centre la zone sur le clic
+        const newPercent = clickPercent - zoneWidthPercent / 2;
+        const clampedPercent = Math.max(0, Math.min(100 - zoneWidthPercent, newPercent));
+        const newValue = Math.round(min + (clampedPercent / 100) * totalRange);
+        onChange(newValue);
+        dragStartRef.current = { startX: event.clientX, startValue: newValue };
       }
 
       setIsDragging(true);
       event.currentTarget.setPointerCapture(event.pointerId);
-      pointerIdRef.current = event.pointerId;
     };
 
-    const handleWindowPointerMove = useCallback(
-      (event: PointerEvent) => {
-        if (!isDragging) return;
-        const newValue = getValueFromPointer(event.clientX, dragOffsetRef.current);
-        if (newValue !== null) onChange(newValue);
-      },
-      [isDragging, getValueFromPointer, onChange]
-    );
+    const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!isDragging || !dragStartRef.current || !sliderRef.current) return;
 
-    useEffect(() => {
-      if (!isDragging) return;
-      const clearDragging = () => {
-        setIsDragging(false);
-        if (pointerIdRef.current !== null) {
-          try {
-            sliderRef.current?.releasePointerCapture(pointerIdRef.current);
-          } catch {
-            // ignore
-          } finally {
-            pointerIdRef.current = null;
-          }
-        }
-      };
-      window.addEventListener("pointermove", handleWindowPointerMove);
-      window.addEventListener("pointerup", clearDragging);
-      window.addEventListener("pointercancel", clearDragging);
-      return () => {
-        window.removeEventListener("pointermove", handleWindowPointerMove);
-        window.removeEventListener("pointerup", clearDragging);
-        window.removeEventListener("pointercancel", clearDragging);
-      };
-    }, [isDragging, handleWindowPointerMove]);
+      const rect = sliderRef.current.getBoundingClientRect();
+      const deltaX = event.clientX - dragStartRef.current.startX;
+      const deltaPercent = (deltaX / rect.width) * 100;
+      const deltaValue = (deltaPercent / 100) * totalRange;
 
-    // Calcul des positions pour l'affichage
-    const effectiveMax = max - rangeSize;
-    const totalRange = effectiveMax - min;
-    const zoneStartPercent = totalRange > 0 ? ((value - min) / totalRange) * 100 : 0;
-    const zoneWidthPercent = (rangeSize / (max - min)) * 100;
+      const newValue = Math.round(dragStartRef.current.startValue + deltaValue);
+      const clampedValue = Math.max(min, Math.min(max - rangeSize, newValue));
+
+      if (clampedValue !== value) {
+        onChange(clampedValue);
+      }
+    };
+
+    const handlePointerUp = () => {
+      setIsDragging(false);
+      dragStartRef.current = null;
+    };
 
     const displayMin = value;
     const displayMax = value + rangeSize;
@@ -447,14 +416,17 @@ function CatalogueContent() {
         </div>
         <div
           ref={sliderRef}
-          className={`relative h-3 rounded-full transition-colors ${
+          className={`relative h-4 rounded-full transition-colors touch-none select-none ${
             isActive ? "cursor-grab bg-white/10" : "cursor-pointer bg-white/5"
           }`}
           onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
           style={{ cursor: isDragging ? "grabbing" : isActive ? "grab" : "pointer" }}
         >
           <div
-            className={`absolute inset-y-0 rounded-full transition-all ${
+            className={`absolute inset-y-0 rounded-full transition-colors ${
               isActive
                 ? `bg-gradient-to-r from-[#7c5cff] to-[#c43eff] ${isDragging ? "shadow-lg shadow-violet-500/30" : ""}`
                 : "bg-white/20"
