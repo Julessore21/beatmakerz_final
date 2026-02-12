@@ -125,6 +125,142 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <div className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">{children}</div>
 );
 
+/* -------------------------------- ZoneSlider -------------------------------- */
+
+const ZoneSlider = ({
+  min,
+  max,
+  rangeSize,
+  value,
+  onChange,
+  isActive,
+  onToggleActive,
+}: {
+  min: number;
+  max: number;
+  rangeSize: number;
+  value: number;
+  onChange: (value: number) => void;
+  isActive: boolean;
+  onToggleActive: () => void;
+}) => {
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragDataRef = useRef<{ startX: number; startValue: number } | null>(null);
+
+  // Calcul des dimensions
+  const totalRange = max - min;
+  const zoneWidthPercent = (rangeSize / totalRange) * 100;
+  const zoneStartPercent = ((value - min) / totalRange) * 100;
+
+  // Mouse move handler - écoute sur window pour capturer le drag même hors de l'élément
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragDataRef.current || !sliderRef.current) return;
+
+      const rect = sliderRef.current.getBoundingClientRect();
+      const deltaX = e.clientX - dragDataRef.current.startX;
+      const deltaPercent = (deltaX / rect.width) * 100;
+      const deltaValue = (deltaPercent / 100) * totalRange;
+
+      const newValue = Math.round(dragDataRef.current.startValue + deltaValue);
+      const clampedValue = Math.max(min, Math.min(max - rangeSize, newValue));
+
+      onChange(clampedValue);
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+      dragDataRef.current = null;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    // Écoute sur window pour capturer les mouvements partout
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    // Empêche la sélection de texte pendant le drag
+    document.body.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isDragging, min, max, rangeSize, totalRange, onChange]);
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const rect = sliderRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const clickX = e.clientX - rect.left;
+    const clickPercent = (clickX / rect.width) * 100;
+
+    // Vérifie si on clique sur la zone
+    const zoneEnd = zoneStartPercent + zoneWidthPercent;
+
+    let startValue = value;
+    if (clickPercent < zoneStartPercent || clickPercent > zoneEnd) {
+      // Clic en dehors - on centre la zone sur le clic
+      const newPercent = clickPercent - zoneWidthPercent / 2;
+      const clampedPercent = Math.max(0, Math.min(100 - zoneWidthPercent, newPercent));
+      startValue = Math.round(min + (clampedPercent / 100) * totalRange);
+      onChange(startValue);
+    }
+
+    dragDataRef.current = { startX: e.clientX, startValue };
+    setIsDragging(true);
+  };
+
+  const displayMin = value;
+  const displayMax = value + rangeSize;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <SectionTitle>Tempo (BPM)</SectionTitle>
+        {isActive && (
+          <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={onToggleActive}>
+            Désactiver
+          </button>
+        )}
+      </div>
+      <div
+        ref={sliderRef}
+        onMouseDown={handleMouseDown}
+        className={`relative h-5 rounded-full transition-colors select-none ${
+          isActive ? "cursor-grab bg-white/10" : "cursor-pointer bg-white/5"
+        } ${isDragging ? "cursor-grabbing" : ""}`}
+      >
+        <div
+          className={`absolute inset-y-0 rounded-full transition-colors ${
+            isActive
+              ? `bg-gradient-to-r from-[#7c5cff] to-[#c43eff] ${isDragging ? "shadow-lg shadow-violet-500/30" : ""}`
+              : "bg-white/20"
+          }`}
+          style={{
+            left: `${zoneStartPercent}%`,
+            width: `${zoneWidthPercent}%`,
+          }}
+        />
+      </div>
+      <div className="flex items-center justify-center text-[11px] uppercase tracking-[0.3em] text-zinc-400">
+        {isActive ? (
+          <span>{displayMin} - {displayMax} BPM</span>
+        ) : (
+          <span className="text-zinc-500">Cliquez pour filtrer par BPM</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* ---------------------------------- page --------------------------------- */
 
 function CatalogueContent() {
@@ -325,140 +461,6 @@ function CatalogueContent() {
     }
     await toggleFavoriteApi(beatId);
     setFavIds((prev) => (prev.includes(beatId) ? prev.filter((id) => id !== beatId) : [...prev, beatId]));
-  };
-
-  const ZoneSlider = ({
-    min,
-    max,
-    rangeSize,
-    value,
-    onChange,
-    isActive,
-    onToggleActive,
-  }: {
-    min: number;
-    max: number;
-    rangeSize: number;
-    value: number;
-    onChange: (value: number) => void;
-    isActive: boolean;
-    onToggleActive: () => void;
-  }) => {
-    const sliderRef = useRef<HTMLDivElement>(null);
-    const [isDragging, setIsDragging] = useState(false);
-    const dragDataRef = useRef<{ startX: number; startValue: number } | null>(null);
-
-    // Calcul des dimensions
-    const totalRange = max - min;
-    const zoneWidthPercent = (rangeSize / totalRange) * 100;
-    const zoneStartPercent = ((value - min) / totalRange) * 100;
-
-    // Mouse move handler - écoute sur window pour capturer le drag même hors de l'élément
-    useEffect(() => {
-      if (!isDragging) return;
-
-      const handleMouseMove = (e: MouseEvent) => {
-        if (!dragDataRef.current || !sliderRef.current) return;
-
-        const rect = sliderRef.current.getBoundingClientRect();
-        const deltaX = e.clientX - dragDataRef.current.startX;
-        const deltaPercent = (deltaX / rect.width) * 100;
-        const deltaValue = (deltaPercent / 100) * totalRange;
-
-        const newValue = Math.round(dragDataRef.current.startValue + deltaValue);
-        const clampedValue = Math.max(min, Math.min(max - rangeSize, newValue));
-
-        onChange(clampedValue);
-      };
-
-      const handleMouseUp = () => {
-        setIsDragging(false);
-        dragDataRef.current = null;
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
-      };
-
-      // Écoute sur window pour capturer les mouvements partout
-      window.addEventListener("mousemove", handleMouseMove);
-      window.addEventListener("mouseup", handleMouseUp);
-
-      // Empêche la sélection de texte pendant le drag
-      document.body.style.cursor = "grabbing";
-      document.body.style.userSelect = "none";
-
-      return () => {
-        window.removeEventListener("mousemove", handleMouseMove);
-        window.removeEventListener("mouseup", handleMouseUp);
-        document.body.style.cursor = "";
-        document.body.style.userSelect = "";
-      };
-    }, [isDragging, min, max, rangeSize, totalRange, onChange]);
-
-    const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      const rect = sliderRef.current?.getBoundingClientRect();
-      if (!rect) return;
-
-      const clickX = e.clientX - rect.left;
-      const clickPercent = (clickX / rect.width) * 100;
-
-      // Vérifie si on clique sur la zone
-      const zoneEnd = zoneStartPercent + zoneWidthPercent;
-
-      let startValue = value;
-      if (clickPercent < zoneStartPercent || clickPercent > zoneEnd) {
-        // Clic en dehors - on centre la zone sur le clic
-        const newPercent = clickPercent - zoneWidthPercent / 2;
-        const clampedPercent = Math.max(0, Math.min(100 - zoneWidthPercent, newPercent));
-        startValue = Math.round(min + (clampedPercent / 100) * totalRange);
-        onChange(startValue);
-      }
-
-      dragDataRef.current = { startX: e.clientX, startValue };
-      setIsDragging(true);
-    };
-
-    const displayMin = value;
-    const displayMax = value + rangeSize;
-
-    return (
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <SectionTitle>Tempo (BPM)</SectionTitle>
-          {isActive && (
-            <button className="text-xs text-zinc-400 hover:text-zinc-200" onClick={onToggleActive}>
-              Désactiver
-            </button>
-          )}
-        </div>
-        <div
-          ref={sliderRef}
-          onMouseDown={handleMouseDown}
-          className={`relative h-5 rounded-full transition-colors select-none ${
-            isActive ? "cursor-grab bg-white/10" : "cursor-pointer bg-white/5"
-          } ${isDragging ? "cursor-grabbing" : ""}`}
-        >
-          <div
-            className={`absolute inset-y-0 rounded-full transition-colors ${
-              isActive
-                ? `bg-gradient-to-r from-[#7c5cff] to-[#c43eff] ${isDragging ? "shadow-lg shadow-violet-500/30" : ""}`
-                : "bg-white/20"
-            }`}
-            style={{
-              left: `${zoneStartPercent}%`,
-              width: `${zoneWidthPercent}%`,
-            }}
-          />
-        </div>
-        <div className="flex items-center justify-center text-[11px] uppercase tracking-[0.3em] text-zinc-400">
-          {isActive ? (
-            <span>{displayMin} - {displayMax} BPM</span>
-          ) : (
-            <span className="text-zinc-500">Cliquez pour filtrer par BPM</span>
-          )}
-        </div>
-      </div>
-    );
   };
 
   const FiltersBlocks = () => (
