@@ -1,11 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import VisibleProgressCircle from "@/components/VisibleProgressCircle";
 import Link from "next/link";
 import FooterHome from "@/components/FooterHome";
+import SplashScreen from "@/components/SplashScreen";
+
+const VIDEO_URLS = [
+  "/videos/videotest0.mp4",
+  "/videos/videotest1.mp4",
+  "/videos/videotest2.mp4",
+  "/videos/videotest3.mp4",
+];
 
 export default function Home() {
+  const [isLoading, setIsLoading] = useState(true);
   const sections = useRef<HTMLElement[]>([]);
   const isScrolling = useRef(false);
   const videoRefs = useRef<HTMLVideoElement[]>([]);
@@ -69,9 +78,10 @@ export default function Home() {
     };
   }, [smoothScrollTo]);
 
-  // Pause/lecture des vidéos uniquement quand la section est visible pour réduire le coût initial
+  // Pause/lecture des vidéos uniquement quand la section est visible
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || isLoading) return;
+
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -89,11 +99,21 @@ export default function Home() {
 
     videoRefs.current.forEach((video) => video && observer.observe(video));
     return () => observer.disconnect();
-  }, []);
+  }, [isLoading]);
 
   return (
-    <div className="bg-black text-white min-h-[100svh] overflow-hidden">
-      {[0, 1, 2, 3].map((index) => {
+    <>
+      {/* Splash screen avec préchargement des vidéos */}
+      {isLoading && (
+        <SplashScreen
+          videoUrls={VIDEO_URLS}
+          onLoadComplete={() => setIsLoading(false)}
+          minDisplayTime={2500}
+        />
+      )}
+
+      <div className={`bg-black text-white min-h-[100svh] overflow-hidden transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+        {[0, 1, 2, 3].map((index) => {
         const titles = [
           [
             "LES PRODS A PRIX ABORDABLE",
@@ -198,6 +218,7 @@ export default function Home() {
       >
         <FooterHome />
       </section>
-    </div>
+      </div>
+    </>
   );
 }
