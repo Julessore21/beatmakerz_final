@@ -613,7 +613,7 @@ export default function AdminCataloguePage() {
                   <input
                     type="file"
                     className="hidden"
-                    accept="audio/mp3,audio/mpeg,audio/wav"
+                    accept="audio/mp3,audio/mpeg,.mp3"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) {
@@ -631,7 +631,7 @@ export default function AdminCataloguePage() {
                     ) : (
                       <div>
                         <p className="text-sm font-medium text-indigo-300">Choisir un fichier audio</p>
-                        <p className="text-[10px] text-zinc-500 mt-1">MP3, WAV • La preview (45s) sera générée automatiquement</p>
+                        <p className="text-[10px] text-zinc-500 mt-1">MP3 uniquement • La preview (45s) sera générée automatiquement</p>
                       </div>
                     )}
                   </div>
