@@ -243,11 +243,11 @@ export default function AdminCataloguePage() {
       formData.append("file", file);
       const token = sessionStorage.getItem("access_token");
 
-      const res = await fetch(`/api/admin/beats/${beatId}/audio`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
+      const res = await fetch(`${apiUrl}/beats/${beatId}/upload-audio`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
-        credentials: "include",
       });
 
       if (!res.ok) {
