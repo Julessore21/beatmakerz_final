@@ -267,7 +267,7 @@ function CatalogueContent() {
             bpm: b.bpm ?? 120,
             key: b.key || "Am",
             tag: null as Tag | null,
-            audio: b.assets?.find((a: { type: string }) => a.type === "preview")
+            audio: b.assets?.find((a) => a.type === "preview")
               ? `${process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com"}/beats/${b._id || b.id}/stream/preview`
               : TEST_AUDIO,
             price: typeof b.price === "number" ? b.price : (b.priceCents ?? 1999) / 100,
