@@ -8,6 +8,7 @@ import { useCart } from "@/context/CartContext";
 import { toggleFavorite } from "@/lib/services/user-api";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
+import { getBeatCover } from "@/lib/genre-cover";
 
 export type Tag = "Tendance" | "Nouveau" | "Populaire";
 
@@ -28,6 +29,7 @@ export type BeatCardProps = {
   onMore?: () => void;
   showTag?: boolean;
   isFav?: boolean;
+  coverUrl?: string | null;
 };
 
 const chipClass =
@@ -50,6 +52,7 @@ export default function BeatCard({
   onMore,
   showTag = true,
   isFav = false,
+  coverUrl,
 }: BeatCardProps) {
   const { addItem } = useCart();
   const { user } = useAuth();
@@ -57,16 +60,7 @@ export default function BeatCard({
 
   useEffect(() => setFav(isFav), [isFav]);
 
-  const backgroundForGenre = (value: string): string | null => {
-    const lower = value.toLowerCase();
-    if (lower.includes("trap")) return "/img/trap.png";
-    if (lower.includes("r&b") || lower.includes("rnb")) return "/img/rnb.png";
-    if (lower.includes("new wave")) return "/img/newwave.png";
-    if (lower.includes("melanc")) return "/img/melancolique.png";
-    return null;
-  };
-
-  const background = backgroundForGenre(genre);
+  const background = getBeatCover(coverUrl, [genre]);
 
   const handleAdd = () => {
     addItem({ id, name, price });

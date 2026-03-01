@@ -26,6 +26,7 @@ type Beat = {
   price: number;
   tag?: "Tendance" | "Nouveau" | "Populaire" | null;
   audio: string;
+  coverUrl?: string | null;
 };
 
 const PRICE_RANGES = [
@@ -337,7 +338,10 @@ export default function BeatmakerMarketplace() {
             key: b.key || "Am",
             price: (b.priceOverrides?.[0]?.priceCents ?? b.priceCents ?? 1999) / 100,
             tag: (b.tag as Beat["tag"]) ?? null,
-            audio: b.assets?.find((a: any) => a.type === "preview")?.storageKey || "/audio/sample.mp3",
+            audio: b.assets?.find((a: any) => a.type === "preview")
+              ? `${process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com"}/beats/${String(b._id || b.id)}/stream/preview`
+              : "/audio/sample.mp3",
+            coverUrl: b.coverUrl ?? null,
           })) || [];
         setBeats(mapped);
       })
@@ -565,6 +569,7 @@ export default function BeatmakerMarketplace() {
                         isFav={favorites.includes(String(beat.id))}
                         onPlayPause={() => handlePlayPause(beat)}
                         onFav={() => handleToggleFavorite(String(beat.id))}
+                        coverUrl={beat.coverUrl}
                       />
                     );
                   })}

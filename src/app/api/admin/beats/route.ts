@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const url = `${API_URL}/beats?limit=50`;
+    const url = `${API_URL}/beats/admin/all`;
 
     const response = await fetch(url, {
       headers: {
@@ -35,8 +35,7 @@ export async function GET(request: NextRequest) {
 
     const data = await response.json();
 
-    // Retourner directement les items du catalogue
-    return NextResponse.json(data.items || []);
+    return NextResponse.json(Array.isArray(data) ? data : data.items || []);
   } catch (error) {
     console.error("Error fetching beats:", error);
     return NextResponse.json(
@@ -65,12 +64,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // TODO: Il faudra ajouter artistId - pour l'instant on utilise un artistId par défaut
-    // Tu devras modifier le formulaire pour sélectionner un artiste
-    const DEFAULT_ARTIST_ID = "5138a0fa-def1-4330-b668-3efd949b8485"; // BeatMaster
-
     const payload = {
-      artistId: DEFAULT_ARTIST_ID,
+      artistId: body.artistId,
       title: body.title,
       bpm: body.bpm,
       key: body.key,

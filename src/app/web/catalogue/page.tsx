@@ -31,6 +31,7 @@ export type Beat = {
   tag: Tag | null;
   audio: string;
   price: number;
+  coverUrl?: string | null;
 };
 
 // Utilise le même fichier test que la marketplace pour assurer la lecture sur les deux pages
@@ -266,12 +267,11 @@ function CatalogueContent() {
             bpm: b.bpm ?? 120,
             key: b.key || "Am",
             tag: null as Tag | null,
-            audio:
-              b.assets?.find((a) => a.type === "preview")?.storageKey ||
-              b.previewUrl ||
-              b.audioUrl ||
-              TEST_AUDIO,
+            audio: b.assets?.find((a: { type: string }) => a.type === "preview")
+              ? `${process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com"}/beats/${b._id || b.id}/stream/preview`
+              : TEST_AUDIO,
             price: typeof b.price === "number" ? b.price : (b.priceCents ?? 1999) / 100,
+            coverUrl: b.coverUrl ?? null,
           })) || [];
         setBeats(mapped);
         setErrorBeats(null);
@@ -688,6 +688,7 @@ function CatalogueContent() {
                       isFav={favIds.includes(String(b.id))}
                       onFav={() => onToggleFav(String(b.id))}
                       onMore={() => {}}
+                      coverUrl={b.coverUrl}
                     />
                   ))}
                 </motion.div>

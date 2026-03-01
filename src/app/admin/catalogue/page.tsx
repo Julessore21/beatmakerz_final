@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { getBeatCover } from "@/lib/genre-cover";
 
 type Artist = {
   _id: string;
@@ -138,6 +139,8 @@ export default function AdminCataloguePage() {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [form, setForm] = useState(initialFormState);
   const [audioFile, setAudioFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -217,6 +220,8 @@ export default function AdminCataloguePage() {
   const resetForm = () => {
     setForm(initialFormState);
     setAudioFile(null);
+    setCoverFile(null);
+    setCoverPreview(null);
     setError(null);
     setInfo(null);
   };
@@ -233,8 +238,27 @@ export default function AdminCataloguePage() {
       status: beat.status || "draft",
       visibility: beat.visibility || "public",
     });
+    setCoverFile(null);
+    setCoverPreview(beat.coverUrl || null);
     setError(null);
     setInfo(null);
+  };
+
+  const uploadCoverForBeat = async (beatId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const token = sessionStorage.getItem("access_token");
+    const res = await fetch(`/api/admin/beats/${beatId}/cover`, {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+      credentials: "include",
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({ error: "Upload cover échoué" }));
+      throw new Error(errorData.error || "Upload cover échoué");
+    }
+    return await res.json();
   };
 
   const uploadAudioForBeat = async (beatId: string, file: File) => {
@@ -306,13 +330,21 @@ export default function AdminCataloguePage() {
       }
       const savedBeat = await res.json();
 
-      // Étape 2: Si un fichier audio est sélectionné, l'uploader
+      // Étape 2: Upload cover si sélectionnée
+      if (coverFile && savedBeat._id) {
+        setInfo("Cover en cours d'upload...");
+        const coverResult = await uploadCoverForBeat(savedBeat._id, coverFile);
+        setCoverPreview(coverResult.coverUrl || null);
+        setCoverFile(null);
+      }
+
+      // Étape 3: Si un fichier audio est sélectionné, l'uploader
       if (audioFile && savedBeat._id) {
         setInfo(`Beat créé! Upload audio en cours... (${(audioFile.size / 1024 / 1024).toFixed(2)} MB)`);
         await uploadAudioForBeat(savedBeat._id, audioFile);
         setInfo("Beat créé et audio uploadé avec succès! Preview générée automatiquement.");
       } else {
-        setInfo("Beat enregistré avec succès.");
+        setInfo(coverFile ? "Beat et cover enregistrés." : "Beat enregistré avec succès.");
       }
 
       await loadBeats();
@@ -605,6 +637,58 @@ export default function AdminCataloguePage() {
               </div>
             </div>
 
+            {/* Cover Image Upload */}
+            <div>
+              <label className="text-xs font-medium text-zinc-400">Cover</label>
+              <div className="mt-1 flex items-center gap-3">
+                {/* Preview */}
+                <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/5">
+                  {(() => {
+                    const img = coverPreview || getBeatCover(null, form.genres);
+                    return img ? (
+                      <img src={img} alt="cover" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-zinc-600 text-xs">—</div>
+                    );
+                  })()}
+                </div>
+                <label className="flex flex-1 cursor-pointer items-center justify-center rounded-lg border border-dashed border-zinc-600/50 bg-white/3 py-2 px-3 transition hover:border-zinc-500/70 hover:bg-white/5">
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setCoverFile(file);
+                        setCoverPreview(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
+                  <div className="text-center">
+                    {coverFile ? (
+                      <p className="text-xs font-medium text-zinc-300">{coverFile.name}</p>
+                    ) : (
+                      <p className="text-xs text-zinc-500">Choisir une image <span className="text-zinc-600">JPG / PNG / WEBP</span></p>
+                    )}
+                  </div>
+                </label>
+                {coverFile && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCoverFile(null);
+                      const currentBeatCover = beats.find((b) => b._id === form.id)?.coverUrl;
+                      setCoverPreview(currentBeatCover || null);
+                    }}
+                    className="text-xs text-zinc-500 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+
             {/* Audio File Upload */}
             <div>
               <label className="text-xs font-medium text-zinc-400">Fichier Audio</label>
@@ -697,7 +781,14 @@ export default function AdminCataloguePage() {
                         {beat.status === "published" ? "●" : "○"}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-center">{beat.coverUrl ? <span className="text-emerald-400">✓</span> : <span className="text-zinc-600">—</span>}</td>
+                    <td className="px-3 py-2 text-center">
+                      {beat.coverUrl
+                        ? <span className="text-emerald-400">✓</span>
+                        : getBeatCover(null, beat.genres || [])
+                          ? <span className="text-zinc-400 text-[9px]">auto</span>
+                          : <span className="text-zinc-600">—</span>
+                      }
+                    </td>
                     <td className="px-3 py-2 text-center">{beat.assets?.find((a) => a.type === "preview") ? <span className="text-emerald-400">✓</span> : <span className="text-zinc-600">—</span>}</td>
                     <td className="px-3 py-2 text-center">{beat.assets?.find((a) => a.type === "mp3") ? <span className="text-emerald-400">✓</span> : <span className="text-zinc-600">—</span>}</td>
                     <td className="px-3 py-2 text-center" onClick={(e) => e.stopPropagation()}>
