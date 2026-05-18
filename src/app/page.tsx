@@ -234,21 +234,41 @@ export default function Home() {
             );
           })}
 
-          {/* Section footer */}
+          {/* Section footer — closing branded section */}
           <section
-            className="relative w-full bg-[#030308] overflow-y-auto"
+            className="relative flex w-full flex-col overflow-hidden bg-[#030308]"
             style={{ height: "100svh" }}
             aria-hidden={currentIndex !== SLIDES.length}
           >
-            <FooterHome />
+            {/* Séparateur haut */}
+            <div className="h-px w-full shrink-0 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+            {/* Filigrane centré — occupe l'espace libre */}
+            <div
+              className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
+              aria-hidden
+            >
+              <span
+                className="font-bold leading-none tracking-[0.35em] text-white/[0.03]"
+                style={{ fontSize: "clamp(3rem, 14vw, 12rem)" }}
+              >
+                BEATMAKERZ
+              </span>
+            </div>
+
+            {/* Footer links poussés en bas */}
+            <div className="relative z-10 mt-auto">
+              <FooterHome />
+            </div>
           </section>
         </div>
 
-        {/* Navigation par points — sections vidéo uniquement */}
+        {/* Navigation par points */}
         <nav
           className="fixed right-4 sm:right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3"
           aria-label="Navigation des sections"
         >
+          {/* Points pour les 4 sections vidéo */}
           {SLIDES.map((_, i) => (
             <button
               key={i}
@@ -258,14 +278,13 @@ export default function Home() {
               className="group flex items-center justify-center w-5 h-5"
             >
               <span
-                className="block rounded-full transition-all duration-400"
+                className="block rounded-full"
                 style={{
                   width: currentIndex === i ? 10 : 6,
                   height: currentIndex === i ? 10 : 6,
-                  background:
-                    currentIndex === i
-                      ? "rgba(255,255,255,1)"
-                      : "rgba(255,255,255,0.35)",
+                  background: currentIndex === i
+                    ? "rgba(255,255,255,1)"
+                    : "rgba(255,255,255,0.35)",
                   boxShadow: currentIndex === i
                     ? "0 0 8px 2px rgba(255,255,255,0.3)"
                     : "none",
@@ -274,6 +293,30 @@ export default function Home() {
               />
             </button>
           ))}
+
+          {/* Trait séparateur */}
+          <div className="mx-auto h-px w-2 bg-white/20 my-0.5" />
+
+          {/* Point footer — forme distincte (carré arrondi) */}
+          <button
+            onClick={() => goTo(SLIDES.length)}
+            aria-label="Footer"
+            aria-current={currentIndex === SLIDES.length ? "true" : undefined}
+            className="flex items-center justify-center w-5 h-5"
+          >
+            <span
+              className="block"
+              style={{
+                width: currentIndex === SLIDES.length ? 8 : 5,
+                height: currentIndex === SLIDES.length ? 8 : 5,
+                borderRadius: 2,
+                background: currentIndex === SLIDES.length
+                  ? "rgba(255,255,255,0.9)"
+                  : "rgba(255,255,255,0.25)",
+                transition: "all 0.35s ease",
+              }}
+            />
+          </button>
         </nav>
       </div>
     </>

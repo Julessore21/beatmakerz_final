@@ -28,7 +28,7 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
     monthly: "19.99 EUR",
     yearly: "199.99 EUR",
     label: "BASIQUE",
-    description: ["4 prods/mois", "40 EUR d&#39;economie", "100% royalty free"],
+    description: ["4 prods/mois", "40 EUR d'economie", "100% royalty free"],
     priceIds: {
       monthly: fallbackPrice(
         process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_MONTHLY,
@@ -52,7 +52,7 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
     label: "POPULAIRE",
     description: [
       "10 prods/mois",
-      "80 EUR d&#39;economie",
+      "80 EUR d'economie",
       "100% royalty free",
       "-15 % (prods sur mesure)",
       "SAV prioritaire",
@@ -80,7 +80,7 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
     label: "MEILLEURE OFFRE",
     description: [
       "15 prods/mois",
-      "120 EUR d&#39;economie",
+      "120 EUR d'economie",
       "100% royalty free",
       "-30 % (prods sur mesure)",
       "SAV prioritaire",
@@ -130,7 +130,7 @@ function Abonnements() {
 
       if (!priceId && !lookupKey) {
         setFeedbackMessage(
-          "Ce plan n&#39;est pas encore disponible. Contacte-nous pour plus d'informations."
+          "Ce plan n'est pas encore disponible. Contacte-nous pour plus d'informations."
         );
         return;
       }
@@ -189,7 +189,7 @@ function Abonnements() {
       const payload = (await response.json()) as { url?: string; error?: string };
 
       if (!response.ok || !payload.url) {
-        throw new Error(payload.error || "Impossible d&#39;ouvrir le portail client.");
+        throw new Error(payload.error || "Impossible d'ouvrir le portail client.");
       }
 
       window.location.href = payload.url;
@@ -314,7 +314,7 @@ function Abonnements() {
               ? "Plan indisponible"
               : isProcessing
                 ? "Redirection..."
-                : "S&#39;abonner";
+                : "S'abonner";
 
           const cardClassName = [
             "relative flex flex-col items-center text-center cursor-pointer",
