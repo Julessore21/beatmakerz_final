@@ -20,7 +20,8 @@ import {
   User,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { fetchFavorites, fetchOrders, fetchSettings, toggleFavorite, updateSettings, type UserSettings } from "@/lib/services/user-api";
+import { fetchFavorites, fetchOrders, fetchSettings, toggleFavorite, updateSettings, type UserSettings, type FavoriteItem, type OrderItem } from "@/lib/services/user-api";
+import { type AuthUser } from "@/lib/auth.service";
 
 const cn = (...c: (string | false | null | undefined)[]) => c.filter(Boolean).join(" ");
 
@@ -76,8 +77,8 @@ export default function AccountPage() {
   const router = useRouter();
   const { user: authUser, logout } = useAuth();
 
-  const [favorites, setFavorites] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+  const [orders, setOrders] = useState<OrderItem[]>([]);
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [openFavs, setOpenFavs] = useState(false);
@@ -109,9 +110,8 @@ export default function AccountPage() {
     }
   }, [isGuest, router]);
 
-  const u: any = authUser;
-  const displayName = typeof authUser === "string" ? authUser : u?.displayName || u?.email || "Invite";
-  const email = typeof authUser === "string" ? authUser : u?.email || "";
+  const displayName = (authUser as AuthUser | null)?.displayName || (authUser as AuthUser | null)?.email || "Invite";
+  const email = (authUser as AuthUser | null)?.email || "";
 
   const stats = useMemo(
     () => [
@@ -124,8 +124,8 @@ export default function AccountPage() {
 
   const downloads = useMemo(
     () =>
-      (orders || []).flatMap((o: any) =>
-        (o.items || []).map((it: any) => ({
+      (orders || []).flatMap((o) =>
+        (o.items || []).map((it) => ({
           id: it._id || it.id,
           beatId: it.beatId,
           beatTitle: it.beat?.title || it.title,
@@ -134,6 +134,11 @@ export default function AccountPage() {
           status: o.status,
           date: o.createdAt,
           expires: it.downloadExpiresAt,
+          downloadUrl: it.downloadUrl,
+          url: it.url,
+          presignedUrl: it.presignedUrl,
+          presignedKey: it.presignedKey,
+          downloadGrant: it.downloadGrant,
         }))
       ),
     [orders]
@@ -306,7 +311,7 @@ export default function AccountPage() {
                           <td className="px-4 py-3 font-medium">{formatId(o._id || o.id)}</td>
                           <td className="px-4 py-3">
                             <div className="space-y-1">
-                              {(o.items || []).map((it: any, idx: number) => {
+                              {(o.items || []).map((it, idx) => {
                                 const title = it.beat?.title || it.title || it.beatId || "Beat";
                                 const license = it.licenseType?.code || it.licenseTypeId || "Licence";
                                 const dl = it.downloadUrl || it.url || it.presignedUrl || it.presignedKey || it.downloadGrant?.url;
@@ -473,7 +478,8 @@ export default function AccountPage() {
             >
               <div className="mt-3 space-y-2">
                 {downloads.slice(0, 6).map((d) => {
-                  const dl = d.downloadUrl || d.url || d.presignedUrl || d.presignedKey || d.downloadGrant?.url;
+                  const _d = d as typeof d & { downloadUrl?: string; url?: string; presignedUrl?: string; presignedKey?: string; downloadGrant?: { url?: string } };
+                  const dl = _d.downloadUrl || _d.url || _d.presignedUrl || _d.presignedKey || _d.downloadGrant?.url;
                   return (
                     <div key={d.id || `${d.orderId}-${d.beatId}`} className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm">
                       <div className="flex items-center justify-between">
@@ -605,7 +611,7 @@ function ToggleRow({ label, checked, onChange }: { label: string; checked: boole
   );
 }
 
-function FavsModal({ open, onClose, favorites, onRefresh }: { open: boolean; onClose: () => void; favorites: any[]; onRefresh: () => void }) {
+function FavsModal({ open, onClose, favorites, onRefresh }: { open: boolean; onClose: () => void; favorites: FavoriteItem[]; onRefresh: () => void }) {
   const router = useRouter();
   if (!open) return null;
   return (
@@ -632,7 +638,8 @@ function FavsModal({ open, onClose, favorites, onRefresh }: { open: boolean; onC
               const id = fav.beatId;
               const b = fav.beat;
               const title = b?.title || `Beat ${formatId(id)}`;
-              const artist = b?.artist || b?.artistName || "Beatmaker";
+              const _b = b as typeof b & { artist?: string; artistName?: string };
+              const artist = _b?.artist || _b?.artistName || "Beatmaker";
               return (
                 <li key={fav.id || fav._id || id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 px-2 text-xs text-center truncate">

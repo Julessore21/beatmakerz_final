@@ -1,9 +1,10 @@
 import { apiGet, apiPost, apiDelete, apiPatch } from "./api-client";
 
 export type FavoriteItem = {
-  id: string;
+  id?: string;
+  _id?: string;
   beatId: string;
-  beat?: { title?: string; coverUrl?: string; artistId?: string };
+  beat?: { title?: string; coverUrl?: string; artistId?: string; artist?: string; artistName?: string };
   createdAt?: string;
 };
 
@@ -25,18 +26,32 @@ export type NotificationItem = {
   createdAt?: string;
 };
 
+export type OrderLineItem = {
+  _id?: string;
+  id?: string;
+  beatId: string;
+  beat?: { title?: string };
+  title?: string;
+  licenseTypeId: string;
+  licenseType?: { code?: string };
+  unitPriceCents?: number;
+  qty?: number;
+  downloadUrl?: string;
+  url?: string;
+  presignedUrl?: string;
+  presignedKey?: string;
+  downloadGrant?: { url?: string };
+  downloadExpiresAt?: string;
+};
+
 export type OrderItem = {
-  _id: string;
+  _id?: string;
+  id?: string;
   status: string;
   totalCents: number;
   currency: string;
   createdAt?: string;
-  items?: {
-    beatId: string;
-    licenseTypeId: string;
-    unitPriceCents: number;
-    qty: number;
-  }[];
+  items?: OrderLineItem[];
 };
 
 export const fetchFavorites = () => apiGet<FavoriteItem[]>("/me/favorites");

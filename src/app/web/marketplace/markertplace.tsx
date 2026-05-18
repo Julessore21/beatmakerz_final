@@ -326,7 +326,8 @@ export default function BeatmakerMarketplace() {
 
   // chargement initial des beats depuis l'API, fallback si erreur
   useEffect(() => {
-    apiGet<{ items: any[] }>("/beats")
+    type ApiBeat = { _id?: string; id?: string; title?: string; artist?: { name?: string }; genres?: string[]; bpm?: number; key?: string; priceOverrides?: { priceCents?: number }[]; priceCents?: number; tag?: string; assets?: { type?: string }[]; coverUrl?: string | null };
+    apiGet<{ items: ApiBeat[] }>("/beats")
       .then((data) => {
         const mapped =
           data.items?.map((b, idx) => ({
@@ -338,7 +339,7 @@ export default function BeatmakerMarketplace() {
             key: b.key || "Am",
             price: (b.priceOverrides?.[0]?.priceCents ?? b.priceCents ?? 1999) / 100,
             tag: (b.tag as Beat["tag"]) ?? null,
-            audio: b.assets?.find((a: any) => a.type === "preview")
+            audio: b.assets?.find((a) => a.type === "preview")
               ? `${process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com"}/beats/${String(b._id || b.id)}/stream/preview`
               : "/audio/sample.mp3",
             coverUrl: b.coverUrl ?? null,

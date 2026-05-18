@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getErrorMessage } from "@/lib/utils/error";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
@@ -71,10 +72,10 @@ export async function POST(
 
     // Le backend devrait retourner les deux assets crees: preview et mp3
     return NextResponse.json(data);
-  } catch (error: any) {
-    console.error(`Error uploading audio:`, error);
+  } catch (error: unknown) {
+    console.error("Error uploading audio:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to upload audio" },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }

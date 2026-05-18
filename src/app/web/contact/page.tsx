@@ -1,22 +1,59 @@
 "use client";
 
 import React, { useState, ChangeEvent, FormEvent } from "react";
+import { contactSchema, type ContactInput } from "@/schemas/forms/contactSchema";
 
 type Status = "idle" | "loading" | "success" | "error";
 
-const EMPTY_FORM = { name: "", email: "", subject: "", message: "" };
+const EMPTY_FORM: ContactInput = { name: "", email: "", subject: "", message: "" };
 
 const Contact: React.FC = () => {
-  const [formData, setFormData] = useState(EMPTY_FORM);
+  const [formData, setFormData] = useState<ContactInput>(EMPTY_FORM);
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ContactInput, string>>>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof ContactInput, boolean>>>({});
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (touched[name as keyof ContactInput]) {
+      const result = contactSchema.safeParse({ ...formData, [name]: value });
+      if (!result.success) {
+        const issue = result.error.issues.find((i) => i.path[0] === name);
+        setFieldErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
+      } else {
+        setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+      }
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name } = e.target;
+    setTouched((prev) => ({ ...prev, [name]: true }));
+    const result = contactSchema.safeParse(formData);
+    if (!result.success) {
+      const issue = result.error.issues.find((i) => i.path[0] === name);
+      setFieldErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
+    } else {
+      setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    const result = contactSchema.safeParse(formData);
+    if (!result.success) {
+      const errs: Partial<Record<keyof ContactInput, string>> = {};
+      result.error.issues.forEach((i) => {
+        const key = i.path[0] as keyof ContactInput;
+        if (key && !errs[key]) errs[key] = i.message;
+      });
+      setFieldErrors(errs);
+      setTouched({ name: true, email: true, subject: true, message: true });
+      return;
+    }
+
     setStatus("loading");
     setErrorMsg("");
 
@@ -24,10 +61,10 @@ const Contact: React.FC = () => {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(result.data),
       });
 
-      const data = await res.json();
+      const data = await res.json() as { error?: string };
 
       if (!res.ok) {
         setStatus("error");
@@ -37,11 +74,16 @@ const Contact: React.FC = () => {
 
       setStatus("success");
       setFormData(EMPTY_FORM);
+      setFieldErrors({});
+      setTouched({});
     } catch {
       setStatus("error");
       setErrorMsg("Impossible de contacter le serveur. Vérifie ta connexion.");
     }
   };
+
+  const inputClass = "w-full h-11 md:h-12 rounded-xl bg-white/[0.04] text-white placeholder:text-neutral-500/80 px-4 md:px-5 ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-white/30 focus:outline-none transition";
+  const errorClass = "mt-1 text-xs text-red-400";
 
   return (
     <div className="relative min-h-screen bg-black text-white overflow-hidden">
@@ -74,6 +116,7 @@ const Contact: React.FC = () => {
         ) : (
           <form
             onSubmit={handleSubmit}
+            noValidate
             className="mt-8 w-full max-w-3xl rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 md:p-8 space-y-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
           >
             <div className="space-y-2">
@@ -86,11 +129,12 @@ const Contact: React.FC = () => {
                 type="text"
                 value={formData.name}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Votre nom"
-                className="w-full h-11 md:h-12 rounded-xl bg-white/[0.04] text-white placeholder:text-neutral-500/80 px-4 md:px-5 ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-white/30 focus:outline-none transition"
-                required
+                className={inputClass}
                 disabled={status === "loading"}
               />
+              {fieldErrors.name && <p className={errorClass}>{fieldErrors.name}</p>}
             </div>
 
             <div className="space-y-2">
@@ -103,11 +147,12 @@ const Contact: React.FC = () => {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Votre email"
-                className="w-full h-11 md:h-12 rounded-xl bg-white/[0.04] text-white placeholder:text-neutral-500/80 px-4 md:px-5 ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-white/30 focus:outline-none transition"
-                required
+                className={inputClass}
                 disabled={status === "loading"}
               />
+              {fieldErrors.email && <p className={errorClass}>{fieldErrors.email}</p>}
             </div>
 
             <div className="space-y-2">
@@ -118,12 +163,14 @@ const Contact: React.FC = () => {
                 id="subject"
                 name="subject"
                 type="text"
-                value={formData.subject}
+                value={formData.subject ?? ""}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Sujet"
-                className="w-full h-11 md:h-12 rounded-xl bg-white/[0.04] text-white placeholder:text-neutral-500/80 px-4 md:px-5 ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-white/30 focus:outline-none transition"
+                className={inputClass}
                 disabled={status === "loading"}
               />
+              {fieldErrors.subject && <p className={errorClass}>{fieldErrors.subject}</p>}
             </div>
 
             <div className="space-y-2">
@@ -135,12 +182,13 @@ const Contact: React.FC = () => {
                 name="message"
                 value={formData.message}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Votre message"
                 rows={5}
                 className="w-full min-h-[7rem] rounded-xl bg-white/[0.04] text-white placeholder:text-neutral-500/80 px-4 md:px-5 py-3 ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-white/30 focus:outline-none transition resize-none"
-                required
                 disabled={status === "loading"}
               />
+              {fieldErrors.message && <p className={errorClass}>{fieldErrors.message}</p>}
             </div>
 
             {status === "error" && (

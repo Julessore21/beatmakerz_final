@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getErrorMessage } from "@/lib/utils/error";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
@@ -101,10 +102,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(beat);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating beat:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to create beat" },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }

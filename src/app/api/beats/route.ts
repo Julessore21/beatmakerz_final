@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getErrorMessage } from "@/lib/utils/error";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
@@ -37,10 +38,10 @@ export async function GET(request: NextRequest) {
 
     // Le backend retourne { items: Beat[], cursor: string | null }
     return NextResponse.json(data);
-  } catch (error: any) {
-    console.error("[API /beats] Error:", error.message, error);
+  } catch (error: unknown) {
+    console.error("[API /beats] Error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to fetch beats", items: [] },
+      { error: getErrorMessage(error), items: [] },
       { status: 500 }
     );
   }

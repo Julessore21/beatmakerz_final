@@ -7,7 +7,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AuthService } from "@/lib/auth.service";
+import { AuthService, type AuthUser } from "@/lib/auth.service";
 import { useAuth } from "@/context/AuthContext";
 import { CreditCard, Loader2, ArrowLeft } from "lucide-react";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
@@ -54,7 +54,7 @@ export default function CheckoutPage() {
 
         const data = await response.json();
         setCart(data);
-      } catch (e: any) {
+      } catch (e: unknown) {
         setError("Impossible de charger le panier");
         console.error("Failed to load cart:", e);
       }
@@ -105,9 +105,9 @@ export default function CheckoutPage() {
       }
 
       throw new Error("URL de redirection manquante");
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Checkout error:", e);
-      setError(e.message || "Impossible de créer la session de paiement");
+      setError(e instanceof Error ? e.message : "Impossible de créer la session de paiement");
       setLoading(false);
     }
   };
@@ -119,7 +119,7 @@ export default function CheckoutPage() {
           <button onClick={() => router.push("/web/panier")} className="inline-flex items-center gap-2 text-sm text-zinc-300 hover:text-white">
             <ArrowLeft className="h-4 w-4" /> Retour au panier
           </button>
-          {user ? <span className="text-sm text-zinc-400">Connecté en tant que {typeof user === "string" ? user : (user as any)?.email}</span> : null}
+          {user ? <span className="text-sm text-zinc-400">Connecté en tant que {(user as AuthUser)?.email}</span> : null}
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">

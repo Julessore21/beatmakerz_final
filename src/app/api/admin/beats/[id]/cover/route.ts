@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getErrorMessage } from "@/lib/utils/error";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
@@ -56,10 +57,10 @@ export async function POST(
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error uploading cover:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to upload cover" },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getErrorMessage } from "@/lib/utils/error";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
@@ -28,7 +29,7 @@ export async function PUT(
     const body = await request.json();
 
     // Ne garder que les champs modifiables
-    const payload: any = {};
+    const payload: Record<string, unknown> = {};
     if (body.title !== undefined) payload.title = body.title;
     if (body.bpm !== undefined) payload.bpm = body.bpm;
     if (body.key !== undefined) payload.key = body.key;
@@ -53,10 +54,10 @@ export async function PUT(
 
     const beat = await response.json();
     return NextResponse.json(beat);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating beat:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to update beat" },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }
@@ -98,10 +99,10 @@ export async function DELETE(
 
     const result = await response.json();
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error deleting beat:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to delete beat" },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }

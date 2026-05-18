@@ -1,3 +1,5 @@
+import { parseApiError, type ApiErrorBody } from "@/lib/utils/error";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const ACCESS_TOKEN_KEY = "access_token"; // Aligne avec auth.service.ts
 
@@ -33,7 +35,7 @@ const refreshAccessToken = async () => {
       body: "{}",
     });
     if (!res.ok) return false;
-    const data = await res.json();
+    const data = await res.json() as { tokens?: { accessToken?: string } };
     if (data?.tokens?.accessToken) {
       setToken(data.tokens.accessToken);
       return true;
@@ -71,23 +73,39 @@ const doFetch = async (path: string, init: RequestInit) => {
 
 export const apiGet = async <T>(path: string): Promise<T> => {
   const res = await doFetch(path, { method: "GET" });
-  if (!res.ok) throw new Error(`GET ${path} failed ${res.status}`);
-  return res.json();
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as unknown;
+    const { message } = parseApiError(body, res.status);
+    throw new Error(typeof message === "string" ? message : message[0] ?? `GET ${path} failed ${res.status}`);
+  }
+  return res.json() as Promise<T>;
 };
 
-export const apiPost = async <T>(path: string, body: any = {}): Promise<T> => {
+export const apiPost = async <T>(path: string, body: Record<string, unknown> = {}): Promise<T> => {
   const res = await doFetch(path, { method: "POST", body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(`POST ${path} failed ${res.status}`);
-  return res.json();
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({})) as unknown;
+    const { message } = parseApiError(errBody, res.status);
+    throw new Error(typeof message === "string" ? message : message[0] ?? `POST ${path} failed ${res.status}`);
+  }
+  return res.json() as Promise<T>;
 };
 
-export const apiPatch = async <T>(path: string, body: any = {}): Promise<T> => {
+export const apiPatch = async <T>(path: string, body: Record<string, unknown> = {}): Promise<T> => {
   const res = await doFetch(path, { method: "PATCH", body: JSON.stringify(body) });
-  if (!res.ok) throw new Error(`PATCH ${path} failed ${res.status}`);
-  return res.json();
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({})) as unknown;
+    const { message } = parseApiError(errBody, res.status);
+    throw new Error(typeof message === "string" ? message : message[0] ?? `PATCH ${path} failed ${res.status}`);
+  }
+  return res.json() as Promise<T>;
 };
 
 export const apiDelete = async (path: string) => {
   const res = await doFetch(path, { method: "DELETE" });
-  if (!res.ok) throw new Error(`DELETE ${path} failed ${res.status}`);
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({})) as unknown;
+    const { message } = parseApiError(errBody, res.status);
+    throw new Error(typeof message === "string" ? message : message[0] ?? `DELETE ${path} failed ${res.status}`);
+  }
 };

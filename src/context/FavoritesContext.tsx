@@ -57,9 +57,10 @@ export function FavoritesProvider({ children }: FavoritesProviderProps) {
     try {
       const items = await fetchFavorites();
       setFavIds(items.map((f) => f.beatId));
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "";
       // Ignorer silencieusement les erreurs 401 (non authentifie)
-      if (err?.message?.includes('401')) {
+      if (msg.includes('401')) {
         setFavIds([]);
         return;
       }

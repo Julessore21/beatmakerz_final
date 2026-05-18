@@ -22,7 +22,7 @@ export interface Beat {
     storageKey: string;
     durationSec?: number;
   }>;
-  priceOverrides: any[];
+  priceOverrides: { licenseTypeId?: string; priceCents?: number }[];
   status: string;
   visibility: string;
   createdAt: string;

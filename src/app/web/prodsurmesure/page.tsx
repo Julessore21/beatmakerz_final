@@ -1,10 +1,10 @@
 "use client";
-"use client";
 /* eslint-disable react-hooks/exhaustive-deps */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { ChevronDown } from "lucide-react";
+import { briefSchema } from "@/schemas/forms/briefSchema";
 
 /* =========================== Types & Data =========================== */
 
@@ -152,7 +152,7 @@ function HeroFull({
   }, []);
 
   const displayPhrases = useMemo(() => phrases.map((p) => toTitleCase(p)), [phrases, toTitleCase]);
-  const full = displayPhrases[idx];
+  const full = displayPhrases[idx] ?? "";
   const longest = useMemo(
     () => displayPhrases.reduce((a, b) => (a.length > b.length ? a : b), ""),
     [displayPhrases]
@@ -444,6 +444,7 @@ function StepRow({
   useEffect(() => {
     const io = new IntersectionObserver(
       ([e]) => {
+        if (!e) return;
         setInView(e.isIntersecting);
         onVisible(step.id, e.isIntersecting);
       },
@@ -537,6 +538,7 @@ function BriefModal({
 }) {
   const [sending, setSending] = useState(false);
   const [ok, setOk] = useState<null | "success" | "error">(null);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
 
   // Choix uniques
   const genres = [
@@ -569,8 +571,8 @@ function BriefModal({
     "Voix": ["Chœurs"],
   };
 
-  const [genre, setGenre] = useState(genres[0]);
-  const [style, setStyle] = useState(styles[0]);
+  const [genre, setGenre] = useState(genres[0] ?? "");
+  const [style, setStyle] = useState(styles[0] ?? "");
   const [styleOther, setStyleOther] = useState("");
   const [genreOther, setGenreOther] = useState("");
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
@@ -583,6 +585,17 @@ function BriefModal({
 
   const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const fd = new FormData(e.currentTarget);
+    const detailsValue = (fd.get("details") as string | null) ?? "";
+    const briefResult = briefSchema.safeParse({ genre, style, details: detailsValue, bpm });
+    if (!briefResult.success) {
+      const detailsIssue = briefResult.error.issues.find((i) => i.path[0] === "details");
+      setDetailsError(detailsIssue?.message ?? null);
+      return;
+    }
+    setDetailsError(null);
+
     setSending(true);
     setOk(null);
 
@@ -592,10 +605,8 @@ function BriefModal({
       setSending(false);
       return;
     }
-
-    const fd = new FormData(e.currentTarget);
     const baseStyle = styleOther.trim() ? styleOther.trim() : style;
-    const details = (fd.get("details") as FormDataEntryValue | null)?.toString() ?? "";
+    const details = detailsValue;
     const notes = (fd.get("notes") as FormDataEntryValue | null)?.toString() ?? "";
     const fileInput = e.currentTarget.querySelector<HTMLInputElement>('input[name="file"]');
     const fileName = fileInput?.files?.[0]?.name ?? "";
@@ -821,11 +832,11 @@ function BriefModal({
                 <label className="text-sm text-zinc-300">Détails & éléments clés</label>
                 <textarea
                   name="details"
-                  required
                   rows={4}
                   className="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 placeholder:text-zinc-500"
                   placeholder="Ex : mélancolique, synthés analogiques, 808 profonde, clap sec, arpèges rétro…"
                 />
+                {detailsError && <p className="mt-1 text-xs text-rose-400">{detailsError}</p>}
               </div>
 
               {/* BPM + Tonalité */}

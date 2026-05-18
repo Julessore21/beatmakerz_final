@@ -6,214 +6,275 @@ import Link from "next/link";
 import FooterHome from "@/components/FooterHome";
 import SplashScreen from "@/components/SplashScreen";
 
-// TODO: remplacer poster-dark.svg par de vraies captures des vidéos (ex: ffmpeg -i videotest0.mp4 -ss 00:00:03 -frames:v 1 public/videos/poster0.jpg)
+// TODO: remplacer poster-dark.svg par de vraies captures des vidéos
+// ex: ffmpeg -i videotest0.mp4 -ss 00:00:03 -frames:v 1 public/videos/poster0.jpg
 const VIDEO_POSTER = "/videos/poster-dark.svg";
+
+const TRANSITION_MS = 900;
+
+const SLIDES = [
+  {
+    subtitle: "LES PRODS A PRIX ABORDABLE",
+    title: "BEAT DE QUALITÉ",
+    href: "/catalogue",
+    cta: "VOIR LE CATALOGUE",
+    video: "/videos/videotest0.mp4",
+  },
+  {
+    subtitle: "NOS ABONNEMENTS",
+    title: "INFINI",
+    href: "/abonnements",
+    cta: "VOIR NOS OFFRES",
+    video: "/videos/videotest1.mp4",
+  },
+  {
+    subtitle: "OBTIENT TA PROD PERSONNALISÉE",
+    title: "SUR MESURE",
+    href: "/prodsurmesure",
+    cta: "EN SAVOIR PLUS",
+    video: "/videos/videotest2.mp4",
+  },
+  {
+    subtitle: "LE COLLECTIF BEATMAKERZ",
+    title: "NOTRE HISTOIRE",
+    href: "/web/notrehistoire",
+    cta: "EN SAVOIR PLUS",
+    video: "/videos/videotest3.mp4",
+  },
+] as const;
+
+// 4 sections vidéo + 1 footer
+const SLIDE_COUNT = SLIDES.length + 1;
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
-  const sections = useRef<HTMLElement[]>([]);
-  const isScrolling = useRef(false);
-  const videoRefs = useRef<HTMLVideoElement[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const isAnimating = useRef(false);
+  const currentIndexRef = useRef(0);
+  const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const touchStartY = useRef<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
 
-  const smoothScrollTo = useCallback(
-    (targetIndex: number, direction: number, duration = 1200) => {
-      const targetSection = sections.current[targetIndex];
-      const previousIndex = targetIndex - direction;
+  // Navigation centrale : toute la logique de transition passe par ici
+  const goTo = useCallback((index: number) => {
+    if (isAnimating.current) return;
+    const clamped = Math.max(0, Math.min(SLIDE_COUNT - 1, index));
+    if (clamped === currentIndexRef.current) return;
 
-      if (!targetSection) return;
+    isAnimating.current = true;
+    currentIndexRef.current = clamped;
+    setCurrentIndex(clamped);
 
-      if (previousIndex >= 0 && previousIndex < sections.current.length) {
-        const previousSection = sections.current[previousIndex];
-        previousSection.style.transition = "opacity 0.4s ease-out";
-        previousSection.style.opacity = "0.6";
+    setTimeout(() => {
+      isAnimating.current = false;
+    }, TRANSITION_MS + 150);
+  }, []);
 
-        setTimeout(() => {
-          previousSection.style.opacity = "1";
-        }, 200);
+  // Play/pause vidéos en fonction de la section active
+  useEffect(() => {
+    if (isLoading) return;
+    videoRefs.current.forEach((video, i) => {
+      if (!video) return;
+      if (i === currentIndex && i < SLIDES.length) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
       }
+    });
+  }, [currentIndex, isLoading]);
 
-      targetSection.scrollIntoView({ behavior: "smooth" });
-
-      setTimeout(() => {
-        isScrolling.current = false;
-        sections.current.forEach((section) => {
-          section.style.opacity = "1";
-        });
-      }, duration);
-    },
-    []
-  );
-
+  // Wheel — desktop uniquement
   useEffect(() => {
-    // Disable custom wheel-based scroll hijacking on touch/mobile devices
-    const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    const isSmallScreen = window.innerWidth < 768;
-    if (isTouchDevice || isSmallScreen) return;
+    if (isLoading) return;
+    const isTouchOnly =
+      typeof window !== "undefined" &&
+      window.matchMedia("(pointer: coarse)").matches &&
+      !window.matchMedia("(pointer: fine)").matches;
+    if (isTouchOnly) return;
 
-    const handleScroll = (event: WheelEvent) => {
-      if (isScrolling.current) return;
-      isScrolling.current = true;
-
-      const direction = event.deltaY > 0 ? 1 : -1;
-      const currentIndex = sections.current.findIndex(
-        (section) => section.getBoundingClientRect().top >= -50
-      );
-
-      const nextIndex = Math.min(
-        Math.max(currentIndex + direction, 0),
-        sections.current.length - 1
-      );
-
-      smoothScrollTo(nextIndex, direction, 900);
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (isAnimating.current) return;
+      if (e.deltaY > 0) goTo(currentIndexRef.current + 1);
+      else if (e.deltaY < 0) goTo(currentIndexRef.current - 1);
     };
 
-    window.addEventListener("wheel", handleScroll, { passive: false });
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, [isLoading, goTo]);
 
+  // Touch swipe — mobile
+  useEffect(() => {
+    if (isLoading) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0]?.clientY ?? 0;
+      touchStartX.current = e.touches[0]?.clientX ?? 0;
+    };
+
+    const onTouchEnd = (e: TouchEvent) => {
+      if (touchStartY.current === null || touchStartX.current === null) return;
+      const dy = touchStartY.current - (e.changedTouches[0]?.clientY ?? 0);
+      const dx = Math.abs(touchStartX.current - (e.changedTouches[0]?.clientX ?? 0));
+      // Ignorer les swipes horizontaux (ex: carrousels internes)
+      if (Math.abs(dy) > 50 && Math.abs(dy) > dx * 1.5) {
+        goTo(currentIndexRef.current + (dy > 0 ? 1 : -1));
+      }
+      touchStartY.current = null;
+      touchStartX.current = null;
+    };
+
+    window.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
     return () => {
-      window.removeEventListener("wheel", handleScroll);
+      window.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [smoothScrollTo]);
+  }, [isLoading, goTo]);
 
-  // Pause/lecture des vidéos uniquement quand la section est visible
+  // Clavier
   useEffect(() => {
-    if (typeof window === "undefined" || isLoading) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          const idx = Number((entry.target as HTMLElement).dataset.index);
-          if (!Number.isFinite(idx)) return;
-          if (entry.isIntersecting) {
-            void videoRefs.current[idx]?.play().catch(() => undefined);
-          } else {
-            videoRefs.current[idx]?.pause();
-          }
-        });
-      },
-      { threshold: 0.35 }
-    );
-
-    videoRefs.current.forEach((video) => video && observer.observe(video));
-    return () => observer.disconnect();
-  }, [isLoading]);
+    if (isLoading) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (["ArrowDown", "PageDown"].includes(e.key)) {
+        e.preventDefault();
+        goTo(currentIndexRef.current + 1);
+      }
+      if (["ArrowUp", "PageUp"].includes(e.key)) {
+        e.preventDefault();
+        goTo(currentIndexRef.current - 1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isLoading, goTo]);
 
   return (
     <>
-      {/* Splash screen avec préchargement des vidéos */}
       {isLoading && (
-        <SplashScreen
-          onLoadComplete={() => setIsLoading(false)}
-          duration={800}
-        />
+        <SplashScreen onLoadComplete={() => setIsLoading(false)} duration={800} />
       )}
 
-      <div className={`bg-black text-white min-h-[100svh] overflow-hidden transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
-        {[0, 1, 2, 3].map((index) => {
-        const titles = [
-          [
-            "LES PRODS A PRIX ABORDABLE",
-            "BEAT DE QUALITÉ",
-            "/catalogue",
-            "VOIR LE CATALOGUE",
-          ],
-          ["NOS ABONNEMENTS", "INFINI", "/abonnements", "VOIR NOS OFFRES"],
-          [
-            "OBTIENT TA PROD PERSONNALISÉE",
-            "SUR MESURE",
-            "/prodsurmesure",
-            "EN SAVOIR PLUS",
-          ],
-          [
-            "LE COLLECTIF BEATMAKERZ",
-            "NOTRE HISTOIRE",
-            "/web/notrehistoire",
-            "EN SAVOIR PLUS",
-          ],
-        ];
-        const [subtitle, title, href, cta] = titles[index];
-
-        return (
-          <section
-            key={index}
-            ref={(el) => {
-              if (el && !sections.current.includes(el)) {
-                sections.current.push(el);
-              }
-            }}
-            id={`${index + 1}`}
-            className="relative w-full min-h-[100svh] overflow-hidden transition-opacity duration-500"
-          >
-            <video
-              ref={(el) => {
-                if (el) {
-                  videoRefs.current[index] = el;
-                }
-              }}
-              data-index={index}
-              className="absolute top-0 left-0 w-full h-full object-cover z-0"
-              preload="none"
-              muted
-              playsInline
-              loop
-              poster={VIDEO_POSTER}
-            >
-              <source src={`/videos/videotest${index}.mp4`} type="video/mp4" />
-            </video>
-            <div className="absolute top-0 left-0 w-full h-full bg-black opacity-50 z-0"></div>
-            <div className="absolute bottom-16 left-4 right-4 sm:left-10 sm:right-auto lg:left-16 z-10 sm:max-w-lg lg:max-w-xl flex flex-col space-y-3 sm:space-y-4 items-start">
-              <span className="uppercase text-[10px] xs:text-xs sm:text-sm font-semibold tracking-wider opacity-70 ml-1">
-                {subtitle}
-              </span>
-              <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold leading-tight lg:whitespace-nowrap">
-                {title}
-              </h1>
-              <Link
-                href={{ pathname: href as string }}
-                className="text-sm sm:text-xs font-bold opacity-90 ml-2 hover:underline"
-              >
-                {cta}
-              </Link>
-              <div className="transform translate-y-5 sm:translate-y-6">
-                <VisibleProgressCircle
-                  duration={4}
-                  onAnimationEnd={() => {
-                    const currentIndex = sections.current.findIndex(
-                      (section) => section.getBoundingClientRect().top >= -50
-                    );
-                    const nextIndex = Math.min(
-                      currentIndex + 1,
-                      sections.current.length - 1
-                    );
-                    smoothScrollTo(nextIndex, 1, 900);
-                  }}
-                  onClick={() => {
-                    const currentIndex = sections.current.findIndex(
-                      (section) => section.getBoundingClientRect().top >= -50
-                    );
-                    const nextIndex = Math.min(
-                      currentIndex + 1,
-                      sections.current.length - 1
-                    );
-                    smoothScrollTo(nextIndex, 1, 900);
-                  }}
-                />
-              </div>
-            </div>
-          </section>
-        );
-      })}
-
-      {/* Footer section - clean solid background */}
-      <section
-        ref={(el) => {
-          if (el && !sections.current.includes(el)) {
-            sections.current.push(el);
-          }
-        }}
-        className="relative w-full bg-[#030308]"
+      {/* Conteneur viewport fixe — ne scroll jamais */}
+      <div
+        className={`relative h-[100svh] overflow-hidden bg-black text-white transition-opacity duration-500 ${
+          isLoading ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
       >
-        <FooterHome />
-      </section>
+        {/* Track : se déplace verticalement via transform GPU */}
+        <div
+          className="will-change-transform"
+          style={{
+            height: `${SLIDE_COUNT * 100}svh`,
+            transform: `translateY(calc(${-currentIndex} * 100svh))`,
+            transition: isLoading
+              ? "none"
+              : `transform ${TRANSITION_MS}ms cubic-bezier(0.76, 0, 0.24, 1)`,
+          }}
+        >
+          {/* Sections vidéo */}
+          {SLIDES.map((slide, index) => {
+            const isActive = currentIndex === index;
+            return (
+              <section
+                key={index}
+                className="relative w-full overflow-hidden"
+                style={{ height: "100svh" }}
+                aria-hidden={!isActive}
+              >
+                {/* Vidéo fond */}
+                <video
+                  ref={(el) => { videoRefs.current[index] = el; }}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  preload="none"
+                  muted
+                  playsInline
+                  loop
+                  poster={VIDEO_POSTER}
+                >
+                  <source src={slide.video} type="video/mp4" />
+                </video>
+
+                {/* Overlay sombre */}
+                <div className="absolute inset-0 bg-black/50" />
+
+                {/* Contenu — slide-up + fade à l'activation */}
+                <div
+                  className="absolute bottom-16 left-4 right-4 sm:left-10 sm:right-auto lg:left-16 z-10 sm:max-w-lg lg:max-w-xl flex flex-col space-y-3 sm:space-y-4 items-start"
+                  style={{
+                    opacity: isActive ? 1 : 0,
+                    transform: isActive ? "translateY(0)" : "translateY(28px)",
+                    transition: isActive
+                      ? `opacity 0.65s ease ${Math.round(TRANSITION_MS * 0.45)}ms, transform 0.65s ease ${Math.round(TRANSITION_MS * 0.45)}ms`
+                      : "opacity 0.25s ease, transform 0.25s ease",
+                  }}
+                >
+                  <span className="uppercase text-[10px] xs:text-xs sm:text-sm font-semibold tracking-wider opacity-70 ml-1">
+                    {slide.subtitle}
+                  </span>
+                  <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold leading-tight lg:whitespace-nowrap">
+                    {slide.title}
+                  </h1>
+                  <Link
+                    href={{ pathname: slide.href }}
+                    className="text-sm sm:text-xs font-bold opacity-90 ml-2 hover:underline"
+                    tabIndex={isActive ? 0 : -1}
+                  >
+                    {slide.cta}
+                  </Link>
+                  <div className="transform translate-y-5 sm:translate-y-6">
+                    <VisibleProgressCircle
+                      duration={4}
+                      onAnimationEnd={() => goTo(index + 1)}
+                      onClick={() => goTo(index + 1)}
+                    />
+                  </div>
+                </div>
+              </section>
+            );
+          })}
+
+          {/* Section footer */}
+          <section
+            className="relative w-full bg-[#030308] overflow-y-auto"
+            style={{ height: "100svh" }}
+            aria-hidden={currentIndex !== SLIDES.length}
+          >
+            <FooterHome />
+          </section>
+        </div>
+
+        {/* Navigation par points — sections vidéo uniquement */}
+        <nav
+          className="fixed right-4 sm:right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3"
+          aria-label="Navigation des sections"
+        >
+          {SLIDES.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              aria-label={`Section ${i + 1}`}
+              aria-current={currentIndex === i ? "true" : undefined}
+              className="group flex items-center justify-center w-5 h-5"
+            >
+              <span
+                className="block rounded-full transition-all duration-400"
+                style={{
+                  width: currentIndex === i ? 10 : 6,
+                  height: currentIndex === i ? 10 : 6,
+                  background:
+                    currentIndex === i
+                      ? "rgba(255,255,255,1)"
+                      : "rgba(255,255,255,0.35)",
+                  boxShadow: currentIndex === i
+                    ? "0 0 8px 2px rgba(255,255,255,0.3)"
+                    : "none",
+                  transition: "all 0.35s ease",
+                }}
+              />
+            </button>
+          ))}
+        </nav>
       </div>
     </>
   );

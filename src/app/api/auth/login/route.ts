@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getErrorMessage } from "@/lib/utils/error";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
@@ -69,10 +70,10 @@ export async function POST(request: NextRequest) {
         refreshToken: data.tokens.refreshToken,
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error during login:", error);
     return NextResponse.json(
-      { error: error.message || "Login failed" },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }

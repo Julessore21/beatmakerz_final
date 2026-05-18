@@ -5,6 +5,8 @@ import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { loginSchema, type LoginInput } from "@/schemas/forms/loginSchema";
+import { registerSchema, type RegisterInput } from "@/schemas/forms/registerSchema";
 
 // Forcer le rendu dynamique pour éviter l'erreur useSearchParams
 export const dynamic = 'force-dynamic';
@@ -32,67 +34,114 @@ const Profil: React.FC = () => {
     router.refresh();
   }, [currentUser, router]);
 
-  const [loginData, setLoginData] = useState({ email: "", password: "" });
-  const [signupData, setSignupData] = useState({ email: "", password: "" });
-  const [loginErrors, setLoginErrors] = useState<{ email?: string; password?: string; general?: string }>({});
-  const [signupErrors, setSignupErrors] = useState<{ email?: string; password?: string; general?: string }>({});
-
-  const MIN_PASSWORD = 8;
+  const [loginData, setLoginData] = useState<LoginInput>({ email: "", password: "" });
+  const [signupData, setSignupData] = useState<RegisterInput>({ email: "", password: "" });
+  const [loginErrors, setLoginErrors] = useState<Partial<Record<keyof LoginInput | "general", string>>>({});
+  const [signupErrors, setSignupErrors] = useState<Partial<Record<keyof RegisterInput | "general", string>>>({});
+  const [loginTouched, setLoginTouched] = useState<Partial<Record<keyof LoginInput, boolean>>>({});
+  const [signupTouched, setSignupTouched] = useState<Partial<Record<keyof RegisterInput, boolean>>>({});
 
   const handleLoginChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setLoginData((prev) => ({ ...prev, [name]: value }));
+    const updated = { ...loginData, [name]: value };
+    setLoginData(updated);
+    if (loginTouched[name as keyof LoginInput]) {
+      const result = loginSchema.safeParse(updated);
+      if (!result.success) {
+        const issue = result.error.issues.find((i) => i.path[0] === name);
+        setLoginErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
+      } else {
+        setLoginErrors((prev) => ({ ...prev, [name]: undefined }));
+      }
+    }
+  };
+
+  const handleLoginBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    const { name } = event.target;
+    setLoginTouched((prev) => ({ ...prev, [name]: true }));
+    const result = loginSchema.safeParse(loginData);
+    if (!result.success) {
+      const issue = result.error.issues.find((i) => i.path[0] === name);
+      setLoginErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
+    } else {
+      setLoginErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleSignupChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    setSignupData((prev) => ({ ...prev, [name]: value }));
+    const updated = { ...signupData, [name]: value };
+    setSignupData(updated);
+    if (signupTouched[name as keyof RegisterInput]) {
+      const result = registerSchema.safeParse(updated);
+      if (!result.success) {
+        const issue = result.error.issues.find((i) => i.path[0] === name);
+        setSignupErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
+      } else {
+        setSignupErrors((prev) => ({ ...prev, [name]: undefined }));
+      }
+    }
+  };
+
+  const handleSignupBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    const { name } = event.target;
+    setSignupTouched((prev) => ({ ...prev, [name]: true }));
+    const result = registerSchema.safeParse(signupData);
+    if (!result.success) {
+      const issue = result.error.issues.find((i) => i.path[0] === name);
+      setSignupErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
+    } else {
+      setSignupErrors((prev) => ({ ...prev, [name]: undefined }));
+    }
   };
 
   const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const errors: { email?: string; password?: string; general?: string } = {};
-    if (!loginData.email.trim()) errors.email = "Email requis";
-    if (!loginData.password.trim()) errors.password = "Mot de passe requis";
-    if (loginData.password.length > 0 && loginData.password.length < MIN_PASSWORD) {
-      errors.password = `Mot de passe trop court (min ${MIN_PASSWORD} caracteres)`;
+    const result = loginSchema.safeParse(loginData);
+    if (!result.success) {
+      const errs: Partial<Record<keyof LoginInput, string>> = {};
+      result.error.issues.forEach((i) => {
+        const key = i.path[0] as keyof LoginInput;
+        if (key && !errs[key]) errs[key] = i.message;
+      });
+      setLoginErrors(errs);
+      setLoginTouched({ email: true, password: true });
+      return;
     }
-    setLoginErrors(errors);
-    if (Object.keys(errors).length > 0) return;
 
     try {
-      await login({
-        email: loginData.email,
-        password: loginData.password,
-      });
+      await login(result.data);
       router.replace("/web/account");
       router.refresh();
-    } catch (error: any) {
-      setLoginErrors({ general: error.message || "Identifiants invalides" });
+    } catch (error: unknown) {
+      setLoginErrors({ general: error instanceof Error ? error.message : "Identifiants invalides" });
     }
   };
 
   const handleSignupSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const errors: { email?: string; password?: string; general?: string } = {};
-    if (!signupData.email.trim()) errors.email = "Email requis";
-    if (!signupData.password.trim()) errors.password = "Mot de passe requis";
-    if (signupData.password.length > 0 && signupData.password.length < MIN_PASSWORD) {
-      errors.password = `Mot de passe trop court (min ${MIN_PASSWORD} caracteres)`;
+    const result = registerSchema.safeParse(signupData);
+    if (!result.success) {
+      const errs: Partial<Record<keyof RegisterInput, string>> = {};
+      result.error.issues.forEach((i) => {
+        const key = i.path[0] as keyof RegisterInput;
+        if (key && !errs[key]) errs[key] = i.message;
+      });
+      setSignupErrors(errs);
+      setSignupTouched({ email: true, password: true });
+      return;
     }
-    setSignupErrors(errors);
-    if (Object.keys(errors).length > 0) return;
 
     try {
       await register({
-        email: signupData.email,
-        password: signupData.password,
-        displayName: signupData.email.split('@')[0], // Utilise la partie avant @ comme nom
+        email: result.data.email,
+        password: result.data.password,
+        displayName: result.data.email.split('@')[0],
       });
       router.replace("/web/account");
       router.refresh();
-    } catch (error: any) {
-      setSignupErrors({ general: error.message || "Cet email est deja utilise ou invalide" });
+    } catch (error: unknown) {
+      setSignupErrors({ general: error instanceof Error ? error.message : "Cet email est deja utilise ou invalide" });
     }
   };
 
@@ -133,7 +182,7 @@ const Profil: React.FC = () => {
                 <h2 className="text-2xl font-bold text-white mb-6 text-center">
                   SE CONNECTER
                 </h2>
-                <form className="space-y-4" onSubmit={handleLoginSubmit}>
+                <form className="space-y-4" onSubmit={handleLoginSubmit} noValidate>
                   <div>
                     <label className="block text-sm text-gray-400 mb-1" htmlFor="login-email">
                       Email
@@ -144,9 +193,9 @@ const Profil: React.FC = () => {
                       type="email"
                       value={loginData.email}
                       onChange={handleLoginChange}
+                      onBlur={handleLoginBlur}
                       className="input-field"
                       placeholder="Entrez votre email"
-                      required
                     />
                     {loginErrors.email && <p className="text-xs text-red-500 mt-1">{loginErrors.email}</p>}
                   </div>
@@ -160,9 +209,9 @@ const Profil: React.FC = () => {
                       type="password"
                       value={loginData.password}
                       onChange={handleLoginChange}
+                      onBlur={handleLoginBlur}
                       className="input-field"
                       placeholder="Entrez votre mot de passe"
-                      required
                     />
                     {loginErrors.password && <p className="text-xs text-red-500 mt-1">{loginErrors.password}</p>}
                   </div>
@@ -186,7 +235,7 @@ const Profil: React.FC = () => {
                 <h2 className="text-2xl font-bold text-white mb-6 text-center">
                   S&apos;inscrire
                 </h2>
-                <form className="space-y-4" onSubmit={handleSignupSubmit}>
+                <form className="space-y-4" onSubmit={handleSignupSubmit} noValidate>
                   <div>
                     <label className="block text-sm text-gray-400 mb-1" htmlFor="signup-email">
                       Email
@@ -197,9 +246,9 @@ const Profil: React.FC = () => {
                       type="email"
                       value={signupData.email}
                       onChange={handleSignupChange}
+                      onBlur={handleSignupBlur}
                       className="input-field"
                       placeholder="Entrez votre email"
-                      required
                     />
                     {signupErrors.email && <p className="text-xs text-red-500 mt-1">{signupErrors.email}</p>}
                   </div>
@@ -213,9 +262,9 @@ const Profil: React.FC = () => {
                       type="password"
                       value={signupData.password}
                       onChange={handleSignupChange}
+                      onBlur={handleSignupBlur}
                       className="input-field"
                       placeholder="Entrez un mot de passe securise"
-                      required
                     />
                     {signupErrors.password && <p className="text-xs text-red-500 mt-1">{signupErrors.password}</p>}
                   </div>
@@ -245,8 +294,3 @@ const Profil: React.FC = () => {
 };
 
 export default Profil;
-
-
-
-
-

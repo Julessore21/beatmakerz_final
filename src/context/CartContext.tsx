@@ -68,8 +68,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
       const data = await response.json();
 
-      const mapped: CartItem[] = data.items?.map((it: any) => ({
-        id: it.beatId,
+      type CartApiItem = { beatId?: string; licenseTypeId?: string; _id?: string; beat?: { title?: string }; unitPriceSnapshotCents?: number; qty?: number };
+      const mapped: CartItem[] = (data.items as CartApiItem[] | undefined)?.map((it) => ({
+        id: it.beatId ?? it._id ?? "",
         beatId: it.beatId,
         licenseTypeId: it.licenseTypeId,
         cartItemId: it._id,

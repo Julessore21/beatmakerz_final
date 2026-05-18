@@ -150,7 +150,7 @@ const ZoneSlider = ({
   const effectiveMax = max - rangeSize;
 
   const handleValueChange = (newValues: number[]) => {
-    onChange(newValues[0]);
+    if (newValues[0] !== undefined) onChange(newValues[0]);
   };
 
   const displayMin = value;

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
+import { getErrorMessage } from "@/lib/utils/error";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
@@ -48,10 +49,10 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
 
     return NextResponse.json(data);
-  } catch (error: any) {
-    console.error("[API /checkout/session] Error:", error.message, error);
+  } catch (error: unknown) {
+    console.error("[API /checkout/session] Error:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to create checkout session" },
+      { error: getErrorMessage(error) },
       { status: 500 }
     );
   }
