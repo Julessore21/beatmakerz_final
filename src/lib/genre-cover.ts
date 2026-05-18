@@ -22,7 +22,6 @@ const GENRE_COVER_MAP: Record<string, string> = {
   "r&b":          "/img/rnb.png",
   "rnb":          "/img/rnb.png",
   "soul":         "/img/soul.png",
-  "trap soul":    "/img/trap.png",
 
   // --- Afro / Caraïbes ---
   "afrobeat":     "/img/afrobeat.png",
