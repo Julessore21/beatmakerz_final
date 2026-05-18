@@ -240,24 +240,68 @@ export default function Home() {
             style={{ height: "100svh" }}
             aria-hidden={currentIndex !== SLIDES.length}
           >
-            {/* Séparateur haut */}
-            <div className="h-px w-full shrink-0 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+            {/* Ambient glow — haut centre (brand purple) */}
+            <div
+              className="pointer-events-none absolute inset-x-0 top-0 h-[55%]"
+              style={{
+                background:
+                  "radial-gradient(ellipse 80% 60% at 50% -10%, rgba(79,43,212,0.18) 0%, transparent 70%)",
+              }}
+              aria-hidden
+            />
 
-            {/* Filigrane centré — occupe l'espace libre */}
+            {/* Ambient glow — bas droite */}
+            <div
+              className="pointer-events-none absolute bottom-0 right-0 h-[40%] w-[50%]"
+              style={{
+                background:
+                  "radial-gradient(ellipse 100% 80% at 100% 100%, rgba(108,63,199,0.10) 0%, transparent 65%)",
+              }}
+              aria-hidden
+            />
+
+            {/* Filigrane stroke — plus élégant qu'un fill quasiment invisible */}
             <div
               className="pointer-events-none absolute inset-0 flex items-center justify-center select-none"
               aria-hidden
             >
               <span
-                className="font-bold leading-none tracking-[0.35em] text-white/[0.03]"
-                style={{ fontSize: "clamp(3rem, 14vw, 12rem)" }}
+                className="font-bold leading-none tracking-[0.35em]"
+                style={{
+                  fontSize: "clamp(3.5rem, 14vw, 13rem)",
+                  color: "transparent",
+                  WebkitTextStroke: "1px rgba(255,255,255,0.045)",
+                }}
               >
                 BEATMAKERZ
               </span>
             </div>
 
-            {/* Footer links poussés en bas */}
-            <div className="relative z-10 mt-auto">
+            {/* Hero centré — statement de marque */}
+            <div
+              className="relative z-10 flex flex-col items-center justify-center gap-5 text-center px-6"
+              style={{ flex: "0 0 42%" }}
+            >
+              <p className="text-[9px] uppercase tracking-[0.55em] text-white/30">
+                Le collectif
+              </p>
+              <h2
+                className="font-bold leading-none text-white"
+                style={{ fontSize: "clamp(2.2rem, 7vw, 6rem)", letterSpacing: "0.12em" }}
+              >
+                BEATMAKERZ
+              </h2>
+              <div className="flex items-center gap-3">
+                <div className="h-px w-12 bg-gradient-to-r from-transparent to-white/20" />
+                <p className="text-xs text-white/30 tracking-widest uppercase whitespace-nowrap">
+                  Prods de qualité&nbsp;· Sons sur mesure
+                </p>
+                <div className="h-px w-12 bg-gradient-to-l from-transparent to-white/20" />
+              </div>
+            </div>
+
+            {/* Footer links — prend le reste de la hauteur */}
+            <div className="relative z-10 min-h-0 flex-1 overflow-y-auto">
               <FooterHome />
             </div>
           </section>
