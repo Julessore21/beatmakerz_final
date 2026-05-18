@@ -1,6 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Music2, Flame, Star, Crown } from "lucide-react";
 import ActionBar from "./ActionBar";
@@ -35,7 +36,7 @@ export type BeatCardProps = {
 const chipClass =
   "inline-flex items-center justify-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] sm:text-[11px] text-zinc-200 max-w-[80px] sm:max-w-[90px] whitespace-nowrap overflow-hidden text-ellipsis";
 
-export default function BeatCard({
+function BeatCard({
   id,
   name,
   artist,
@@ -149,3 +150,19 @@ export default function BeatCard({
     </motion.div>
   );
 }
+
+export default memo(BeatCard, (prev, next) =>
+  prev.id === next.id &&
+  prev.name === next.name &&
+  prev.artist === next.artist &&
+  prev.genre === next.genre &&
+  prev.bpm === next.bpm &&
+  prev.keySig === next.keySig &&
+  prev.price === next.price &&
+  prev.tag === next.tag &&
+  prev.isCurrent === next.isCurrent &&
+  prev.isPlaying === next.isPlaying &&
+  prev.isFav === next.isFav &&
+  prev.coverUrl === next.coverUrl &&
+  prev.showTag === next.showTag
+);

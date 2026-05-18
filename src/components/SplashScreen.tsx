@@ -1,61 +1,36 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SplashScreenProps {
-  videoUrls: string[];
   onLoadComplete: () => void;
-  minDisplayTime?: number;
+  duration?: number; // ms — durée de l'animation avant disparition
 }
 
 export default function SplashScreen({
-  videoUrls,
   onLoadComplete,
-  minDisplayTime = 2000,
+  duration = 800,
 }: SplashScreenProps) {
   const [progress, setProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
 
-  const preloadVideos = useCallback(async () => {
-    const startTime = Date.now();
-    let loaded = 0;
-
-    const loadPromises = videoUrls.map((url) => {
-      return new Promise<void>((resolve) => {
-        const video = document.createElement('video');
-        video.preload = 'auto';
-        video.muted = true;
-        video.playsInline = true;
-
-        const onReady = () => {
-          loaded++;
-          setProgress(Math.round((loaded / videoUrls.length) * 100));
-          resolve();
-        };
-
-        video.oncanplaythrough = onReady;
-        video.onerror = onReady;
-        video.src = url;
-        video.load();
-
-        setTimeout(onReady, 10000);
-      });
-    });
-
-    await Promise.all(loadPromises);
-
-    const elapsed = Date.now() - startTime;
-    if (elapsed < minDisplayTime) {
-      await new Promise((r) => setTimeout(r, minDisplayTime - elapsed));
-    }
-
-    setIsExiting(true);
-    setTimeout(onLoadComplete, 600);
-  }, [videoUrls, minDisplayTime, onLoadComplete]);
-
   useEffect(() => {
-    preloadVideos();
-  }, [preloadVideos]);
+    const steps = 20;
+    const interval = duration / steps;
+    let step = 0;
+
+    const timer = setInterval(() => {
+      step++;
+      setProgress(Math.round((step / steps) * 100));
+      if (step >= steps) {
+        clearInterval(timer);
+        setIsExiting(true);
+        setTimeout(onLoadComplete, 500);
+      }
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [duration, onLoadComplete]);
 
   return (
     <div

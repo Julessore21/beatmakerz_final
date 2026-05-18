@@ -13,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import BeatCard from "@/components/BeatCard";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
 import BeatTableRow from "@/components/BeatTableRow";
+import ListSkeleton from "@/components/skeletons/ListSkeleton";
 import { fetchFileUpCatalogue } from "@/lib/services/fileup-catalogue";
 import { fetchFavorites, toggleFavorite as toggleFavoriteApi } from "@/lib/services/user-api";
 
@@ -251,11 +252,13 @@ function CatalogueContent() {
   const pageSize = 12;
 
   const [beats, setBeats] = useState<Beat[]>([]);
+  const [isLoadingBeats, setIsLoadingBeats] = useState(true);
   const [favIds, setFavIds] = useState<string[]>([]);
   const [errorBeats, setErrorBeats] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
+      setIsLoadingBeats(true);
       try {
         const items = await fetchFileUpCatalogue();
         const mapped =
@@ -276,7 +279,10 @@ function CatalogueContent() {
         setBeats(mapped);
         setErrorBeats(null);
       } catch {
-        setBeats([]); setErrorBeats("Impossible de charger le catalogue");
+        setBeats([]);
+        setErrorBeats("Impossible de charger le catalogue");
+      } finally {
+        setIsLoadingBeats(false);
       }
     };
     load();
@@ -306,16 +312,15 @@ function CatalogueContent() {
     const g = searchParams.get("genres")?.split(",").filter(Boolean) ?? [];
     const k = searchParams.get("keys")?.split(",").filter(Boolean) ?? [];
     const bpmMinUrl = parseInt(searchParams.get("bpmMin") || "", 10);
-    const bpmMaxUrl = parseInt(searchParams.get("bpmMax") || "", 10);
     const tag = (searchParams.get("tag") as Tag) || null;
     const s = (searchParams.get("sort") as (typeof SORTS)[number]) || "Pertinence";
     const v = (searchParams.get("view") as ViewMode) || "grid";
+    const pageUrl = parseInt(searchParams.get("page") || "1", 10);
 
     setQuery(q);
     setDebounced(q);
     setSelectedGenres(g);
     setSelectedKeys(k);
-    // Active le filtre BPM uniquement si présent dans l'URL
     if (!Number.isNaN(bpmMinUrl)) {
       const initialStart = Math.max(BPM_MIN, Math.min(BPM_MAX - BPM_RANGE_SIZE, bpmMinUrl));
       setBpmStart(initialStart);
@@ -324,6 +329,7 @@ function CatalogueContent() {
     setSelectedTag(tag);
     setSort(s);
     setViewMode(v);
+    if (!Number.isNaN(pageUrl) && pageUrl > 1) setCurrentPage(pageUrl);
   }, [searchParams]); // mount only
 
   /* sync URL */
@@ -337,12 +343,13 @@ function CatalogueContent() {
     if (selectedTag) p.set("tag", selectedTag);
     p.set("sort", sort);
     p.set("view", viewMode);
+    if (currentPage > 1) p.set("page", String(currentPage));
     const qs = p.toString();
     if (qs !== lastQSRef.current) {
       lastQSRef.current = qs;
       router.replace(qs ? `?${qs}` : "?", { scroll: false });
     }
-  }, [debounced, selectedGenres, selectedKeys, bpmFilterActive, bpmMin, selectedTag, sort, viewMode, router]);
+  }, [debounced, selectedGenres, selectedKeys, bpmFilterActive, bpmMin, selectedTag, sort, viewMode, currentPage, router]);
 
   /* reset page on filter change */
   useEffect(() => setCurrentPage(1), [debounced, selectedGenres, selectedKeys, bpmFilterActive, bpmMin, selectedTag, sort, viewMode]);
@@ -414,15 +421,21 @@ function CatalogueContent() {
     []
   );
 
-  const onPlay = (b: Beat) => (track?.id === b.id && isPlaying ? toggle() : play(b, currentBeats));
-  const onToggleFav = async (beatId: string) => {
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
-    await toggleFavoriteApi(beatId);
-    setFavIds((prev) => (prev.includes(beatId) ? prev.filter((id) => id !== beatId) : [...prev, beatId]));
-  };
+  const onPlay = useCallback(
+    (b: Beat) => (track?.id === b.id && isPlaying ? toggle() : play(b, currentBeats)),
+    [track?.id, isPlaying, toggle, play, currentBeats]
+  );
+  const onToggleFav = useCallback(
+    async (beatId: string) => {
+      if (!user) {
+        setShowAuthModal(true);
+        return;
+      }
+      await toggleFavoriteApi(beatId);
+      setFavIds((prev) => (prev.includes(beatId) ? prev.filter((id) => id !== beatId) : [...prev, beatId]));
+    },
+    [user]
+  );
 
   const FiltersBlocks = () => (
     <>
@@ -662,6 +675,9 @@ function CatalogueContent() {
                 </button>
               </div>
             </div>
+            {isLoadingBeats ? (
+              <ListSkeleton count={12} />
+            ) : (
             <AnimatePresence mode="popLayout">
               {viewMode === "grid" ? (
                 <motion.div
@@ -737,8 +753,10 @@ function CatalogueContent() {
                 </motion.div>
               )}
             </AnimatePresence>
+            )}
 
             {/* pagination */}
+            {!isLoadingBeats && (
             <div className="mt-6 flex items-center justify-center gap-3">
               <button
                 disabled={currentPage === 1}
@@ -764,6 +782,7 @@ function CatalogueContent() {
                 Suivant
               </button>
             </div>
+            )}
           </section>
         </div>
       </div>

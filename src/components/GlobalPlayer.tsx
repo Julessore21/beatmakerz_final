@@ -1,4 +1,6 @@
 "use client";
+// NOTE: Ce composant n'est pas rendu dans app/layout.tsx — il n'a aucun PlayerProvider parent.
+// Code mort / prototype. À supprimer avec PlayerContext.tsx dans un chantier dédié.
 /* eslint-disable react-hooks/exhaustive-deps */
 
 import { motion } from "framer-motion";

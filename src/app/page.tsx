@@ -6,12 +6,8 @@ import Link from "next/link";
 import FooterHome from "@/components/FooterHome";
 import SplashScreen from "@/components/SplashScreen";
 
-const VIDEO_URLS = [
-  "/videos/videotest0.mp4",
-  "/videos/videotest1.mp4",
-  "/videos/videotest2.mp4",
-  "/videos/videotest3.mp4",
-];
+// TODO: remplacer poster-dark.svg par de vraies captures des vidéos (ex: ffmpeg -i videotest0.mp4 -ss 00:00:03 -frames:v 1 public/videos/poster0.jpg)
+const VIDEO_POSTER = "/videos/poster-dark.svg";
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
@@ -106,9 +102,8 @@ export default function Home() {
       {/* Splash screen avec préchargement des vidéos */}
       {isLoading && (
         <SplashScreen
-          videoUrls={VIDEO_URLS}
           onLoadComplete={() => setIsLoading(false)}
-          minDisplayTime={2500}
+          duration={800}
         />
       )}
 
@@ -160,6 +155,7 @@ export default function Home() {
               muted
               playsInline
               loop
+              poster={VIDEO_POSTER}
             >
               <source src={`/videos/videotest${index}.mp4`} type="video/mp4" />
             </video>

@@ -1,4 +1,8 @@
 "use client";
+// NOTE: PlayerProvider n'est pas monté dans app/layout.tsx (seul AudioPlayerProvider l'est).
+// GlobalPlayer.tsx consomme ce contexte mais n'est pas non plus rendu nulle part.
+// Ces deux fichiers semblent être du code mort / prototype. À supprimer dans un chantier dédié
+// après confirmation qu'aucune future feature n'en dépend.
 
 import React, {
   createContext,
