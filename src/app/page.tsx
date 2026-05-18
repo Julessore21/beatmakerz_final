@@ -131,7 +131,7 @@ export default function Home() {
           [
             "LE COLLECTIF BEATMAKERZ",
             "NOTRE HISTOIRE",
-            "/notrehistoire",
+            "/web/notrehistoire",
             "EN SAVOIR PLUS",
           ],
         ];
