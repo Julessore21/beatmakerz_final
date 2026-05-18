@@ -115,7 +115,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!current) return;
     const idx = queue.findIndex((b) => b.id === current.id);
     if (idx >= 0 && idx < queue.length - 1) {
-      play(queue[idx + 1]);
+      const n = queue[idx + 1];
+      if (n) play(n);
     }
   }, [current, queue, play]);
 
@@ -123,7 +124,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!current) return;
     const idx = queue.findIndex((b) => b.id === current.id);
     if (idx > 0) {
-      play(queue[idx - 1]);
+      const p = queue[idx - 1];
+      if (p) play(p);
     }
   }, [current, queue, play]);
 
@@ -158,7 +160,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         const idx = queue.findIndex((b) => b.id === current.id);
         if (idx >= 0 && idx < queue.length - 1) {
           const nxt = queue[idx + 1];
-          play(nxt);
+          if (nxt) play(nxt);
         }
       }, 0);
     };

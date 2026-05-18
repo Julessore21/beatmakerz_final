@@ -103,7 +103,7 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       const idx = queue.findIndex((q) => q.id === track.id);
       if (idx >= 0 && idx < queue.length - 1) {
         const n = queue[idx + 1];
-        play(n);
+        if (n) play(n);
       }
     };
     const onPlay = () => setIsPlaying(true);
@@ -167,7 +167,8 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!track) return;
     const idx = queue.findIndex((q) => q.id === track.id);
     if (idx >= 0 && idx < queue.length - 1) {
-      play(queue[idx + 1]);
+      const n = queue[idx + 1];
+      if (n) play(n);
     }
   }, [track, queue, play]);
 
@@ -175,7 +176,8 @@ export const AudioPlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!track) return;
     const idx = queue.findIndex((q) => q.id === track.id);
     if (idx > 0) {
-      play(queue[idx - 1]);
+      const p = queue[idx - 1];
+      if (p) play(p);
     }
   }, [track, queue, play]);
 

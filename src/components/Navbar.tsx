@@ -75,7 +75,7 @@ const AnimatedTwoBarsToggle = ({
   );
 };
 
-const primaryNavLinks = [
+const primaryNavLinks: [string, string][] = [
   ["/", "Accueil"],
   ["/catalogue", "Catalogue"],
   ["/abonnements", "Abonnements"],
@@ -85,7 +85,7 @@ const primaryNavLinks = [
   ["/programmefidelite", "Programme fidélité"],
 ];
 
-const secondaryNavLinks = [
+const secondaryNavLinks: [string, string][] = [
   ["/tarification", "Tarification"],
   ["/faq", "FAQ"],
   ["/retractation", "Droit de rétractation"],

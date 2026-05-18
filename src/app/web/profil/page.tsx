@@ -136,7 +136,7 @@ const Profil: React.FC = () => {
       await register({
         email: result.data.email,
         password: result.data.password,
-        displayName: result.data.email.split('@')[0],
+        displayName: (result.data.email ?? "").split("@")[0] || result.data.email || "",
       });
       router.replace("/web/account");
       router.refresh();

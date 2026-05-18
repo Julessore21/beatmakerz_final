@@ -47,7 +47,7 @@ export default function BeatmakerSetup() {
         await register({
           email: username,
           password,
-          displayName: username.split('@')[0],
+          displayName: username.split('@')[0] ?? username,
         });
         alert("Compte cree et connecte.");
       } catch {

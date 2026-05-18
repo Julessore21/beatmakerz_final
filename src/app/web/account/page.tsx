@@ -435,7 +435,7 @@ export default function AccountPage() {
                       {formatDate(o.createdAt)} · {formatPrice(o.totalCents, o.currency)}
                     </div>
                     <div className="mt-2 space-y-1">
-                      {(o.items || []).map((it: any, idx: number) => {
+                      {(o.items || []).map((it, idx) => {
                         const title = it.beat?.title || it.title || it.beatId || "Beat";
                         const license = it.licenseType?.code || it.licenseTypeId || "Licence";
                         const dl = it.downloadUrl || it.url || it.presignedUrl || it.presignedKey || it.downloadGrant?.url;
