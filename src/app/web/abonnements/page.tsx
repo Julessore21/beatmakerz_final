@@ -156,7 +156,7 @@ function Abonnements() {
         const responsePayload = (await response.json()) as { url?: string; error?: string };
 
         if (!response.ok || !responsePayload.url) {
-          throw new Error(responsePayload.error || "Impossible de demarrer le paiement.");
+          throw new Error(responsePayload.error || "Impossible de démarrer le paiement.");
         }
 
         window.location.href = responsePayload.url;
