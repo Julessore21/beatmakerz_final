@@ -8,7 +8,14 @@ import NavBar from "@/components/Navbar";
 import { AuthProvider } from "@/context/AuthContext";
 import FooterWrapper from "@/components/FooterWrapper";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.NODE_ENV === "production"
+    ? process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "https://beatmakerz-final.vercel.app"
+    : "http://localhost:3000")
+).replace(/\/$/, "");
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
