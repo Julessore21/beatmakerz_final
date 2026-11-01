@@ -221,10 +221,16 @@ export default function Home() {
                   </h1>
                   <Link
                     href={{ pathname: slide.href }}
-                    className="btn-primary inline-flex min-h-[44px] items-center justify-center text-sm font-bold"
+                    className="btn-primary inline-flex min-h-[44px] items-center justify-center gap-2 text-sm font-bold"
                     tabIndex={isActive ? 0 : -1}
                   >
                     {slide.cta}
+                    {slide.cta === "EN SAVOIR PLUS" && (
+                      <span
+                        aria-hidden="true"
+                        className="block h-1.5 w-1.5 shrink-0 rounded-full bg-[#9F8CFF]"
+                      />
+                    )}
                   </Link>
                   <div className="transform translate-y-5 sm:translate-y-6">
                     <VisibleProgressCircle
