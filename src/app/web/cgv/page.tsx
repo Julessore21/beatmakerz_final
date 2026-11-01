@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 
 export default function CGV() {
@@ -18,7 +19,7 @@ export default function CGV() {
         </motion.div>
 
         <div className="mt-8 space-y-6">
-          {sections.map(({ title, content }, index) => (
+          {sections.map(({ title, content, link }, index) => (
             <section key={index} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur">
               <h2 className="text-lg font-semibold">{title}</h2>
               {typeof content === "string" ? (
@@ -29,6 +30,13 @@ export default function CGV() {
                     <li key={idx}>{item}</li>
                   ))}
                 </ul>
+              )}
+              {link && (
+                <p className="mt-2 text-sm text-zinc-300">
+                  <Link href={link.href} className="underline hover:text-white">
+                    {link.label}
+                  </Link>
+                </p>
               )}
             </section>
           ))}
@@ -42,6 +50,7 @@ export default function CGV() {
 const sections: {
   title: string;
   content: string | string[];
+  link?: { href: string; label: string };
 }[] = [
   {
     title: "Préambule",
@@ -66,9 +75,10 @@ const sections: {
     content: [
       "Les prix de nos instrumentales sont indiqués en euros (€) TTC. Nous nous réservons le droit de modifier les prix à tout moment, mais les produits seront facturés sur la base des tarifs en vigueur au moment de la validation de la commande.",
       "Instrumentale à l'unité : 9,99€",
-      "Abonnement mensuel 'Infini' : 14,99€/mois (4 prods incluses)",
-      "Abonnement mensuel 'Infini +' : 29,99€/mois (10 prods incluses)",
-      "Prod sur-mesure : 49,99€",
+      "Abonnement 'Infini' : 19,99€/mois ou 199,99€/an (4 prods par mois incluses)",
+      "Abonnement 'Infini +' : 39,99€/mois ou 399,99€/an (10 prods par mois incluses)",
+      "Abonnement 'Infini X' : 59,99€/mois ou 599,99€/an (15 prods par mois incluses)",
+      "Prod sur-mesure : 59,99€",
     ],
   },
   {
@@ -79,7 +89,7 @@ const sections: {
   {
     title: "5. Paiement",
     content:
-      "Le paiement s'effectue en ligne par carte bancaire ou via PayPal. Nos transactions sont sécurisées par [nom du prestataire de paiement]. Après validation de votre paiement, notre système vérifiera votre transaction.",
+      "Le paiement s'effectue en ligne par carte bancaire. Nos transactions sont sécurisées par Stripe. Après validation de votre paiement, notre système vérifiera votre transaction.",
   },
   {
     title: "6. Livraison des Instrumentales",
@@ -89,7 +99,8 @@ const sections: {
   {
     title: "7. Droit de Rétractation",
     content:
-      "Conformément à la législation, les produits numériques téléchargés instantanément après l'achat ne bénéficient pas du droit de rétractation.",
+      "Les conditions d'exercice et les exceptions au droit de rétractation sont détaillées sur notre page dédiée.",
+    link: { href: "/web/retractation", label: "Voir la page Droit de rétractation" },
   },
   {
     title: "8. Garanties et Responsabilités",

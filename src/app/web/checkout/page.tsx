@@ -11,6 +11,7 @@ import { AuthService, type AuthUser } from "@/lib/auth.service";
 import { useAuth } from "@/context/AuthContext";
 import { CreditCard, Loader2, ArrowLeft } from "lucide-react";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
+import RetractationConsent from "@/components/RetractationConsent";
 
 type CartItem = {
   _id?: string;
@@ -37,6 +38,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -160,8 +162,11 @@ export default function CheckoutPage() {
               </p>
             </div>
             {error && <p className="mt-3 text-sm text-rose-400">{error}</p>}
+            <div className="mt-4">
+              <RetractationConsent checked={consent} onChange={setConsent} />
+            </div>
             <button
-              disabled={!hasItems || loading}
+              disabled={!hasItems || loading || !consent}
               onClick={handleCheckout}
               className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-60"
             >

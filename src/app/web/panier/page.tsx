@@ -8,6 +8,7 @@ import { Minus, Plus, Trash2, ShieldCheck, CreditCard, PackageSearch, CheckCircl
 import { useAuth } from "@/context/AuthContext";
 import { AuthService } from "@/lib/auth.service";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
+import RetractationConsent from "@/components/RetractationConsent";
 
 const SummaryRow = ({ label, value, bold = false }: { label: string; value: string; bold?: boolean }) => (
   <div className="flex items-center justify-between text-sm text-zinc-200">
@@ -23,6 +24,7 @@ const Panier: React.FC = () => {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [consent, setConsent] = useState(false);
 
   const computedTotalPrice: number = totalPrice;
   const totalArticles = totalItems;
@@ -189,10 +191,11 @@ const Panier: React.FC = () => {
               <SummaryRow label="Total" value={`${totalWithVat.toFixed(2)} EUR`} bold />
             </div>
             <div className="flex flex-col gap-2 pt-2">
+              <RetractationConsent checked={consent} onChange={setConsent} />
               <button
                 className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-black hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
                 onClick={handleCheckout}
-                disabled={status === "loading" || !hasItems}
+                disabled={status === "loading" || !hasItems || !consent}
               >
                 {status === "loading" ? "Traitement..." : "Valider et payer"}
               </button>
