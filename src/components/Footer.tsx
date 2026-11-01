@@ -16,10 +16,10 @@ const NAV_SECTIONS = {
     { label: "Mon compte", href: "/web/account" },
   ],
   legal: [
-    { label: "Mentions legales", href: "/web/mentions" },
+    { label: "Mentions légales", href: "/web/mentions" },
     { label: "CGV", href: "/web/cgv" },
     { label: "CGU", href: "/web/cgu" },
-    { label: "Confidentialite", href: "/web/politique" },
+    { label: "Confidentialité", href: "/web/politique" },
   ],
   support: [
     { label: "Contact", href: "/web/contact" },
@@ -29,12 +29,12 @@ const NAV_SECTIONS = {
 
 // Export for backwards compatibility
 export const LEGAL_LINKS: { label: string; href: string }[] = [
-  { label: "Mentions legales", href: "/web/mentions" },
+  { label: "Mentions légales", href: "/web/mentions" },
   { label: "CGV", href: "/web/cgv" },
   { label: "CGU", href: "/web/cgu" },
-  { label: "Politique de confidentialite", href: "/web/politique" },
+  { label: "Politique de confidentialité", href: "/web/politique" },
   { label: "Cookies", href: "/web/politique#cookies" },
-  { label: "Propriete intellectuelle", href: "/web/mentions#propriete-intellectuelle" },
+  { label: "Propriété intellectuelle", href: "/web/mentions#propriete-intellectuelle" },
 ];
 
 export default function Footer() {
@@ -53,7 +53,7 @@ export default function Footer() {
           <div className="col-span-2 sm:col-span-4 lg:col-span-1 lg:pr-8">
             <div className="text-xl font-bold tracking-[0.25em] text-white">BEATMAKERZ</div>
             <p className="mt-3 text-xs leading-relaxed text-white/40">
-              Plateforme francaise pour artistes & beatmakers
+              Plateforme française pour artistes & beatmakers
             </p>
             {/* Social icons */}
             <div className="mt-6 flex items-center gap-3">
@@ -75,14 +75,14 @@ export default function Footer() {
           {/* Navigation columns */}
           <NavColumn title="Explorer" links={NAV_SECTIONS.explore} />
           <NavColumn title="Compte" links={NAV_SECTIONS.account} />
-          <NavColumn title="Legal" links={NAV_SECTIONS.legal} />
+          <NavColumn title="Légal" links={NAV_SECTIONS.legal} />
           <NavColumn title="Support" links={NAV_SECTIONS.support} />
         </div>
 
         {/* Bottom bar */}
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
           <p className="text-xs text-white/30">
-            © {new Date().getFullYear()} Beatmakerz. Tous droits reserves.
+            © {new Date().getFullYear()} Beatmakerz. Tous droits réservés.
           </p>
           <div className="flex items-center gap-6">
             <LangSwitch lang={lang} setLang={setLang} />
