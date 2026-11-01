@@ -127,6 +127,16 @@ function Abonnements() {
   const sessionIdParam = searchParams?.get("session_id") ?? "";
   const billingCycle: BillingCycle = isMensuel ? "monthly" : "yearly";
 
+  // Offre ciblée par la barre collante mobile : la sélection, sinon la POPULAIRE.
+  const stickyPlan =
+    PLAN_DEFINITIONS.find((plan) => plan.name === selectedPlan) ??
+    PLAN_DEFINITIONS.find((plan) => plan.label === "POPULAIRE") ??
+    PLAN_DEFINITIONS[0];
+  const stickyLookupKey = stickyPlan.lookupKeys[billingCycle];
+  const stickyPriceId = stickyPlan.priceIds[billingCycle];
+  const stickyUnavailable = !stickyLookupKey && !stickyPriceId;
+  const stickyProcessing = processingPlan === stickyPlan.name;
+
   const handleSubscribe = useCallback(
     async (plan: PlanDefinition) => {
       const priceId = plan.priceIds[billingCycle];
@@ -209,7 +219,7 @@ function Abonnements() {
   }, [sessionIdParam]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden text-white px-4 pt-24 pb-20 flex flex-col items-center">
+    <div className="relative min-h-screen overflow-clip text-white px-4 pt-24 pb-20 flex flex-col items-center">
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
         <motion.div
           initial={{ opacity: 0 }}
@@ -260,6 +270,10 @@ function Abonnements() {
           </button>
         </div>
       </div>
+
+      <p className="relative mt-3 max-w-xs text-center text-[11px] leading-snug text-neutral-400">
+        Économie = ce que tu gagnes en payant à l&#39;année plutôt que 12 mois en mensuel.
+      </p>
 
       <p className="relative mt-4 text-center text-xs text-neutral-400">
         Paiement sécurisé Stripe · 100&nbsp;% royalty free ·{" "}
@@ -335,6 +349,8 @@ function Abonnements() {
 
           const cardClassName = [
             "relative flex flex-col items-center text-center cursor-pointer",
+            // Sous md, la carte POPULAIRE passe en premier.
+            plan.label === "POPULAIRE" ? "order-first md:order-none" : "",
             borderClass,
             "border rounded-2xl p-5 sm:p-6 bg-[#141416]/90 backdrop-blur-xl w-full min-h-[360px] sm:min-h-[410px] hover:-translate-y-2 transition-transform duration-300 shadow-[0_10px_40px_rgba(0,0,0,.35)]",
           ].join(" ");
@@ -384,9 +400,6 @@ function Abonnements() {
                 <p className="mt-2 text-xs font-semibold text-white break-words">
                   soit {pricePerMonth.toFixed(2)} €/mois · {pricePerProd.toFixed(2)} € par prod
                 </p>
-                <p className="mt-1 text-[11px] leading-snug text-neutral-400 break-words">
-                  Économie = ce que tu gagnes en payant à l&#39;année plutôt que 12 mois en mensuel.
-                </p>
               </div>
 
               <hr className="border-white/10 w-full mb-3" />
@@ -420,6 +433,32 @@ function Abonnements() {
         <Link href="/web/cgv" className="underline hover:text-white">
           Conditions de licence
         </Link>
+      </div>
+
+      {/* Barre d'achat collante, mobile uniquement (< md) */}
+      <div className="sticky bottom-0 z-30 mt-6 w-full md:hidden pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-[#0f0f18]/95 px-4 py-3 backdrop-blur-xl shadow-[0_-6px_30px_rgba(0,0,0,0.5)]">
+          <div className="min-w-0 text-left">
+            <p className="truncate text-sm font-bold uppercase">{stickyPlan.name}</p>
+            <p className="truncate text-xs text-neutral-400">
+              {billingCycle === "monthly"
+                ? `${stickyPlan.monthly}/mois`
+                : `${stickyPlan.yearly}/an`}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleSubscribe(stickyPlan)}
+            disabled={stickyUnavailable || stickyProcessing}
+            className="shrink-0 rounded-full border border-[var(--brand-purple)] bg-[var(--brand-purple)] px-6 py-2.5 text-sm font-semibold uppercase text-white transition-colors hover:bg-[var(--brand-purple-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {stickyUnavailable
+              ? "INDISPONIBLE"
+              : stickyProcessing
+                ? "REDIRECTION..."
+                : "S'ABONNER"}
+          </button>
+        </div>
       </div>
     </div>
   );
