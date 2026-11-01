@@ -228,7 +228,7 @@ export default function Home() {
                     {slide.cta === "EN SAVOIR PLUS" && (
                       <span
                         aria-hidden="true"
-                        className="block h-1.5 w-1.5 shrink-0 rounded-full bg-[#9F8CFF]"
+                        className="block h-1 w-1 shrink-0 rounded-full bg-[#7C5CFF] opacity-70"
                       />
                     )}
                   </Link>
