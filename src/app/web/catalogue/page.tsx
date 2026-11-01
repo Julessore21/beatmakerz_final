@@ -179,7 +179,7 @@ const ZoneSlider = ({
         <div
           className={`absolute top-0 h-5 rounded-full pointer-events-none transition-colors ${
             isActive
-              ? "bg-gradient-to-r from-[#7c5cff] to-[#c43eff]"
+              ? "bg-gradient-to-r from-brand-vivid to-[#c43eff]"
               : "bg-white/20"
           }`}
           style={{
@@ -624,7 +624,7 @@ function CatalogueContent() {
       {/* content */}
       <div className="container mx-auto mt-8 max-w-screen-2xl px-4 xs:px-5 sm:px-6 lg:px-8">
         {isCatalogueEmpty ? (
-          <div className="relative flex flex-col items-center justify-center rounded-3xl border border-white/10 bg-[#0F0F18]/80 px-6 py-24 text-center backdrop-blur-xl">
+          <div className="relative flex flex-col items-center justify-center rounded-3xl border border-white/10 bg-brand-card/80 px-6 py-24 text-center backdrop-blur-xl">
             <h2 className="text-3xl font-bold uppercase tracking-tight text-white sm:text-5xl">LES PRODS ARRIVENT</h2>
             <p className="mt-4 max-w-md text-sm text-zinc-300">
               Le catalogue se remplit. En attendant, fais ton son sur mesure ou prends un abonnement pour ne rien rater.
@@ -632,13 +632,13 @@ function CatalogueContent() {
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
               <Link
                 href="/web/prodsurmesure"
-                className="rounded-full bg-[#4F2BD4] px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#5B35E8]"
+                className="rounded-full bg-brand px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-hover"
               >
                 PROD SUR MESURE
               </Link>
               <Link
                 href="/web/abonnements"
-                className="rounded-full bg-[#4F2BD4] px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#5B35E8]"
+                className="rounded-full bg-brand px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-hover"
               >
                 VOIR LES ABONNEMENTS
               </Link>
@@ -716,7 +716,7 @@ function CatalogueContent() {
                 <button
                   type="button"
                   onClick={loadBeats}
-                  className="mt-6 rounded-full bg-[#4F2BD4] px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#5B35E8]"
+                  className="mt-6 rounded-full bg-brand px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-hover"
                 >
                   RÉESSAYER
                 </button>
@@ -730,7 +730,7 @@ function CatalogueContent() {
                 <button
                   type="button"
                   onClick={resetFilters}
-                  className="mt-6 rounded-full bg-[#4F2BD4] px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#5B35E8]"
+                  className="mt-6 rounded-full bg-brand px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-hover"
                 >
                   Réinitialiser les filtres
                 </button>
