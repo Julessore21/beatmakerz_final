@@ -48,7 +48,7 @@ export const metadata: Metadata = {
       "Plateforme française de vente d'instrumentales et de services pour artistes",
     images: [
       {
-        url: "/og.svg",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Beatmakerz",
@@ -62,7 +62,7 @@ export const metadata: Metadata = {
     title: "Beatmakerz",
     description:
       "Plateforme française de vente d'instrumentales et de services pour artistes",
-    images: ["/og.svg"],
+    images: ["/opengraph-image"],
   },
   icons: {
     icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
