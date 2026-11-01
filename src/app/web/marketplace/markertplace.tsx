@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { Flame, Grid3X3, Rows3, Search, Star, Store, Users } from "lucide-react";
 import BeatCard from "@/components/BeatCard";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
+import ListSkeleton from "@/components/skeletons/ListSkeleton";
 import { Input } from "@/components/ui/input";
 import { useAudio } from "@/context/AudioPlayerContext";
 import { useAuth } from "@/context/AuthContext";
@@ -149,20 +150,44 @@ function SellerSection({ onBack }: { onBack: () => void }) {
   );
 }
 
-function EmptyState({ query }: { query: string }) {
-  const message = query ? `Essayez une autre recherche que "${query}" ou modifiez vos filtres.` : "Aucun beat ne correspond à ces filtres.";
-
+function EmptyState({ onReset }: { onReset: () => void }) {
   return (
     <motion.div
       key="empty"
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -6 }}
-      className="flex h-64 flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/[0.02] text-center text-sm text-zinc-300"
+      className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-16 text-center"
     >
-      <h3 className="text-base font-semibold text-white">Aucun résultat</h3>
-      <p className="mt-2 max-w-sm">{message}</p>
+      <h3 className="text-2xl font-bold uppercase tracking-tight text-white">Aucune prod ici</h3>
+      <p className="mt-2 max-w-sm text-sm text-zinc-300">Rien ne colle à ta recherche. Élargis tes filtres et trouve ton prochain son.</p>
+      <button
+        type="button"
+        onClick={onReset}
+        className="mt-6 text-sm font-bold uppercase tracking-wide text-[#9F8CFF] underline underline-offset-4 hover:text-white"
+      >
+        RÉINITIALISER LES FILTRES
+      </button>
     </motion.div>
+  );
+}
+
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div
+      role="alert"
+      className="flex flex-col items-center justify-center rounded-3xl border border-red-500/20 bg-red-500/10 px-6 py-16 text-center"
+    >
+      <h3 className="text-2xl font-bold uppercase tracking-tight text-white">Le son a coupé</h3>
+      <p className="mt-2 max-w-sm text-sm text-zinc-300">Impossible de charger les beats pour le moment. Relance, ça repart.</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-6 rounded-full bg-[#4F2BD4] px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#5B35E8]"
+      >
+        RÉESSAYER
+      </button>
+    </div>
   );
 }
 
@@ -321,12 +346,16 @@ export default function BeatmakerMarketplace() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [beats, setBeats] = useState<Beat[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const { play, toggle, track, isPlaying } = useAudio();
   const { user } = useAuth();
 
-  // chargement initial des beats depuis l'API, fallback si erreur
-  useEffect(() => {
+  // chargement des beats depuis l'API (état chargement / erreur géré)
+  const loadBeats = useCallback(() => {
     type ApiBeat = { _id?: string; id?: string; title?: string; artist?: { name?: string }; genres?: string[]; bpm?: number; key?: string; priceOverrides?: { priceCents?: number }[]; priceCents?: number; tag?: string; assets?: { type?: string }[]; coverUrl?: string | null };
+    setIsLoading(true);
+    setHasError(false);
     apiGet<{ items: ApiBeat[] }>("/beats")
       .then((data) => {
         const mapped =
@@ -346,8 +375,16 @@ export default function BeatmakerMarketplace() {
           })) || [];
         setBeats(mapped);
       })
-      .catch(() => setBeats([]));
+      .catch(() => {
+        setBeats([]);
+        setHasError(true);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadBeats();
+  }, [loadBeats]);
 
   // favoris utilisateurs via API
   useEffect(() => {
@@ -406,6 +443,13 @@ export default function BeatmakerMarketplace() {
   }, [filteredBeats, page]);
 
   const currentTrackId = track ? track.id : null;
+
+  const resetFilters = () => {
+    setQuery("");
+    setGenreFilter("all");
+    setPriceRangeIndex(null);
+    setOnlyTop(false);
+  };
 
   const handleToggleFavorite = async (beatId: string) => {
     if (!user) {
@@ -536,59 +580,65 @@ export default function BeatmakerMarketplace() {
                 </label>
               </div>
             </div>
-            <ResultsSummary beatsCount={filteredBeats.length} />
+            {!isLoading && !hasError && <ResultsSummary beatsCount={filteredBeats.length} />}
           </div>
 
           <div className="mt-6">
-            <AnimatePresence mode="wait">
-              {visibleBeats.length === 0 ? (
-                <EmptyState query={query} />
-              ) : view === "grid" ? (
-                <motion.div
-                  key="grid"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.2 }}
-                  className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-                >
-                  {visibleBeats.map((beat) => {
-                    const isCurrent = currentTrackId === beat.id;
-                    return (
-                      <BeatCard
-                        key={beat.id}
-                        id={beat.id}
-                        name={beat.name}
-                        artist={beat.artist}
-                        genre={beat.genre}
-                        bpm={beat.bpm}
-                        keySig={beat.key}
-                        price={beat.price}
-                        tag={beat.tag ?? undefined}
-                        isCurrent={isCurrent}
-                        isPlaying={isPlaying}
-                        isFav={favorites.includes(String(beat.id))}
-                        onPlayPause={() => handlePlayPause(beat)}
-                        onFav={() => handleToggleFavorite(String(beat.id))}
-                        coverUrl={beat.coverUrl}
-                      />
-                    );
-                  })}
-                </motion.div>
-              ) : (
-                <TableView
-                  beats={visibleBeats}
-                  onPlayPause={handlePlayPause}
-                  isPlaying={isPlaying}
-                  currentTrackId={currentTrackId}
-                  favorites={favorites}
-                  onToggleFavorite={handleToggleFavorite}
-                />
-              )}
-            </AnimatePresence>
+            {isLoading ? (
+              <ListSkeleton count={12} />
+            ) : hasError ? (
+              <ErrorState onRetry={loadBeats} />
+            ) : (
+              <AnimatePresence mode="wait">
+                {visibleBeats.length === 0 ? (
+                  <EmptyState onReset={resetFilters} />
+                ) : view === "grid" ? (
+                  <motion.div
+                    key="grid"
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                    transition={{ duration: 0.2 }}
+                    className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                  >
+                    {visibleBeats.map((beat) => {
+                      const isCurrent = currentTrackId === beat.id;
+                      return (
+                        <BeatCard
+                          key={beat.id}
+                          id={beat.id}
+                          name={beat.name}
+                          artist={beat.artist}
+                          genre={beat.genre}
+                          bpm={beat.bpm}
+                          keySig={beat.key}
+                          price={beat.price}
+                          tag={beat.tag ?? undefined}
+                          isCurrent={isCurrent}
+                          isPlaying={isPlaying}
+                          isFav={favorites.includes(String(beat.id))}
+                          onPlayPause={() => handlePlayPause(beat)}
+                          onFav={() => handleToggleFavorite(String(beat.id))}
+                          coverUrl={beat.coverUrl}
+                        />
+                      );
+                    })}
+                  </motion.div>
+                ) : (
+                  <TableView
+                    beats={visibleBeats}
+                    onPlayPause={handlePlayPause}
+                    isPlaying={isPlaying}
+                    currentTrackId={currentTrackId}
+                    favorites={favorites}
+                    onToggleFavorite={handleToggleFavorite}
+                  />
+                )}
+              </AnimatePresence>
+            )}
           </div>
 
-          <Pagination page={page} totalPages={totalPages} onChange={handlePageChange} />
+          {!isLoading && !hasError && <Pagination page={page} totalPages={totalPages} onChange={handlePageChange} />}
         </>
       )}
       <AuthRequiredModal

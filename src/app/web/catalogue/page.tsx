@@ -256,37 +256,39 @@ function CatalogueContent() {
   const [favIds, setFavIds] = useState<string[]>([]);
   const [errorBeats, setErrorBeats] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async () => {
-      setIsLoadingBeats(true);
-      try {
-        const items = await fetchFileUpCatalogue();
-        const mapped =
-          items.map((b, idx) => ({
-            id: b._id || b.id || `beat-${idx}`,
-            name: b.title || b.name || "Beat",
-            artist: typeof b.artist === "string" ? b.artist : b.artist?.name || "Beatmaker",
-            genre: b.genres?.[0] || b.genre || "Beat",
-            bpm: b.bpm ?? 120,
-            key: b.key || "Am",
-            tag: null as Tag | null,
-            audio: b.assets?.find((a) => a.type === "preview")
-              ? `${process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com"}/beats/${b._id || b.id}/stream/preview`
-              : TEST_AUDIO,
-            price: typeof b.price === "number" ? b.price : (b.priceCents ?? 1999) / 100,
-            coverUrl: b.coverUrl ?? null,
-          })) || [];
-        setBeats(mapped);
-        setErrorBeats(null);
-      } catch {
-        setBeats([]);
-        setErrorBeats("Impossible de charger le catalogue");
-      } finally {
-        setIsLoadingBeats(false);
-      }
-    };
-    load();
+  const loadBeats = useCallback(async () => {
+    setIsLoadingBeats(true);
+    setErrorBeats(null);
+    try {
+      const items = await fetchFileUpCatalogue();
+      const mapped =
+        items.map((b, idx) => ({
+          id: b._id || b.id || `beat-${idx}`,
+          name: b.title || b.name || "Beat",
+          artist: typeof b.artist === "string" ? b.artist : b.artist?.name || "Beatmaker",
+          genre: b.genres?.[0] || b.genre || "Beat",
+          bpm: b.bpm ?? 120,
+          key: b.key || "Am",
+          tag: null as Tag | null,
+          audio: b.assets?.find((a) => a.type === "preview")
+            ? `${process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com"}/beats/${b._id || b.id}/stream/preview`
+            : TEST_AUDIO,
+          price: typeof b.price === "number" ? b.price : (b.priceCents ?? 1999) / 100,
+          coverUrl: b.coverUrl ?? null,
+        })) || [];
+      setBeats(mapped);
+      setErrorBeats(null);
+    } catch {
+      setBeats([]);
+      setErrorBeats("Impossible de charger le catalogue");
+    } finally {
+      setIsLoadingBeats(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadBeats();
+  }, [loadBeats]);
 
   // hydrate favoris si connecté
   useEffect(() => {
@@ -410,6 +412,15 @@ function CatalogueContent() {
 
   const toggleInArray = (val: string, arr: string[], set: (v: string[]) => void) =>
     set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
+
+  const resetFilters = () => {
+    setSelectedGenres([]);
+    setSelectedKeys([]);
+    setBpmFilterActive(false);
+    setSelectedTag(null);
+    setQuery("");
+    setDebounced("");
+  };
 
   const handleBpmStartChange = useCallback(
     (value: number) => {
@@ -611,14 +622,7 @@ function CatalogueContent() {
                   <FiltersBlocks />
                   {selectedGenres.length || selectedKeys.length || bpmFilterActive || selectedTag ? (
                     <button
-                      onClick={() => {
-                        setSelectedGenres([]);
-                        setSelectedKeys([]);
-                        setBpmFilterActive(false);
-                        setSelectedTag(null);
-                        setQuery("");
-                        setDebounced("");
-                      }}
+                      onClick={resetFilters}
                       className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
                     >
                       Réinitialiser tous les filtres
@@ -634,14 +638,7 @@ function CatalogueContent() {
               <FiltersBlocks />
               {selectedGenres.length || selectedKeys.length || bpmFilterActive || selectedTag ? (
                 <button
-                  onClick={() => {
-                    setSelectedGenres([]);
-                    setSelectedKeys([]);
-                    setBpmFilterActive(false);
-                    setSelectedTag(null);
-                    setQuery("");
-                    setDebounced("");
-                  }}
+                  onClick={resetFilters}
                   className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
                 >
                   Réinitialiser tous les filtres
@@ -652,11 +649,6 @@ function CatalogueContent() {
 
           {/* list + header de résultats */}
           <section className="lg:col-span-9">
-            {errorBeats && (
-              <div className="mb-4 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-400">
-                {errorBeats}
-              </div>
-            )}
             <div className="mb-3 flex items-center justify-between text-sm text-zinc-400">
               <span>{sorted.length} résultats</span>
               <div className="inline-flex items-center gap-2">
@@ -677,6 +669,37 @@ function CatalogueContent() {
             </div>
             {isLoadingBeats ? (
               <ListSkeleton count={12} />
+            ) : errorBeats ? (
+              <div
+                role="alert"
+                className="flex flex-col items-center justify-center rounded-3xl border border-red-500/20 bg-red-500/10 px-6 py-16 text-center"
+              >
+                <h3 className="text-2xl font-bold uppercase tracking-tight text-white">Le son a coupé</h3>
+                <p className="mt-2 max-w-sm text-sm text-zinc-300">
+                  Impossible de charger les beats pour le moment. Relance, ça repart.
+                </p>
+                <button
+                  type="button"
+                  onClick={loadBeats}
+                  className="mt-6 rounded-full bg-[#4F2BD4] px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#5B35E8]"
+                >
+                  RÉESSAYER
+                </button>
+              </div>
+            ) : sorted.length === 0 ? (
+              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-16 text-center">
+                <h3 className="text-2xl font-bold uppercase tracking-tight text-white">Aucune prod ici</h3>
+                <p className="mt-2 max-w-sm text-sm text-zinc-300">
+                  Rien ne colle à ta recherche. Élargis tes filtres et trouve ton prochain son.
+                </p>
+                <button
+                  type="button"
+                  onClick={resetFilters}
+                  className="mt-6 text-sm font-bold uppercase tracking-wide text-[#9F8CFF] underline underline-offset-4 hover:text-white"
+                >
+                  RÉINITIALISER LES FILTRES
+                </button>
+              </div>
             ) : (
             <AnimatePresence mode="popLayout">
               {viewMode === "grid" ? (
@@ -756,7 +779,7 @@ function CatalogueContent() {
             )}
 
             {/* pagination */}
-            {!isLoadingBeats && (
+            {!isLoadingBeats && !errorBeats && sorted.length > 0 && (
             <div className="mt-6 flex items-center justify-center gap-3">
               <button
                 disabled={currentPage === 1}
@@ -801,7 +824,15 @@ function CatalogueContent() {
 export default function CataloguePage() {
   return (
     <>
-      <Suspense fallback={<div className="min-h-screen bg-black text-white pt-24 px-4">Chargement…</div>}>
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-[#0A0A12] px-4 pt-24 text-white">
+            <div className="container mx-auto max-w-screen-2xl">
+              <ListSkeleton count={12} />
+            </div>
+          </div>
+        }
+      >
         <CatalogueContent />
       </Suspense>
     </>
