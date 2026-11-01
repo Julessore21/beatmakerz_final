@@ -261,6 +261,13 @@ function Abonnements() {
         </div>
       </div>
 
+      <p className="relative mt-4 text-center text-xs text-neutral-400">
+        Paiement sécurisé Stripe · 100&nbsp;% royalty free ·{" "}
+        <Link href="/web/cgv" className="underline hover:text-white">
+          CGV
+        </Link>
+      </p>
+
       {checkoutStatus === "success" && (
         <div className="mt-6 w-full max-w-3xl rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 text-sm text-emerald-100 shadow-[0_0_35px_rgba(16,185,129,0.25)]">
           <p className="font-semibold">Abonnement confirmé via Stripe.</p>
