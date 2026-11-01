@@ -12,6 +12,7 @@ type PlanDefinition = {
   subTitle: string;
   monthly: string;
   yearly: string;
+  prodsPerMonth: number;
   label: string;
   description: string[];
   priceIds: Partial<Record<BillingCycle, string>>;
@@ -24,11 +25,12 @@ const fallbackPrice = (envValue: string | undefined, hardcoded: string) =>
 const PLAN_DEFINITIONS: PlanDefinition[] = [
   {
     name: "INFINI",
-    subTitle: "A partir de",
-    monthly: "19.99 EUR",
-    yearly: "199.99 EUR",
+    subTitle: "À partir de",
+    monthly: "19.99 €",
+    yearly: "199.99 €",
+    prodsPerMonth: 4,
     label: "BASIQUE",
-    description: ["4 prods/mois", "40 EUR d'economie", "100% royalty free"],
+    description: ["4 prods/mois", "40 € d'économie", "100% royalty free"],
     priceIds: {
       monthly: fallbackPrice(
         process.env.NEXT_PUBLIC_STRIPE_PRICE_INFINI_MONTHLY,
@@ -46,13 +48,14 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
   },
   {
     name: "INFINI +",
-    subTitle: "A partir de",
-    monthly: "39.99 EUR",
-    yearly: "399.99 EUR",
+    subTitle: "À partir de",
+    monthly: "39.99 €",
+    yearly: "399.99 €",
+    prodsPerMonth: 10,
     label: "POPULAIRE",
     description: [
       "10 prods/mois",
-      "80 EUR d'economie",
+      "80 € d'économie",
       "100% royalty free",
       "-15 % (prods sur mesure)",
       "SAV prioritaire",
@@ -74,13 +77,14 @@ const PLAN_DEFINITIONS: PlanDefinition[] = [
   },
   {
     name: "INFINI X",
-    subTitle: "A partir de",
-    monthly: "59.99 EUR",
-    yearly: "599.99 EUR",
+    subTitle: "À partir de",
+    monthly: "59.99 €",
+    yearly: "599.99 €",
+    prodsPerMonth: 15,
     label: "MEILLEURE OFFRE",
     description: [
       "15 prods/mois",
-      "120 EUR d'economie",
+      "120 € d'économie",
       "100% royalty free",
       "-30 % (prods sur mesure)",
       "SAV prioritaire",
@@ -228,10 +232,10 @@ function Abonnements() {
       <div className="w-full max-w-5xl text-center mx-auto">
         <div className="rounded-3xl border border-white/10 bg-[#141416]/90 p-8 backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
-            Choisis l&#39;abonnement Infini adapte a tes besoins
+            Choisis l&#39;abonnement Infini adapté à tes besoins
           </h1>
           <p className="mt-2 text-sm md:text-base text-neutral-400">
-            Donne-toi enfin les moyens de reussir dans la musique !
+            Donne-toi enfin les moyens de réussir dans la musique !
           </p>
         </div>
       </div>
@@ -259,9 +263,9 @@ function Abonnements() {
 
       {checkoutStatus === "success" && (
         <div className="mt-6 w-full max-w-3xl rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 text-sm text-emerald-100 shadow-[0_0_35px_rgba(16,185,129,0.25)]">
-          <p className="font-semibold">Abonnement confirme via Stripe.</p>
+          <p className="font-semibold">Abonnement confirmé via Stripe.</p>
           <p className="mt-1 text-xs text-emerald-200/80">
-            Merci pour ta confiance ! Tu peux gerer ta facturation a tout moment.
+            Merci pour ta confiance ! Tu peux gérer ta facturation à tout moment.
           </p>
           {sessionIdParam && (
             <button
@@ -270,7 +274,7 @@ function Abonnements() {
               disabled={isManagingBilling}
               className="mt-3 inline-flex items-center justify-center rounded-full border border-emerald-300/40 px-4 py-2 text-xs font-semibold text-emerald-50 transition disabled:cursor-not-allowed disabled:opacity-60 hover:bg-emerald-500/20"
             >
-              {isManagingBilling ? "Ouverture..." : "Gerer la facturation"}
+              {isManagingBilling ? "Ouverture..." : "Gérer la facturation"}
             </button>
           )}
         </div>
@@ -278,7 +282,7 @@ function Abonnements() {
 
       {checkoutStatus === "canceled" && (
         <div className="mt-6 w-full max-w-3xl rounded-2xl border border-amber-400/30 bg-amber-400/10 px-5 py-4 text-sm text-amber-100 shadow-[0_0_35px_rgba(251,191,36,0.25)]">
-          Le paiement a ete annule. Tu peux retenter l&#39;experience quand tu es pret.
+          Le paiement a été annulé. Tu peux retenter l&#39;expérience quand tu es prêt.
         </div>
       )}
 
@@ -297,6 +301,12 @@ function Abonnements() {
             totalMensuel > 0
               ? Math.round(((totalMensuel - yearlyPrice) / totalMensuel) * 100)
               : 0;
+
+          // Prix par mois et par prod, calculés à partir des prix affichés.
+          const pricePerMonth =
+            billingCycle === "monthly" ? monthlyPrice : yearlyPrice / 12;
+          const pricePerProd =
+            plan.prodsPerMonth > 0 ? pricePerMonth / plan.prodsPerMonth : 0;
 
           let borderClass = "border-white/15";
           if (selectedPlan === plan.name) {
@@ -352,18 +362,24 @@ function Abonnements() {
                   {billingCycle === "monthly" ? plan.monthly : plan.yearly}
                 </p>
                 <p className="text-xs text-neutral-400">
-                  facture {billingCycle === "monthly" ? "mensuellement" : "annuellement"}
+                  facturé {billingCycle === "monthly" ? "mensuellement" : "annuellement"}
                 </p>
                 {billingCycle === "yearly" && discount > 0 && (
                   <div className="mt-1 flex flex-col items-center gap-2">
                     <p className="text-sm text-neutral-400 line-through opacity-75">
-                      {(totalMensuel || 0).toFixed(2)} EUR
+                      {(totalMensuel || 0).toFixed(2)} €
                     </p>
                     <div className="inline-block px-2 py-1 rounded-full bg-[#401a87] text-white text-[10px] font-semibold">
-                      {discount}% de reduction
+                      {discount}% de réduction
                     </div>
                   </div>
                 )}
+                <p className="mt-2 text-xs font-semibold text-white break-words">
+                  soit {pricePerMonth.toFixed(2)} €/mois · {pricePerProd.toFixed(2)} € par prod
+                </p>
+                <p className="mt-1 text-[11px] leading-snug text-neutral-400 break-words">
+                  Économie = ce que tu gagnes en payant à l&#39;année plutôt que 12 mois en mensuel.
+                </p>
               </div>
 
               <hr className="border-white/10 w-full mb-3" />
@@ -390,9 +406,12 @@ function Abonnements() {
         })}
       </div>
 
-      <div className="text-center mt-5 text-xs md:text-sm text-neutral-400">
+      <div className="text-center mt-5 text-xs md:text-sm text-neutral-400 flex flex-col sm:flex-row items-center gap-2 sm:gap-6">
         <Link href="/web/faq#tarifs" className="underline hover:text-white">
           En savoir plus sur la tarification
+        </Link>
+        <Link href="/web/cgv" className="underline hover:text-white">
+          Conditions de licence
         </Link>
       </div>
     </div>
