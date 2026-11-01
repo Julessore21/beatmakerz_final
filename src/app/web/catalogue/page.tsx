@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -400,6 +401,16 @@ function CatalogueContent() {
   const currentBeats = sorted.slice(lastIndex - pageSize, lastIndex);
   const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
 
+  /* catalogue vraiment vide (aucun beat, aucun filtre actif) */
+  const hasActiveFilters =
+    debounced.trim() !== "" ||
+    query.trim() !== "" ||
+    selectedGenres.length > 0 ||
+    selectedKeys.length > 0 ||
+    bpmFilterActive ||
+    selectedTag !== null;
+  const isCatalogueEmpty = !isLoadingBeats && !errorBeats && beats.length === 0 && !hasActiveFilters;
+
   /* queue -> global player */
   const lastQueueKey = useRef("");
   useEffect(() => {
@@ -534,7 +545,8 @@ function CatalogueContent() {
           <div className="mt-1 text-sm text-zinc-300">{sorted.length} résultats • {GENRES.length} genres • vue {viewMode}</div>
         </div>
 
-        {/* tools sticky */}
+        {/* tools sticky (masqué si le catalogue est vide) */}
+        {!isCatalogueEmpty && (
         <div className="mt-6 sticky top-20 z-40 rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="inline-flex items-center gap-2 text-sm text-zinc-400">
@@ -606,10 +618,33 @@ function CatalogueContent() {
             />
           </div>
         </div>
+        )}
       </motion.div>
 
       {/* content */}
       <div className="container mx-auto mt-8 max-w-screen-2xl px-4 xs:px-5 sm:px-6 lg:px-8">
+        {isCatalogueEmpty ? (
+          <div className="relative flex flex-col items-center justify-center rounded-3xl border border-white/10 bg-[#0F0F18]/80 px-6 py-24 text-center backdrop-blur-xl">
+            <h2 className="text-3xl font-bold uppercase tracking-tight text-white sm:text-5xl">LES PRODS ARRIVENT</h2>
+            <p className="mt-4 max-w-md text-sm text-zinc-300">
+              Le catalogue se remplit. En attendant, fais ton son sur mesure ou prends un abonnement pour ne rien rater.
+            </p>
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+              <Link
+                href="/web/prodsurmesure"
+                className="rounded-full bg-[#4F2BD4] px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#5B35E8]"
+              >
+                PROD SUR MESURE
+              </Link>
+              <Link
+                href="/web/abonnements"
+                className="rounded-full bg-[#4F2BD4] px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#5B35E8]"
+              >
+                VOIR LES ABONNEMENTS
+              </Link>
+            </div>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <section className="lg:col-span-12 lg:hidden">
             <div className="space-y-3">
@@ -688,16 +723,16 @@ function CatalogueContent() {
               </div>
             ) : sorted.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-16 text-center">
-                <h3 className="text-2xl font-bold uppercase tracking-tight text-white">Aucune prod ici</h3>
+                <h3 className="text-2xl font-bold uppercase tracking-tight text-white">Aucun résultat</h3>
                 <p className="mt-2 max-w-sm text-sm text-zinc-300">
                   Rien ne colle à ta recherche. Élargis tes filtres et trouve ton prochain son.
                 </p>
                 <button
                   type="button"
                   onClick={resetFilters}
-                  className="mt-6 text-sm font-bold uppercase tracking-wide text-[#9F8CFF] underline underline-offset-4 hover:text-white"
+                  className="mt-6 rounded-full bg-[#4F2BD4] px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-[#5B35E8]"
                 >
-                  RÉINITIALISER LES FILTRES
+                  Réinitialiser les filtres
                 </button>
               </div>
             ) : (
@@ -808,6 +843,7 @@ function CatalogueContent() {
             )}
           </section>
         </div>
+        )}
       </div>
       <AuthRequiredModal
         open={showAuthModal}
