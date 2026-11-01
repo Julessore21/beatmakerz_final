@@ -6,12 +6,10 @@ import Link from "next/link";
 import FooterHome from "@/components/FooterHome";
 import SplashScreen from "@/components/SplashScreen";
 
-// TODO: remplacer poster-dark.svg par de vraies captures des vidéos
-// ex: ffmpeg -i videotest0.mp4 -ss 00:00:03 -frames:v 1 public/videos/poster0.jpg
-const VIDEO_POSTER = "/videos/poster-dark.svg";
-
 const TRANSITION_MS = 900;
 
+// Posters générés avec ffmpeg, ex :
+// ffmpeg -i videotest0.mp4 -ss 00:00:03 -frames:v 1 public/videos/poster0.jpg
 const SLIDES = [
   {
     subtitle: "LES PRODS A PRIX ABORDABLE",
@@ -19,6 +17,7 @@ const SLIDES = [
     href: "/web/catalogue",
     cta: "VOIR LE CATALOGUE",
     video: "/videos/videotest0.mp4",
+    poster: "/videos/poster0.jpg",
   },
   {
     subtitle: "NOS ABONNEMENTS",
@@ -26,6 +25,7 @@ const SLIDES = [
     href: "/web/abonnements",
     cta: "VOIR NOS OFFRES",
     video: "/videos/videotest1.mp4",
+    poster: "/videos/poster1.jpg",
   },
   {
     subtitle: "OBTIENT TA PROD PERSONNALISÉE",
@@ -33,6 +33,7 @@ const SLIDES = [
     href: "/web/prodsurmesure",
     cta: "EN SAVOIR PLUS",
     video: "/videos/videotest2.mp4",
+    poster: "/videos/poster2.jpg",
   },
   {
     subtitle: "LE COLLECTIF BEATMAKERZ",
@@ -40,6 +41,7 @@ const SLIDES = [
     href: "/web/notrehistoire",
     cta: "EN SAVOIR PLUS",
     video: "/videos/videotest3.mp4",
+    poster: "/videos/poster3.jpg",
   },
 ] as const;
 
@@ -175,6 +177,8 @@ export default function Home() {
           {/* Sections vidéo */}
           {SLIDES.map((slide, index) => {
             const isActive = currentIndex === index;
+            // Métadonnées chargées uniquement pour la slide active et la suivante
+            const shouldPreload = index === currentIndex || index === currentIndex + 1;
             return (
               <section
                 key={index}
@@ -186,11 +190,11 @@ export default function Home() {
                 <video
                   ref={(el) => { videoRefs.current[index] = el; }}
                   className="absolute inset-0 h-full w-full object-cover"
-                  preload="none"
+                  preload={shouldPreload ? "metadata" : "none"}
                   muted
                   playsInline
                   loop
-                  poster={VIDEO_POSTER}
+                  poster={slide.poster}
                 >
                   <source src={slide.video} type="video/mp4" />
                 </video>
