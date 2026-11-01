@@ -6,16 +6,22 @@
   :root {
     --brand-purple: #4f2bd4;
     --brand-purple-strong: #5b35e8;
+    --brand-vivid: #7c5cff;
+    --brand-hover: #5b35e8;
+    --brand-lavender: #9f8cff;
+    --brand-night: #090912;
+    --brand-card: #0f0f18;
+    --brand-footer: #030308;
     --brand-surface: #0f0f18;
     --brand-border: rgba(255, 255, 255, 0.08);
   }
   html {
-    background-color: #090912;
+    background-color: var(--brand-night);
   }
   body {
     min-height: 100vh;
     color: white;
-    background-color: #090912;
+    background-color: var(--brand-night);
     background-image:
       radial-gradient(circle at 15% 20%, rgba(120, 63, 255, 0.18), transparent 34%),
       radial-gradient(circle at 85% 22%, rgba(120, 63, 255, 0.14), transparent 32%),
@@ -57,12 +63,12 @@
 
 /* Style des inputs range pour la barre de volume/progress (violet) */
 input[type="range"].volume-purple {
-  accent-color: #7C5CFF;
+  accent-color: var(--brand-vivid);
 }
 
 /* Webkit (Chrome/Safari) - personnalisation plus visible */
 input[type="range"].volume-purple::-webkit-slider-runnable-track {
-  background: linear-gradient(90deg, #7C5CFF 0%, #9f8cff 100%);
+  background: linear-gradient(90deg, var(--brand-vivid) 0%, var(--brand-lavender) 100%);
   height: 4px;
   border-radius: 9999px;
 }
@@ -79,7 +85,7 @@ input[type="range"].volume-purple::-webkit-slider-thumb {
 
 /* Firefox */
 input[type="range"].volume-purple::-moz-range-track {
-  background: linear-gradient(90deg, #7C5CFF 0%, #9f8cff 100%);
+  background: linear-gradient(90deg, var(--brand-vivid) 0%, var(--brand-lavender) 100%);
   height: 4px;
   border-radius: 9999px;
 }
@@ -93,10 +99,10 @@ input[type="range"].volume-purple::-moz-range-thumb {
 
 /* Tous les sliders du site en violet */
 input[type="range"] {
-  accent-color: #7C5CFF;
+  accent-color: var(--brand-vivid);
 }
 input[type="range"]::-webkit-slider-runnable-track {
-  background: linear-gradient(90deg, #7C5CFF 0%, #9f8cff 100%);
+  background: linear-gradient(90deg, var(--brand-vivid) 0%, var(--brand-lavender) 100%);
   height: 4px;
   border-radius: 9999px;
 }
@@ -111,7 +117,7 @@ input[type="range"]::-webkit-slider-thumb {
   border: 2px solid rgba(255,255,255,0.4);
 }
 input[type="range"]::-moz-range-track {
-  background: linear-gradient(90deg, #7C5CFF 0%, #9f8cff 100%);
+  background: linear-gradient(90deg, var(--brand-vivid) 0%, var(--brand-lavender) 100%);
   height: 4px;
   border-radius: 9999px;
 }
