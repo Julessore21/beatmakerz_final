@@ -17,6 +17,14 @@ const siteUrl = (
     : "http://localhost:3000")
 ).replace(/\/$/, "");
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "Beatmakerz",
+  url: siteUrl,
+  logo: `${siteUrl}/img/beatmakerz.png`,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   applicationName: "Beatmakerz",
@@ -78,6 +86,12 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className="font-sans flex min-h-screen flex-col bg-transparent">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
         <CartProvider>
           <AuthProvider>
             <FavoritesProvider>
