@@ -196,6 +196,12 @@ const Panier: React.FC = () => {
               >
                 {status === "loading" ? "Traitement..." : "Valider et payer"}
               </button>
+              <p className="text-center text-xs text-zinc-400">
+                Paiement sécurisé Stripe · 100&nbsp;% royalty free ·{" "}
+                <Link href="/web/cgv" className="underline hover:text-white">
+                  CGV
+                </Link>
+              </p>
               <Link
                 href="/web/catalogue"
                 className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10"

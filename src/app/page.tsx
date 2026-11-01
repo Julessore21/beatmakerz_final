@@ -180,7 +180,7 @@ export default function Home() {
                 key={index}
                 className="relative w-full overflow-hidden"
                 style={{ height: "100svh" }}
-                inert={!isActive}
+                aria-hidden={!isActive}
               >
                 {/* Vidéo fond */}
                 <video
@@ -217,7 +217,8 @@ export default function Home() {
                   </h1>
                   <Link
                     href={{ pathname: slide.href }}
-                    className="text-sm sm:text-xs font-bold opacity-90 ml-2 hover:underline"
+                    className="btn-primary inline-flex min-h-[44px] items-center justify-center text-sm font-bold"
+                    tabIndex={isActive ? 0 : -1}
                   >
                     {slide.cta}
                   </Link>
@@ -237,7 +238,7 @@ export default function Home() {
           <section
             className="relative flex w-full flex-col overflow-hidden bg-[#030308]"
             style={{ height: "100svh" }}
-            inert={currentIndex !== SLIDES.length}
+            aria-hidden={currentIndex !== SLIDES.length}
           >
             {/* Ambient glow — haut centre (brand purple) */}
             <div
@@ -312,11 +313,11 @@ export default function Home() {
           aria-label="Navigation des sections"
         >
           {/* Points pour les 4 sections vidéo */}
-          {SLIDES.map((slide, i) => (
+          {SLIDES.map((_, i) => (
             <button
               key={i}
               onClick={() => goTo(i)}
-              aria-label={slide.title}
+              aria-label={`Section ${i + 1}`}
               aria-current={currentIndex === i ? "true" : undefined}
               className="group flex items-center justify-center w-5 h-5"
             >
