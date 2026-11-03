@@ -81,7 +81,7 @@ const sections: { title: string; content: string | string[] }[] = [
   {
     title: "Cookies",
     content:
-      "Le site [Nom du Site] utilise des cookies pour améliorer l'expérience utilisateur, analyser le trafic et personnaliser le contenu. En poursuivant votre navigation, vous acceptez l'utilisation de ces cookies. Vous pouvez modifier vos préférences via votre navigateur.",
+      "Le site [Nom du Site] utilise des cookies pour améliorer l'expérience utilisateur, analyser le trafic et personnaliser le contenu. Vous pouvez modifier vos préférences via votre navigateur.",
   },
   {
     title: "Limitation de responsabilité",
