@@ -43,10 +43,7 @@ const sections: { title: string; content: string | string[] }[] = [
     content: [
       "BEATMAKERZ",
       "ASSOCIATION D'ENTREPRENEURS",
-      "Siège social : [Adresse du siège social]",
-      "Numéro d'immatriculation : [Numéro d'inscription au registre du commerce et des sociétés]",
-      "Numéro de TVA intracommunautaire : [Numéro de TVA, si applicable]",
-      "Directeur de la publication : [Nom du responsable de la publication]",
+      "Contact : beatmakerz.contact@gmail.com",
     ],
   },
   {
