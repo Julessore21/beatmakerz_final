@@ -26,32 +26,26 @@ export type NotificationItem = {
   createdAt?: string;
 };
 
-export type OrderLineItem = {
-  _id?: string;
-  id?: string;
+export type PurchasedItem = {
+  _id: string;
+  orderId: string;
   beatId: string;
-  beat?: { title?: string };
-  title?: string;
   licenseTypeId: string;
-  licenseType?: { code?: string };
-  unitPriceCents?: number;
-  qty?: number;
-  downloadUrl?: string;
-  url?: string;
-  presignedUrl?: string;
-  presignedKey?: string;
-  downloadGrant?: { url?: string };
-  downloadExpiresAt?: string;
+  unitPriceCents: number;
+  qty: number;
+  beat?: { title?: string; coverUrl?: string } | null;
+  license?: { code?: string } | null;
+  downloadable: boolean;
 };
 
-export type OrderItem = {
-  _id?: string;
-  id?: string;
-  status: string;
+/** Commande payée (ou remboursée) telle que renvoyée par GET /me/orders. */
+export type Order = {
+  _id: string;
+  status: "paid" | "refunded";
   totalCents: number;
   currency: string;
   createdAt?: string;
-  items?: OrderLineItem[];
+  items: PurchasedItem[];
 };
 
 export const fetchFavorites = () => apiGet<FavoriteItem[]>("/me/favorites");
@@ -63,5 +57,17 @@ export const updateSettings = (data: Partial<UserSettings>) => apiPatch<UserSett
 export const fetchNotifications = () => apiGet<NotificationItem[]>("/me/notifications");
 export const markNotificationRead = (id: string) => apiPost(`/me/notifications/${id}/read`, {});
 
-export const fetchOrders = () => apiGet<OrderItem[]>("/me/orders");
-export const createOrderFromCart = () => apiPost<OrderItem[]>("/me/orders", {});
+export const fetchOrders = () => apiGet<Order[]>("/me/orders");
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+
+/**
+ * Lien de téléchargement d'un beat acheté : l'API renvoie un lien signé
+ * (valable 15 min) qui relaie le fichier sans exposer son URL de stockage.
+ */
+export const fetchDownloadUrl = async (orderId: string, itemId: string) => {
+  const { downloadUrl } = await apiGet<{ downloadUrl: string; expiresAt: string }>(
+    `/me/orders/${orderId}/items/${itemId}/download`
+  );
+  return `${API_URL}${downloadUrl}`;
+};

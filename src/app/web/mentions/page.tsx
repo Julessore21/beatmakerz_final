@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export default function MentionsLegales() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black text-white pt-24 pb-24">
+    <div className="min-h-screen text-white pt-28 pb-24">
       <div className="container mx-auto max-w-4xl px-4">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -52,9 +52,9 @@ const sections: { title: string; content: string | string[] }[] = [
   {
     title: "Hébergement du site",
     content: [
-      "WIX",
-      "Adresse de l'hébergeur : [Adresse de l'hébergeur]",
-      "Numéro de téléphone de l'hébergeur : [Numéro de téléphone de l'hébergeur]",
+      "Site : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis — vercel.com",
+      "Serveur applicatif : Render Services, Inc., 525 Brannan Street, Suite 300, San Francisco, CA 94107, États-Unis — render.com",
+      "Base de données : MongoDB Atlas (MongoDB, Inc.) — mongodb.com",
     ],
   },
   {
@@ -71,27 +71,27 @@ const sections: { title: string; content: string | string[] }[] = [
   {
     title: "Propriété Intellectuelle",
     content:
-      "Tous les contenus présents sur ce site (graphismes, images, textes, vidéos, animations, sons, logos, gifs, icônes, etc.) ainsi que leur mise en forme sont la propriété exclusive de [BEATMAKERZ], à l'exception des marques, logos ou contenus appartenant à des sociétés partenaires ou auteurs. Toute reproduction, distribution, modification, adaptation, retransmission ou publication, même partielle, est strictement interdite sans l'accord écrit de [Nom de l'entreprise]. Toute représentation ou reproduction, par quelque procédé que ce soit, constitue une contrefaçon (articles L.335-2 et suivants du Code de la propriété intellectuelle) et peut engager la responsabilité civile et pénale du contrefacteur.",
+      "Tous les contenus présents sur ce site (graphismes, images, textes, vidéos, animations, sons, logos, gifs, icônes, etc.) ainsi que leur mise en forme sont la propriété exclusive de Beatmakerz, à l'exception des marques, logos ou contenus appartenant à des sociétés partenaires ou auteurs. Toute reproduction, distribution, modification, adaptation, retransmission ou publication, même partielle, est strictement interdite sans l'accord écrit de Beatmakerz. Toute représentation ou reproduction, par quelque procédé que ce soit, constitue une contrefaçon (articles L.335-2 et suivants du Code de la propriété intellectuelle) et peut engager la responsabilité civile et pénale du contrefacteur.",
   },
   {
     title: "Protection des Données Personnelles",
     content:
-      "[Nom de l'entreprise] s'engage à ce que la collecte et le traitement de vos données, effectués à partir du site [Nom du Site], soient conformes au RGPD et à la loi Informatique et Libertés. Pour plus d'informations, consultez notre Politique de Confidentialité.",
+      "Beatmakerz s'engage à ce que la collecte et le traitement de vos données, effectués à partir du site Beatmakerz, soient conformes au RGPD et à la loi Informatique et Libertés. Pour plus d'informations, consultez notre Politique de Confidentialité.",
   },
   {
     title: "Cookies",
     content:
-      "Le site [Nom du Site] utilise des cookies pour améliorer l'expérience utilisateur, analyser le trafic et personnaliser le contenu. Vous pouvez modifier vos préférences via votre navigateur.",
+      "Le site Beatmakerz utilise des cookies pour améliorer l'expérience utilisateur, analyser le trafic et personnaliser le contenu. Vous pouvez modifier vos préférences via votre navigateur.",
   },
   {
     title: "Limitation de responsabilité",
     content:
-      "[Nom de l'entreprise] ne saurait être tenu pour responsable des erreurs présentes sur le site, des problèmes techniques, des interprétations des informations publiées et des conséquences de leur utilisation. L'utilisateur reconnaît utiliser ces informations sous sa responsabilité exclusive.",
+      "Beatmakerz ne saurait être tenu pour responsable des erreurs présentes sur le site, des problèmes techniques, des interprétations des informations publiées et des conséquences de leur utilisation. L'utilisateur reconnaît utiliser ces informations sous sa responsabilité exclusive.",
   },
   {
     title: "Liens Hypertextes",
     content:
-      "Le site [Nom du Site] peut proposer des liens vers d'autres sites ou ressources disponibles sur Internet. [Nom de l'entreprise] n'exerce aucun contrôle sur ces sites externes et ne saurait être tenu responsable de leur disponibilité ou de leur contenu.",
+      "Le site Beatmakerz peut proposer des liens vers d'autres sites ou ressources disponibles sur Internet. Beatmakerz n'exerce aucun contrôle sur ces sites externes et ne saurait être tenu responsable de leur disponibilité ou de leur contenu.",
   },
   {
     title: "Droit Applicable",

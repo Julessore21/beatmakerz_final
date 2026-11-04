@@ -11,6 +11,8 @@ export type FileUpCatalogueItem = {
   bpm?: number;
   key?: string;
   priceCents?: number;
+  /** Licence (Basic) sur laquelle priceCents est calculé : à utiliser pour le panier. */
+  licenseTypeId?: string;
   price?: number;
   assets?: { type?: string; url?: string; storageKey?: string; _id?: string }[];
   previewUrl?: string;

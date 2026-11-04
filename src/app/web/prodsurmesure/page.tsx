@@ -2,8 +2,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { Button, buttonClasses } from "@/components/ui/button";
+import { Chip } from "@/components/ui/chip";
+import { fieldClasses } from "@/components/ui/input";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, CheckCircle } from "lucide-react";
 import { briefSchema } from "@/schemas/forms/briefSchema";
 
 /* =========================== Types & Data =========================== */
@@ -45,15 +50,15 @@ const stepsData: Step[] = [
 
 const fillMap: Record<number, number> = { 1: 33, 2: 66, 3: 100 };
 
-type Sample = { id: string; title: string; tag: string; src: string };
 
-const PROD_SUR_MESURE_PRICE_ID = process.env.NEXT_PUBLIC_STRIPE_PRICE_PROD_SUR_MESURE;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
 /* =========================== Page =========================== */
 
 function ProdSurMesure() {
+  const searchParams = useSearchParams();
+  const paymentStatus = searchParams.get("success") ? "success" : searchParams.get("canceled") ? "canceled" : null;
   const stepsRef = useRef<HTMLElement | null>(null);
-  const samplesRef = useRef<HTMLElement | null>(null);
   const [openBrief, setOpenBrief] = useState(false);
   useEffect(() => {
     if (openBrief) {
@@ -74,12 +79,10 @@ function ProdSurMesure() {
   const scrollToSteps = () =>
     stepsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
-  const scrollToSamples = () =>
-    samplesRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
 
   return (
-    <div className="relative min-h-[100svh] overflow-hidden bg-[#07070B] text-white">
-      {/* Ambient background sombre inspiré des cartes cadeau */}
+    <div className="relative min-h-[100svh] overflow-hidden text-white">
+      {/* Ambient background sombre */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
         <motion.div
           initial={{ opacity: 0 }}
@@ -99,11 +102,11 @@ function ProdSurMesure() {
         />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.04),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.03),transparent_60%)]" />
       </div>
-      {/* 1) HERO 100svh */}
-      <HeroFull onCreate={scrollToSteps} onSeeSamples={scrollToSamples} />
+      {paymentStatus && <PaymentBanner status={paymentStatus} />}
 
-      {/* 2) EXEMPLES */}
-    
+      {/* 1) HERO 100svh */}
+      <HeroFull onCreate={scrollToSteps} />
+
 
       {/* 3) ÉTAPES */}
       <StepsSection
@@ -130,10 +133,8 @@ export default function ProdSurMesurePage() {
 
 function HeroFull({
   onCreate,
-  onSeeSamples,
 }: {
   onCreate: () => void;
-  onSeeSamples: () => void;
 }) {
   const phrases = [
     "Des prods sur‑mesure, première version livrée en 24 h",
@@ -236,23 +237,9 @@ function HeroFull({
         </ul>
 
         <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={onCreate}
-            className="w-full sm:w-auto rounded-xl bg-white px-6 py-3 font-semibold text-black shadow-sm hover:bg-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-          >
+          <Button size="lg" onClick={onCreate} className="w-full sm:w-auto">
             Créer ma prod
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={onSeeSamples}
-            className="w-full sm:w-auto rounded-xl border border-white/20 px-6 py-3 font-semibold text-white hover:bg-white/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-          >
-            Écouter des exemples
-          </motion.button>
+          </Button>
         </div>
 
         <p className="mt-4 text-sm text-zinc-400">
@@ -277,51 +264,8 @@ function HeroFull({
   );
 }
 
-/* =========================== 2) EXEMPLES =========================== */
 
-const SamplesSection = React.forwardRef<HTMLElement, { items: Sample[] }>(
-  ({ items }, ref) => (
-    <section ref={ref} className="mx-auto max-w-4xl px-6 py-16">
-      <div className="mb-6 text-center">
-        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight">Exemples récents</h2>
-        <p className="mt-2 text-zinc-300">Produit pour nos clients — rendu réel.</p>
-      </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        {items.map((s) => (
-          <motion.article
-            key={s.id}
-            initial={{ opacity: 0, y: "0.5rem" }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 1 }}
-            className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur"
-          >
-            <div className="flex items-center justify-between">
-              <h3 className="text-base font-medium">{s.title}</h3>
-              <span className="rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1 text-xs text-zinc-300">
-                {s.tag}
-              </span>
-            </div>
-
-            <div className="mt-3">
-              <audio controls preload="none" className="w-full">
-                <source src={s.src} />
-              </audio>
-            </div>
-
-            <div className="mt-3">
-              <button className="w-full rounded-lg border border-white/20 px-3 py-2 text-sm text-white hover:bg-white/5">
-                Je veux ce style
-              </button>
-            </div>
-          </motion.article>
-        ))}
-      </div>
-    </section>
-  )
-);
-SamplesSection.displayName = "SamplesSection";
 
 /* =========================== 3) ÉTAPES =========================== */
 
@@ -402,21 +346,13 @@ const StepsSection = React.forwardRef<HTMLElement, {
                 <p className="mt-1 text-sm text-zinc-300">2 minutes pour ton formulaire. V1 sous 24 h.</p>
 
                 <div className="mt-4">
-                  <button
-                    onClick={onOpenBrief}
-                    className="group relative inline-flex items-center justify-center rounded-xl px-6 py-3 font-semibold text-black
-                              transition-transform duration-150 hover:scale-[1.01] active:scale-[0.99]"
-                    style={{
-                      background:
-                        "linear-gradient(180deg, #fff 0%, #eaeaea 100%)",
-                    }}
-                  >
+                  <button onClick={onOpenBrief} className={buttonClasses({ size: "lg" })}>
                     Remplir le formulaire (2 min)
                   </button>
                 </div>
 
                 <p className="mt-2 text-xs text-zinc-500">
-                  Deadline finale <span className="font-medium">fixe</span> (visible dans ton compte).
+                  Délai confirmé par e-mail après réception de ton brief.
                 </p>
               </div>
             </div>
@@ -527,7 +463,7 @@ function StepCard({
 }
 
 /* =========================== 4) MODAL FORMULAIRE =========================== */
-/* Optimisé : menus, bulles multi-sélection, slider BPM. Identité + deadline gérées côté compte. */
+/* Optimisé : menus, bulles multi-sélection, slider BPM. Le suivi se fait par e-mail. */
 
 function BriefModal({
   open,
@@ -536,6 +472,7 @@ function BriefModal({
   open: boolean;
   onClose: () => void;
 }) {
+  const { user } = useAuth();
   const [sending, setSending] = useState(false);
   const [ok, setOk] = useState<null | "success" | "error">(null);
   const [detailsError, setDetailsError] = useState<string | null>(null);
@@ -575,6 +512,8 @@ function BriefModal({
   const [style, setStyle] = useState(styles[0] ?? "");
   const [styleOther, setStyleOther] = useState("");
   const [genreOther, setGenreOther] = useState("");
+  // "Autre" : on envoie le genre saisi librement (ou "Autre" s'il est vide).
+  const effectiveGenre = genre === "Autre" ? genreOther.trim() || "Autre" : genre;
   const [selectedInstruments, setSelectedInstruments] = useState<string[]>([]);
   const [customInstrumentByFamily, setCustomInstrumentByFamily] = useState<Record<string, string>>({});
   const [bpm, setBpm] = useState(140);
@@ -588,7 +527,7 @@ function BriefModal({
 
     const fd = new FormData(e.currentTarget);
     const detailsValue = (fd.get("details") as string | null) ?? "";
-    const briefResult = briefSchema.safeParse({ genre, style, details: detailsValue, bpm });
+    const briefResult = briefSchema.safeParse({ genre: effectiveGenre, style, details: detailsValue, bpm });
     if (!briefResult.success) {
       const detailsIssue = briefResult.error.issues.find((i) => i.path[0] === "details");
       setDetailsError(detailsIssue?.message ?? null);
@@ -599,24 +538,17 @@ function BriefModal({
     setSending(true);
     setOk(null);
 
-    if (!PROD_SUR_MESURE_PRICE_ID) {
-      setOk("error");
-      alert("Le tarif Stripe pour les prods sur mesure n'est pas configure.");
-      setSending(false);
-      return;
-    }
     const baseStyle = styleOther.trim() ? styleOther.trim() : style;
     const details = detailsValue;
     const notes = (fd.get("notes") as FormDataEntryValue | null)?.toString() ?? "";
-    const fileInput = e.currentTarget.querySelector<HTMLInputElement>('input[name="file"]');
-    const fileName = fileInput?.files?.[0]?.name ?? "";
+    const fileLink = (fd.get("file") as FormDataEntryValue | null)?.toString().trim() ?? "";
     const instrumentsLabel = selectedInstruments.join(", ");
 
     const truncate = (value: string, max = 450) =>
       value.length > max ? `${value.slice(0, max - 3)}...` : value;
 
     const metadata: Record<string, string> = {
-      genre: truncate(genre),
+      genre: truncate(effectiveGenre),
       style: truncate(baseStyle),
       bpm: String(bpm),
       key: key || "non_precise",
@@ -625,24 +557,19 @@ function BriefModal({
     };
 
     if (notes.trim()) metadata.notes = truncate(notes.trim());
-    if (fileName) metadata.file = truncate(fileName, 120);
+    if (fileLink) metadata.file = truncate(fileLink, 200);
 
     try {
-      const response = await fetch("/api/stripe/create-checkout-session", {
+      // Prix fixé côté API (STRIPE_PRICE_CUSTOM_PROD) ; le brief part dans les metadata Stripe.
+      const response = await fetch(`${API_URL}/checkout/custom-prod`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          priceId: PROD_SUR_MESURE_PRICE_ID,
-          mode: "payment",
-          metadata,
-          successUrl: "/web/prodsurmesure?success=true&session_id={CHECKOUT_SESSION_ID}",
-          cancelUrl: "/web/prodsurmesure?canceled=true",
-        }),
+        body: JSON.stringify({ ...metadata, ...(user?.email ? { email: user.email } : {}) }),
       });
 
-      const payload = (await response.json()) as { url?: string; error?: string };
+      const payload = (await response.json().catch(() => ({}))) as { url?: string; message?: string };
       if (!response.ok || !payload.url) {
-        throw new Error(payload.error || "Impossible de demarrer le paiement Stripe.");
+        throw new Error(payload.message || "Impossible de démarrer le paiement Stripe.");
       }
 
       window.location.href = payload.url;
@@ -672,17 +599,14 @@ function BriefModal({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "1rem" }}
             transition={{ duration: 0.25 }}
-            className="w-full sm:max-w-xl rounded-2xl border border-white/10 bg-[#111116] text-white shadow-xl"
+            className="w-full sm:max-w-xl rounded-2xl border border-white/10 bg-brand-card text-white shadow-xl"
           >
             {/* Header figé */}
-            <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-white/10 bg-[#111116] px-5 py-4">
+            <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-2xl border-b border-white/10 bg-brand-card px-5 py-4">
               <h3 className="text-base font-semibold tracking-tight">Formulaire de production</h3>
-              <button
-                onClick={onClose}
-                className="rounded-lg border border-white/10 px-3 py-1 text-sm text-zinc-300 hover:bg-white/5"
-              >
+              <Button variant="ghost" size="sm" onClick={onClose}>
                 Fermer
-              </button>
+              </Button>
             </div>
 
             {/* Corps scrollable */}
@@ -694,29 +618,28 @@ function BriefModal({
                   {genres.map((g) => {
                     const active = genre === g;
                     return (
-                      <button
+                      <Chip
                         type="button"
                         key={g}
-                        onClick={() => {
-                          if (g === "Autre") {
-                            const val = prompt("Entrez votre genre");
-                            if (val && val.trim()) setGenre(val.trim());
-                            return;
-                          }
-                          setGenre(g);
-                        }}
-                        aria-pressed={active}
-                        className={`rounded-full px-3 py-1.5 text-sm border transition text-left
-                          ${active ? "bg-white text-black border-white" : "border-white/15 bg-white/[0.04] text-zinc-200 hover:bg-white/10"}
-                        `}
+                        onClick={() => setGenre(g)}
+                        active={active}
+                        className="justify-start"
                       >
                         {g}
-                      </button>
+                      </Chip>
                     );
                   })}
-                  {/* Autre géré comme une chip via l'entrée "Autre" de la liste */}
                 </div>
-                <input type="hidden" name="genre" value={genre} />
+                {genre === "Autre" && (
+                  <input
+                    value={genreOther}
+                    onChange={(e) => setGenreOther(e.target.value)}
+                    placeholder="Précise ton genre"
+                    className={`mt-3 ${fieldClasses}`}
+                    autoFocus
+                  />
+                )}
+                <input type="hidden" name="genre" value={effectiveGenre} />
               </div>
 
               {/* Style (chips single) + Autre */}
@@ -726,17 +649,15 @@ function BriefModal({
                   {styles.map((s) => {
                     const active = style === s && !styleOther.trim();
                     return (
-                      <button
+                      <Chip
                         type="button"
                         key={s}
                         onClick={() => { setStyle(s); setStyleOther(""); }}
-                        aria-pressed={active}
-                        className={`rounded-full px-3 py-1.5 text-sm border transition text-left
-                          ${active ? "bg-white text-black border-white" : "border-white/15 bg-white/[0.04] text-zinc-200 hover:bg-white/10"}
-                        `}
+                        active={active}
+                        className="justify-start"
                       >
                         {s}
-                      </button>
+                      </Chip>
                     );
                   })}
                 </div>
@@ -745,7 +666,7 @@ function BriefModal({
                     value={styleOther}
                     onChange={(e) => setStyleOther(e.target.value)}
                     placeholder="Autre style (optionnel)"
-                    className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 placeholder:text-zinc-500"
+                    className={fieldClasses}
                   />
                 </div>
                 <input type="hidden" name="style" value={styleOther.trim() ? styleOther.trim() : style} />
@@ -778,7 +699,7 @@ function BriefModal({
                         {list.map((ins) => {
                           const active = selectedInstruments.includes(ins);
                           return (
-                            <button
+                            <Chip
                               type="button"
                               key={ins}
                               onClick={() =>
@@ -786,15 +707,11 @@ function BriefModal({
                                   prev.includes(ins) ? prev.filter((i) => i !== ins) : [...prev, ins]
                                 )
                               }
-                              aria-pressed={active}
-                              className={`rounded-full px-3 py-1.5 text-sm border transition shadow-sm
-                                ${active
-                                  ? "bg-white text-black border-white"
-                                  : "border-white/15 bg-white/[0.05] text-zinc-200 hover:bg-white/10"}
-                              `}
-                            >
+                        active={active}
+                        className="justify-start"
+                      >
                               {ins}
-                            </button>
+                            </Chip>
                           );
                         })}
                       </div>
@@ -815,7 +732,7 @@ function BriefModal({
                             }
                           }}
                           placeholder={`Autre (${family.toLowerCase()})`}
-                          className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 placeholder:text-zinc-500"
+                          className={fieldClasses}
                         />
                       </div>
                     </div>
@@ -833,7 +750,7 @@ function BriefModal({
                 <textarea
                   name="details"
                   rows={4}
-                  className="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 placeholder:text-zinc-500"
+                  className={`mt-2 ${fieldClasses}`}
                   placeholder="Ex : mélancolique, synthés analogiques, 808 profonde, clap sec, arpèges rétro…"
                 />
                 {detailsError && <p className="mt-1 text-xs text-rose-400">{detailsError}</p>}
@@ -863,7 +780,7 @@ function BriefModal({
                         const v = parseInt(e.target.value || "0", 10);
                         setBpm(Number.isFinite(v) ? Math.max(60, Math.min(200, v)) : 60);
                       }}
-                      className="w-20 rounded-lg border border-white/10 bg-white/[0.04] px-2 py-1 text-sm"
+                      className={`${fieldClasses} !w-20 !px-2 !py-1`}
                     />
                   </div>
                 </div>
@@ -884,7 +801,7 @@ function BriefModal({
                       }
                       setOpenKeyModal(true);
                     }}
-                    className="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-left text-zinc-200 hover:bg-white/10"
+                    className={`mt-2 text-left hover:bg-white/10 ${fieldClasses}`}
                   >
                     {key ? `Tonalité: ${key}` : "Choisir une tonalité"}
                   </button>
@@ -893,11 +810,12 @@ function BriefModal({
 
               {/* Fichier / Notes */}
               <div>
-                <label className="text-sm text-zinc-300">Fichier (sample / voix guide — optionnel)</label>
+                <label className="text-sm text-zinc-300">Lien vers un fichier (sample / voix guide — optionnel)</label>
                 <input
                   name="file"
-                  type="file"
-                  className="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] file:mr-3 file:rounded-md file:border-0 file:bg-white file:px-3 file:py-2 file:text-black"
+                  type="url"
+                  placeholder="https://wetransfer.com/… ou lien Google Drive"
+                  className={`mt-2 ${fieldClasses}`}
                 />
               </div>
               <div>
@@ -905,22 +823,18 @@ function BriefModal({
                 <textarea
                   name="notes"
                   rows={3}
-                  className="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 placeholder:text-zinc-500"
+                  className={`mt-2 ${fieldClasses}`}
                   placeholder="Références YouTube/Spotify, contraintes, idées stylistiques…"
                 />
               </div>
 
               {/* Footer actions */}
               <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={sending}
-                  className="w-full rounded-xl bg-white px-6 py-3 font-semibold text-black hover:bg-zinc-100 disabled:opacity-70"
-                >
-                  {sending ? "Redirection..." : "Proceder au paiement"}
-                </button>
+                <Button type="submit" size="lg" fullWidth disabled={sending}>
+                  {sending ? "Redirection vers Stripe…" : "Procéder au paiement"}
+                </Button>
                 <p className="mt-2 text-center text-xs text-zinc-500">
-                  Licence exclusive délivrée · Deadline finale <span className="font-medium">fixe</span> (gérée par nos conditions et visible dans ton compte).
+                  Licence exclusive délivrée · On te recontacte par e-mail sous 24 h après le paiement.
                 </p>
 
                 <AnimatePresence>
@@ -967,61 +881,79 @@ function BriefModal({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "1rem" }}
             transition={{ duration: 0.2 }}
-            className="w-full sm:max-w-md rounded-2xl border border-white/10 bg-[#111116] p-5 text-white shadow-xl"
+            className="w-full sm:max-w-md rounded-2xl border border-white/10 bg-brand-card p-5 text-white shadow-xl"
           >
             <div className="flex items-center justify-between">
               <h4 className="text-base font-semibold">Choisir une tonalité</h4>
-              <button
-                onClick={() => setOpenKeyModal(false)}
-                className="rounded-lg border border-white/10 px-2 py-1 text-xs text-zinc-300 hover:bg-white/5"
-              >
+              <Button variant="ghost" size="sm" onClick={() => setOpenKeyModal(false)}>
                 Fermer
-              </button>
+              </Button>
             </div>
             <div className="mt-4 grid grid-cols-4 gap-2">
               {["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"].map((note) => (
-                <button
+                <Chip
                   key={note}
-                  type="button"
                   onClick={() => setSelectedNote(note)}
-                  className={`rounded-lg border px-3 py-2 text-sm ${selectedNote===note?"bg-white text-black border-white":"border-white/15 bg-white/[0.04] text-zinc-200 hover:bg-white/10"}`}
+                  active={selectedNote===note}
+                  className="justify-center"
                 >
                   {note}
-                </button>
+                </Chip>
               ))}
             </div>
             <div className="mt-3 grid grid-cols-2 gap-2">
               {["maj","m"].map((qual) => (
-                <button
+                <Chip
                   key={qual}
-                  type="button"
                   onClick={() => setSelectedQuality(qual as ("m"|"maj"))}
-                  className={`rounded-lg border px-3 py-2 text-sm ${selectedQuality===qual?"bg-white text-black border-white":"border-white/15 bg-white/[0.04] text-zinc-200 hover:bg-white/10"}`}
+                  active={selectedQuality===qual}
+                  className="justify-center"
                 >
                   {qual === "m" ? "Mineur" : "Majeur"}
-                </button>
+                </Chip>
               ))}
             </div>
             <div className="mt-4 flex justify-end gap-2">
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => { setKey(""); setSelectedNote(""); setSelectedQuality(""); setOpenKeyModal(false); }}
-                className="rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200 hover:bg-white/10"
               >
                 Effacer
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                size="sm"
                 onClick={() => { const computed = selectedNote ? `${selectedNote}${selectedQuality==='m'?'m':''}` : ""; setKey(computed); setOpenKeyModal(false); }}
-                className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-black"
               >
                 Valider
-              </button>
+              </Button>
             </div>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
     </>
+  );
+}
+
+function PaymentBanner({ status }: { status: "success" | "canceled" }) {
+  const success = status === "success";
+  return (
+    <div className="relative z-10 mx-auto max-w-3xl px-4 pt-28">
+      <div
+        className={`flex items-start gap-3 rounded-2xl border px-5 py-4 text-sm ${
+          success
+            ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
+            : "border-amber-400/40 bg-amber-500/10 text-amber-100"
+        }`}
+      >
+        {success && <CheckCircle className="mt-0.5 h-5 w-5 shrink-0" />}
+        <p>
+          {success
+            ? "Paiement reçu, merci ! On revient vers toi par e-mail sous 24 h avec une première version de ta prod."
+            : "Paiement annulé : aucun montant n’a été débité. Tu peux relancer ta commande quand tu veux."}
+        </p>
+      </div>
+    </div>
   );
 }

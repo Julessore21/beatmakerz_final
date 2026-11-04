@@ -2,9 +2,8 @@ import { test, expect } from '@playwright/test';
 
 const CTAS = [
   { section: 'Section 1', label: /VOIR LE CATALOGUE/i, path: '/web/catalogue' },
-  { section: 'Section 2', label: /VOIR NOS OFFRES/i, path: '/web/abonnements' },
-  { section: 'Section 3', label: /EN SAVOIR PLUS/i, path: '/web/prodsurmesure' },
-  { section: 'Section 4', label: /EN SAVOIR PLUS/i, path: '/web/notrehistoire' },
+  { section: 'Section 2', label: /EN SAVOIR PLUS/i, path: '/web/prodsurmesure' },
+  { section: 'Section 3', label: /NOUS CONTACTER/i, path: '/web/contact' },
 ];
 
 for (const cta of CTAS) {
@@ -13,8 +12,9 @@ for (const cta of CTAS) {
 
     await page.getByRole('button', { name: cta.section }).click();
 
-    const link = page.locator(`a[href="${cta.path}"]`);
-    await expect(link).toHaveText(cta.label);
+    // Le menu et le footer pointent aussi vers ces pages : on cible le CTA par son libellé.
+    const link = page.getByRole('link', { name: cta.label });
+    await expect(link).toHaveAttribute('href', cta.path);
 
     await link.click();
     await page.waitForURL(`**${cta.path}`);
@@ -24,7 +24,7 @@ for (const cta of CTAS) {
   });
 }
 
-for (const old of ['/catalogue', '/abonnements', '/prodsurmesure']) {
+for (const old of ['/catalogue', '/prodsurmesure', '/contact']) {
   test(`${old} redirige vers /web${old} en 200`, async ({ page }) => {
     const response = await page.goto(old);
     expect(response?.status()).toBe(200);

@@ -1,248 +1,136 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
-import { Minus, Plus, Trash2, ShieldCheck, CreditCard, PackageSearch, CheckCircle2 } from "lucide-react";
+import { Trash2, ShieldCheck, CreditCard, PackageSearch, Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { AuthService } from "@/lib/auth.service";
+import Link from "next/link";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
 import RetractationConsent from "@/components/RetractationConsent";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { PageShell, PageHeader } from "@/components/ui/page";
+
+const VAT_RATE = 0.2;
+const fmt = (value: number) => `${value.toFixed(2)} €`;
 
 const SummaryRow = ({ label, value, bold = false }: { label: string; value: string; bold?: boolean }) => (
-  <div className="flex items-center justify-between text-sm text-zinc-200">
+  <div className="flex items-center justify-between text-sm">
     <span className="text-zinc-400">{label}</span>
-    <span className={bold ? "font-semibold text-white" : ""}>{value}</span>
+    <span className={bold ? "text-base font-semibold text-white" : "text-zinc-200"}>{value}</span>
   </div>
 );
 
-const Panier: React.FC = () => {
+export default function PanierPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { items, totalItems, totalPrice, addItem, removeItem, decrementItem } = useCart();
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [message, setMessage] = useState<string | null>(null);
+  const { items, totalPrice, removeItem, checkout } = useCart();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [consent, setConsent] = useState(false);
 
-  const computedTotalPrice: number = totalPrice;
-  const totalArticles = totalItems;
-  const shipping = 0; // digital
-  const vatRate = 0.2;
-  const vatAmount = computedTotalPrice * vatRate;
-  const totalWithVat = computedTotalPrice + shipping;
-
   const hasItems = items.length > 0;
+  // Les prix affichés sont TTC : on extrait la part de TVA.
+  const vatAmount = totalPrice - totalPrice / (1 + VAT_RATE);
 
   const handleCheckout = async () => {
     if (!user) {
       setShowAuthModal(true);
       return;
     }
-    if (!hasItems) {
-      setStatus("error");
-      setMessage("Ajoute au moins un beat pour continuer.");
-      return;
-    }
-    setStatus("loading");
-    setMessage(null);
-
-    try {
-      // Récupérer le token d'authentification
-      const accessToken = AuthService.getAccessToken();
-
-      // Appel via notre API route qui gère l'authentification
-      const headers: HeadersInit = { "Content-Type": "application/json" };
-      if (accessToken) {
-        headers["Authorization"] = `Bearer ${accessToken}`;
-      }
-
-      const response = await fetch("/api/checkout/session", {
-        method: "POST",
-        headers,
-        body: JSON.stringify({}),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Erreur inconnue" }));
-        throw new Error(errorData.error || `Erreur ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data?.url) {
-        setStatus("success");
-        setMessage("Redirection vers Stripe...");
-        window.location.href = data.url;
-        return;
-      }
-      throw new Error("URL manquante");
-    } catch (e) {
-      setStatus("error");
-      const fallback = e instanceof Error ? e.message : "Impossible de lancer le paiement Stripe pour le moment.";
-      setMessage(fallback);
+    setError(null);
+    setLoading(true);
+    const failure = await checkout();
+    if (failure) {
+      setError(failure);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#07070b] via-[#0c0c12] to-black text-white">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -left-20 -top-20 h-80 w-80 rounded-full bg-indigo-600/15 blur-[110px]" />
-        <div className="absolute right-10 top-1/3 h-72 w-72 rounded-full bg-blue-500/10 blur-[120px]" />
-        <div className="absolute left-1/4 bottom-0 h-64 w-64 rounded-full bg-purple-500/10 blur-[120px]" />
-      </div>
+    <PageShell>
+      <PageHeader
+        title="Mon panier"
+        subtitle={`${items.length} beat${items.length > 1 ? "s" : ""} · ${fmt(totalPrice)}`}
+      />
 
-      <div className="relative container mx-auto max-w-6xl px-4 xs:px-5 pt-20 pb-20">
-        <div className="flex flex-col gap-2 text-center">
-          <h1 className="text-4xl font-bold tracking-tight">Mon panier</h1>
-          <p className="text-sm text-zinc-400">
-            {totalArticles} article{totalArticles > 1 ? "s" : ""} · Sous-total {computedTotalPrice.toFixed(2)} EUR
-          </p>
-          {message && (
-            <div
-              className={`mx-auto mt-3 w-full max-w-xl rounded-xl border px-4 py-3 text-sm ${
-                status === "success"
-                  ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-100"
-                  : "border-amber-400/40 bg-amber-400/10 text-amber-100"
-              }`}
-            >
-              {message}
-            </div>
+      <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
+        <div className="space-y-3">
+          {!hasItems && (
+            <Card className="flex flex-col items-center gap-3 py-10 text-center">
+              <PackageSearch className="h-8 w-8 text-zinc-400" />
+              <p className="text-base font-semibold">Ton panier est vide.</p>
+              <p className="text-sm text-zinc-400">Ajoute des beats depuis le catalogue pour commencer.</p>
+              <ButtonLink href="/web/catalogue" className="mt-2">
+                Aller au catalogue
+              </ButtonLink>
+            </Card>
           )}
+
+          {items.map((item) => (
+            <Card key={item.id} className="flex items-center justify-between gap-4 p-4 sm:p-5">
+              <div className="min-w-0">
+                <p className="truncate text-base font-semibold">{item.name}</p>
+                <p className="text-xs text-zinc-400">Licence Basic</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-semibold tabular-nums">{fmt(Number(item.price) || 0)}</span>
+                <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} aria-label={`Retirer ${item.name}`}>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </Card>
+          ))}
         </div>
 
-        <div className="mt-10 grid gap-6 lg:grid-cols-[2fr,1fr]">
-          <div className="space-y-3">
-            {!hasItems && (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-6 py-10 text-center text-zinc-300">
-                <PackageSearch className="h-8 w-8 text-zinc-400" />
-                <div className="text-base font-semibold text-white">Votre panier est vide.</div>
-                <p className="text-sm text-zinc-400">Ajoutez des beats depuis le catalogue ou la marketplace pour commencer.</p>
-                <div className="flex gap-3">
-                  <Link
-                    href="/web/catalogue"
-                    className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15"
-                  >
-                    Aller au catalogue
-                  </Link>
-                  <Link
-                    href="/web/marketplace"
-                    className="rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm font-semibold text-white hover:bg-white/15"
-                  >
-                    Marketplace
-                  </Link>
-                </div>
-              </div>
-            )}
-
-            {items.map((item) => {
-              const priceVal = Number(item.price) || 0;
-              const qtyVal = Number(item.quantity) || 0;
-              const itemTotal = (priceVal * qtyVal).toFixed(2);
-
-              return (
-                <div
-                  key={item.id}
-                  className="w-full overflow-hidden rounded-2xl border border-white/10 bg-white/[0.06] backdrop-blur-sm p-4 sm:p-5 shadow-[0_10px_60px_rgba(0,0,0,0.35)]"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0 space-y-1">
-                      <div className="truncate text-base font-semibold text-white">{item.name}</div>
-                      <div className="text-xs text-zinc-400">Licence Basic · {priceVal.toFixed(2)} EUR</div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-2 py-1">
-                        <button onClick={() => decrementItem(item.id)} className="rounded-md p-1 hover:bg-white/10" aria-label="Diminuer">
-                          <Minus size={14} />
-                        </button>
-                        <div className="min-w-6 text-center text-sm tabular-nums">{qtyVal}</div>
-                        <button
-                          onClick={() => addItem({ id: item.id, name: item.name, price: priceVal, beatId: item.beatId })}
-                          className="rounded-md p-1 hover:bg-white/10"
-                          aria-label="Augmenter"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-                      <div className="w-20 text-right text-sm font-semibold">{itemTotal} EUR</div>
-                      <button
-                        onClick={() => removeItem(item.id)}
-                        className="ml-2 rounded-md border border-white/10 p-2 text-zinc-200 hover:bg-white/10"
-                        aria-label="Supprimer"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+        <Card className="h-fit space-y-4 p-5">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <CreditCard className="h-4 w-4 text-brand-lavender" /> Récapitulatif
+          </div>
+          <SummaryRow label="Sous-total HT" value={fmt(totalPrice - vatAmount)} />
+          <SummaryRow label="TVA (20 %)" value={fmt(vatAmount)} />
+          <div className="border-t border-white/10 pt-3">
+            <SummaryRow label="Total TTC" value={fmt(totalPrice)} bold />
           </div>
 
-          <aside className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.06] p-5 backdrop-blur-sm shadow-[0_10px_60px_rgba(0,0,0,0.35)]">
-            <div className="flex items-center gap-2 text-sm font-semibold text-white">
-              <CreditCard className="h-4 w-4 text-indigo-300" /> Récapitulatif
-            </div>
-            <SummaryRow label="Sous-total" value={`${computedTotalPrice.toFixed(2)} EUR`} />
-            <SummaryRow label="TVA estimée (20%)" value={`${vatAmount.toFixed(2)} EUR`} />
-            <SummaryRow label="Frais" value="0.00 EUR" />
-            <div className="border-t border-white/10 pt-3">
-              <SummaryRow label="Total" value={`${totalWithVat.toFixed(2)} EUR`} bold />
-            </div>
-            <div className="flex flex-col gap-2 pt-2">
-              <RetractationConsent checked={consent} onChange={setConsent} />
-              <button
-                className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-black hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-60"
-                onClick={handleCheckout}
-                disabled={status === "loading" || !hasItems || !consent}
-              >
-                {status === "loading" ? "Traitement..." : "Valider et payer"}
-              </button>
-              <p className="text-center text-xs text-zinc-400">
-                Paiement sécurisé Stripe · 100&nbsp;% royalty free ·{" "}
-                <Link href="/web/cgv" className="underline hover:text-white">
-                  CGV
-                </Link>
-              </p>
-              <Link
-                href="/web/catalogue"
-                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
-              >
-                Retour au catalogue
-              </Link>
-              <Link
-                href="/web/marketplace"
-                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
-              >
-                Explorer la marketplace
-              </Link>
-            </div>
-            <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300">
-              <ShieldCheck className="h-4 w-4 text-emerald-300" />
-              Téléchargements sécurisés et licences auto-générées après paiement.
-            </div>
-            {status === "success" && (
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-100">
-                <CheckCircle2 className="h-4 w-4" />
-                Paiement démarré...
-              </div>
-            )}
-            {status === "error" && message && <div className="text-xs text-rose-300">{message}</div>}
-          </aside>
-        </div>
+          <RetractationConsent checked={consent} onChange={setConsent} />
+
+          <div className="flex flex-col gap-2 pt-2">
+            <Button fullWidth size="lg" onClick={handleCheckout} disabled={loading || !hasItems || !consent}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+              {loading ? "Redirection vers Stripe…" : "Payer avec Stripe"}
+            </Button>
+            <ButtonLink href="/web/catalogue" variant="outline" fullWidth>
+              Continuer mes achats
+            </ButtonLink>
+          </div>
+
+          {error && <p className="text-sm text-rose-300">{error}</p>}
+
+          <p className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300">
+            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-300" />
+            Paiement sécurisé par Stripe. Tes fichiers sont disponibles dans ton compte dès la validation.
+          </p>
+          <p className="text-center text-xs text-zinc-400">
+            100&nbsp;% royalty free ·{" "}
+            <Link href="/web/cgv" className="underline hover:text-white">
+              CGV
+            </Link>
+          </p>
+        </Card>
       </div>
+
       <AuthRequiredModal
         open={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onLogin={() => {
           setShowAuthModal(false);
-          router.push("/web/profil?mode=login");
+          router.push("/web/profil?mode=login&next=/web/panier");
         }}
-        message="Cette action necessite d'etre connecte pour finaliser ton achat."
+        message="Connecte-toi pour finaliser ton achat."
       />
-    </div>
+    </PageShell>
   );
-};
-
-export default Panier;
+}

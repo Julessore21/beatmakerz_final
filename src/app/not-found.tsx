@@ -1,12 +1,18 @@
-// src/app/not-found.tsx
-import React from "react";
+import { ButtonLink } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
-    <div className="flex items-center justify-center h-screen bg-black text-white">
+    <div className="flex min-h-[80vh] items-center justify-center px-4 text-white">
       <div className="text-center">
-        <h1 className="text-5xl font-bold mb-4">404</h1>
-        <p className="text-xl">Cette page n&apos;existe pas.</p>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-brand-lavender">Erreur 404</p>
+        <h1 className="mt-2 text-4xl font-bold">Cette page n’existe pas</h1>
+        <p className="mt-3 text-sm text-zinc-400">Le lien est peut-être cassé, ou la page a été déplacée.</p>
+        <div className="mt-8 flex justify-center gap-3">
+          <ButtonLink href="/web/catalogue">Voir le catalogue</ButtonLink>
+          <ButtonLink href="/" variant="outline">
+            Accueil
+          </ButtonLink>
+        </div>
       </div>
     </div>
   );

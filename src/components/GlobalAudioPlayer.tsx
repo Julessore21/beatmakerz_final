@@ -71,7 +71,7 @@ const GlobalAudioPlayer: React.FC = () => {
         transition={{ type: "spring", stiffness: 260, damping: 28 }}
         className="fixed inset-x-0 bottom-4 z-50 flex justify-center pointer-events-none"
       >
-      <div className="pointer-events-auto w-[min(960px,94vw)] rounded-2xl border border-white/10 bg-black/80 backdrop-blur shadow-[0_20px_60px_rgba(0,0,0,.6)]">
+      <div className="pointer-events-auto w-[min(960px,94vw)] rounded-2xl border border-white/10 bg-brand-card/90 backdrop-blur-xl shadow-2xl">
         {/* Progress/global seek */}
         <div
           className="h-1.5 rounded-t-2xl bg-white/10 cursor-pointer"
@@ -82,7 +82,7 @@ const GlobalAudioPlayer: React.FC = () => {
           }}
         >
           <div
-            className="h-full rounded-t-2xl bg-gradient-to-r from-[#7C5CFF] to-[#9f8cff]"
+            className="h-full rounded-t-2xl bg-gradient-to-r from-brand-vivid to-brand-lavender"
             style={{ width: `${(progress || 0) * 100}%` }}
           />
         </div>
@@ -94,7 +94,7 @@ const GlobalAudioPlayer: React.FC = () => {
               setDismissed(true);
               pause();
             }}
-            className="rounded-md p-1 sm:p-1.5 hover:bg-white/10 text-white shrink-0"
+            className="rounded-full p-1 sm:p-1.5 hover:bg-white/10 text-white shrink-0"
             aria-label="Fermer le lecteur"
           >
             <X size={14} />
@@ -129,7 +129,7 @@ const GlobalAudioPlayer: React.FC = () => {
             </button>
             <button
               onClick={toggle}
-              className="rounded-full p-1.5 px-2 sm:p-2 sm:px-3 font-semibold text-white hover:bg-white/10"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-brand text-white hover:bg-brand-hover sm:h-10 sm:w-10"
               aria-label={isPlaying ? "Pause" : "Lecture"}
             >
               {isPlaying ? <Pause size={16} className="sm:hidden" /> : <Play size={16} className="sm:hidden" />}
@@ -148,7 +148,7 @@ const GlobalAudioPlayer: React.FC = () => {
           <div className="hidden sm:flex items-center gap-2 w-28 lg:w-36 shrink-0">
             <button
               onClick={() => setVolume(muted ? 0.8 : 0)}
-              className="rounded-md p-1 hover:bg-white/10"
+              className="rounded-full p-1 hover:bg-white/10"
               aria-label="Volume"
             >
               {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -167,7 +167,7 @@ const GlobalAudioPlayer: React.FC = () => {
           {/* Collapse button (arrow down) */}
           <button
             onClick={() => setCollapsed(true)}
-            className="rounded-md p-1 hover:bg-white/10 text-white shrink-0"
+            className="rounded-full p-1 hover:bg-white/10 text-white shrink-0"
             aria-label="Réduire"
           >
             <ChevronDown size={16} />
@@ -186,7 +186,7 @@ const GlobalAudioPlayer: React.FC = () => {
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 28 }}
             onClick={() => setCollapsed(false)}
-            className="fixed bottom-4 right-4 z-50 rounded-full border border-white/10 bg-black/70 p-2 text-white backdrop-blur hover:bg-black/60"
+            className="fixed bottom-4 right-4 z-50 rounded-full border border-white/10 bg-brand-card/90 p-2 text-white backdrop-blur-xl hover:bg-brand-card"
             aria-label="Déployer le lecteur"
           >
             <ChevronUp size={18} />

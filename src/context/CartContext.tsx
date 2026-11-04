@@ -8,8 +8,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { AuthService } from "@/lib/auth.service";
+import { useAuth } from "@/context/AuthContext";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://beatmakerz-api.onrender.com';
 
 export type CartItem = {
   id: number | string;
@@ -23,11 +23,14 @@ export type CartItem = {
 
 interface CartContextValue {
   items: CartItem[];
-  addItem: (item: Omit<CartItem, "quantity">) => Promise<void>;
+  /** Renvoie false si l'ajout a échoué (session expirée, beat indisponible…). */
+  addItem: (item: Omit<CartItem, "quantity">) => Promise<boolean>;
   removeItem: (id: CartItem["id"]) => Promise<void>;
   decrementItem: (id: CartItem["id"]) => Promise<void>;
   setQuantity: (id: CartItem["id"], qty: number) => Promise<void>;
-  clearCart: () => void;
+  clearCart: () => Promise<void>;
+  /** Crée la session Stripe côté API et redirige. Renvoie un message d'erreur si échec. */
+  checkout: () => Promise<string | null>;
   totalItems: number;
   totalPrice: number;
   totalCents: number;
@@ -44,6 +47,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const envDefaultLicenseId = process.env.NEXT_PUBLIC_LICENSE_TYPE_ID;
+  const { user, isLoading: authLoading } = useAuth();
 
   /**
    * Charger le panier depuis le backend
@@ -96,19 +100,22 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
    * Charger le panier au montage
    */
   useEffect(() => {
+    // Attendre la restauration de session, puis recharger à chaque changement d'utilisateur
+    if (authLoading) return;
     fetchCart();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user?.userId]);
 
   /**
    * Ajouter un item au panier
    */
-  const addItem = async (item: Omit<CartItem, "quantity">) => {
+  const addItem = async (item: Omit<CartItem, "quantity">): Promise<boolean> => {
     const beatId = (item.beatId ?? item.id)?.toString();
     const licenseTypeId = item.licenseTypeId ?? envDefaultLicenseId;
 
     if (!beatId || !licenseTypeId) {
       setError('Invalid item: missing beatId or licenseTypeId');
-      return;
+      return false;
     }
 
     try {
@@ -142,11 +149,13 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
       // Recharger le panier depuis le backend (source de vérité)
       await fetchCart();
+      return true;
     } catch (err) {
       console.error('Failed to add item:', err);
       setError(err instanceof Error ? err.message : 'Failed to add item');
       // Rollback optimistic update
       await fetchCart();
+      return false;
     } finally {
       setIsLoading(false);
     }
@@ -261,9 +270,33 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   /**
    * Vider le panier (local uniquement, le backend le videra après paiement)
    */
-  const clearCart = () => {
+  const clearCart = async () => {
+    // Vide aussi côté API, sinon le panier réapparaît au rechargement
+    const toRemove = items.filter((i) => i.cartItemId);
     setItems([]);
     setTotalCents(0);
+    await Promise.all(
+      toRemove.map((i) =>
+        AuthService.authenticatedFetch(`/me/cart/items/${i.cartItemId}`, { method: 'DELETE' }).catch(() => null)
+      )
+    );
+    await fetchCart();
+  };
+
+  const checkout = async (): Promise<string | null> => {
+    try {
+      const response = await AuthService.authenticatedFetch('/checkout/session', { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.url) {
+        return response.status === 401
+          ? 'Ta session a expiré, reconnecte-toi.'
+          : data?.message || 'Impossible de lancer le paiement pour le moment.';
+      }
+      window.location.href = data.url;
+      return null;
+    } catch {
+      return 'Impossible de joindre le serveur de paiement.';
+    }
   };
 
   const totalItems = items.reduce((acc, i) => acc + i.quantity, 0);
@@ -278,6 +311,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         decrementItem,
         setQuantity,
         clearCart,
+        checkout,
         totalItems,
         totalPrice,
         totalCents,

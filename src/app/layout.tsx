@@ -92,8 +92,8 @@ export default function RootLayout({
             __html: JSON.stringify(organizationJsonLd).replace(/</g, "\\u003c"),
           }}
         />
-        <CartProvider>
-          <AuthProvider>
+        <AuthProvider>
+          <CartProvider>
             <FavoritesProvider>
               <AudioPlayerProvider>
                 <header>
@@ -106,8 +106,8 @@ export default function RootLayout({
                 <GlobalAudioPlayer />
               </AudioPlayerProvider>
             </FavoritesProvider>
-          </AuthProvider>
-        </CartProvider>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

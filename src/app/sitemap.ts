@@ -13,11 +13,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const pages = [
     "/",
     "/web/catalogue",
-    "/web/abonnements",
     "/web/prodsurmesure",
-    "/web/marketplace",
-    "/web/cartes-cadeau",
-    "/web/notrehistoire",
     "/web/profil",
     "/web/account",
     "/web/panier",
@@ -28,9 +24,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "/web/mentions",
     "/web/politique",
     "/web/retractation",
-    "/web/tarification",
-    "/web/programmefidelite",
-    "/web/vendeur",
   ];
   const now = new Date();
   return pages.map((path) => ({

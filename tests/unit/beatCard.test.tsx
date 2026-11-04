@@ -1,45 +1,40 @@
-﻿import React from 'react';
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import BeatCard from '@/components/BeatCard';
-import { CartProvider, useCart } from '@/context/CartContext';
-import { vi } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 
-const CartProbe = () => {
-  const { totalItems } = useCart();
-  return <div data-testid="cart-count">{totalItems}</div>;
+const addItem = vi.fn();
+vi.mock('@/context/CartContext', () => ({ useCart: () => ({ addItem }) }));
+vi.mock('@/context/AuthContext', () => ({ useAuth: () => ({ user: null }) }));
+
+import BeatCard from '@/components/BeatCard';
+
+const props = {
+  id: 42,
+  name: 'Space Wave',
+  artist: 'Nova Wave',
+  genre: 'Trap',
+  bpm: 120,
+  keySig: 'Am',
+  price: 29.99,
+  isCurrent: false,
+  isPlaying: false,
+  onPlayPause: vi.fn(),
 };
 
 describe('BeatCard', () => {
-  it('ajoute le beat au panier et déclenche le callback', async () => {
+  it('délègue l’ajout au panier au parent quand onAdd est fourni (pas de double ajout)', async () => {
     const onAdd = vi.fn();
-    const user = userEvent.setup();
+    render(<BeatCard {...props} onAdd={onAdd} />);
 
-    render(
-      <CartProvider>
-        <BeatCard
-          id={42}
-          name="Space Wave"
-          artist="Nova Wave"
-          genre="Trap"
-          bpm={120}
-          keySig="Am"
-          price={29.99}
-          tag="Tendance"
-          isCurrent={false}
-          isPlaying={false}
-          onPlayPause={vi.fn()}
-          onAdd={onAdd}
-        />
-        <CartProbe />
-      </CartProvider>
-    );
-
-    expect(screen.getByTestId('cart-count')).toHaveTextContent('0');
-
-    await user.click(screen.getByTestId('action-add-to-cart'));
+    await userEvent.setup().click(screen.getByTestId('action-add-to-cart'));
 
     expect(onAdd).toHaveBeenCalledTimes(1);
-    expect(screen.getByTestId('cart-count')).toHaveTextContent('1');
+    expect(addItem).not.toHaveBeenCalled();
+  });
+
+  it('affiche le prix en euros', () => {
+    render(<BeatCard {...props} />);
+    expect(screen.getByText('29.99 €')).toBeInTheDocument();
   });
 });

@@ -109,7 +109,7 @@ function Popover({
   return (
     <div
       ref={ref}
-      className={`absolute z-[100] mt-1 rounded-xl border border-white/10 bg-[#0c0c18] p-2.5 shadow-2xl backdrop-blur-xl ${className}`}
+      className={`absolute z-[100] mt-1 rounded-xl border border-white/10 bg-brand-card p-2.5 shadow-2xl backdrop-blur-xl ${className}`}
     >
       {children}
     </div>
@@ -125,7 +125,7 @@ function Chip({ active, onClick, children, size = "sm" }: { active?: boolean; on
       onClick={onClick}
       className={`rounded-full border transition-all ${sizeClasses} ${
         active
-          ? "border-indigo-400 bg-indigo-500/30 text-white"
+          ? "border-brand-lavender bg-brand/30 text-white"
           : "border-white/10 bg-white/5 text-zinc-300 hover:border-white/30 hover:bg-white/10"
       }`}
     >
@@ -185,7 +185,7 @@ export default function AdminCataloguePage() {
     } catch (err) {
       console.error(err);
       setBeats([]);
-      setError("Les beats n&apos;ont pas pu être chargés.");
+      setError("Les beats n’ont pas pu être chargés.");
     } finally {
       setLoading(false);
     }
@@ -282,13 +282,13 @@ export default function AdminCataloguePage() {
       return await res.json();
     } catch (err: unknown) {
       console.error(err);
-      throw new Error((err as Error).message || "L&apos;upload de l&apos;audio n&apos;a pas pu être réalisé.");
+      throw new Error((err as Error).message || "L’upload de l’audio n’a pas pu être réalisé.");
     }
   };
 
   const validateForm = () => {
     if (!form.title.trim()) return "Le titre est obligatoire.";
-    if (!form.artistId) return "L&apos;artiste est obligatoire.";
+    if (!form.artistId) return "L’artiste est obligatoire.";
     return null;
   };
 
@@ -326,7 +326,7 @@ export default function AdminCataloguePage() {
       });
       if (!res.ok) {
         const errorData = await res.json();
-        throw new Error(errorData.error || "Impossible d&apos;enregistrer le beat.");
+        throw new Error(errorData.error || "Impossible d’enregistrer le beat.");
       }
       const savedBeat = await res.json();
 
@@ -424,7 +424,7 @@ export default function AdminCataloguePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#040410] text-white px-4 pt-24 pb-10">
+    <div className="min-h-screen text-white px-4 pt-24 pb-10">
       <div className="mx-auto max-w-7xl space-y-6">
         <header className="flex items-center justify-between">
           <div>
@@ -456,7 +456,7 @@ export default function AdminCataloguePage() {
                   type="text"
                   value={form.title}
                   onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-white/10 bg-[#08080f]/70 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-indigo-500 focus:outline-none"
+                  className="mt-1 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-brand focus:outline-none"
                   placeholder="Titre du beat"
                 />
               </div>
@@ -466,7 +466,7 @@ export default function AdminCataloguePage() {
                   ref={artistBtnRef}
                   type="button"
                   onClick={() => togglePopover("artist")}
-                  className="mt-1 flex w-full items-center justify-between rounded-lg border border-white/10 bg-[#08080f]/70 px-3 py-2 text-sm text-white transition hover:border-white/30"
+                  className="mt-1 flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white transition hover:border-white/30"
                 >
                   <span>{selectedArtist?.name || "Sélectionner"} {selectedArtist?.verified ? "✓" : ""}</span>
                   <span className="text-zinc-400">▾</span>
@@ -498,7 +498,7 @@ export default function AdminCataloguePage() {
                   ref={bpmBtnRef}
                   type="button"
                   onClick={() => togglePopover("bpm")}
-                  className="mt-1 flex w-full items-center justify-between rounded-lg border border-white/10 bg-[#08080f]/70 px-3 py-2 text-sm text-white transition hover:border-white/30"
+                  className="mt-1 flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white transition hover:border-white/30"
                 >
                   <span>{form.bpm || "—"}</span>
                   <span className="text-zinc-400">▾</span>
@@ -537,7 +537,7 @@ export default function AdminCataloguePage() {
                           closePopover();
                         }
                       }}
-                      className="rounded-lg bg-indigo-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-400"
+                      className="rounded-full bg-brand px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-hover"
                     >
                       OK
                     </button>
@@ -552,7 +552,7 @@ export default function AdminCataloguePage() {
                   ref={keyBtnRef}
                   type="button"
                   onClick={() => togglePopover("key")}
-                  className="mt-1 flex w-full items-center justify-between rounded-lg border border-white/10 bg-[#08080f]/70 px-3 py-2 text-sm text-white transition hover:border-white/30"
+                  className="mt-1 flex w-full items-center justify-between rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-white transition hover:border-white/30"
                 >
                   <span>{form.key || "—"}</span>
                   <span className="text-zinc-400">▾</span>
@@ -693,7 +693,7 @@ export default function AdminCataloguePage() {
             <div>
               <label className="text-xs font-medium text-zinc-400">Fichier Audio</label>
               <div className="mt-1">
-                <label className="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-indigo-500/30 bg-indigo-500/5 py-3 px-4 transition hover:border-indigo-500/50 hover:bg-indigo-500/10">
+                <label className="flex cursor-pointer items-center justify-center rounded-lg border border-dashed border-brand/30 bg-brand/5 py-3 px-4 transition hover:border-brand/50 hover:bg-brand/10">
                   <input
                     type="file"
                     className="hidden"
@@ -709,12 +709,12 @@ export default function AdminCataloguePage() {
                   <div className="text-center">
                     {audioFile ? (
                       <div>
-                        <p className="text-sm font-medium text-indigo-300">{audioFile.name}</p>
+                        <p className="text-sm font-medium text-brand-lavender">{audioFile.name}</p>
                         <p className="text-[10px] text-zinc-500 mt-1">{(audioFile.size / 1024 / 1024).toFixed(2)} MB</p>
                       </div>
                     ) : (
                       <div>
-                        <p className="text-sm font-medium text-indigo-300">Choisir un fichier audio</p>
+                        <p className="text-sm font-medium text-brand-lavender">Choisir un fichier audio</p>
                         <p className="text-[10px] text-zinc-500 mt-1">MP3 uniquement • La preview (45s) sera générée automatiquement</p>
                       </div>
                     )}
@@ -739,7 +739,7 @@ export default function AdminCataloguePage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="rounded-lg bg-indigo-500 px-4 py-1.5 text-xs font-semibold text-white shadow-md shadow-indigo-500/30 transition hover:bg-indigo-400 disabled:cursor-wait disabled:opacity-60"
+                className="rounded-full bg-brand px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-brand-hover disabled:cursor-wait disabled:opacity-60"
               >
                 {saving ? "Enregistrement..." : (form.id ? "Mettre à jour" : "Créer")}
               </button>
@@ -771,7 +771,7 @@ export default function AdminCataloguePage() {
                   <th className="px-3 py-2 text-center font-medium">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 bg-[#03030a] text-zinc-300">
+              <tbody className="divide-y divide-white/5 bg-brand-night text-zinc-300">
                 {beats.map((beat) => (
                   <tr key={beat._id} className="hover:bg-white/5 cursor-pointer" onClick={() => handleSelectBeat(beat)}>
                     <td className="px-3 py-2 font-medium text-white">{beat.title}</td>

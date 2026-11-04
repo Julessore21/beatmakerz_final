@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#040410] text-white flex items-center justify-center px-4">
+    <div className="min-h-screen text-white flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-8 shadow-[0_20px_80px_rgba(0,0,0,.35)] backdrop-blur-xl">
           <div className="text-center mb-8">
@@ -97,7 +97,7 @@ export default function AdminLoginPage() {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-white/10 bg-[#08080f]/70 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-brand"
                 placeholder="admin@beatmakerz.fr"
               />
               {fieldErrors.email && <p className="text-xs text-red-400 mt-1">{fieldErrors.email}</p>}
@@ -112,7 +112,7 @@ export default function AdminLoginPage() {
                 type="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full rounded-2xl border border-white/10 bg-[#08080f]/70 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-brand"
                 placeholder="••••••••"
               />
               {fieldErrors.password && <p className="text-xs text-red-400 mt-1">{fieldErrors.password}</p>}
@@ -121,7 +121,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-2xl bg-indigo-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/40 transition hover:bg-indigo-400 disabled:cursor-wait disabled:opacity-60"
+              className="w-full rounded-full bg-brand px-6 py-3 text-sm font-semibold text-white transition hover:bg-brand-hover disabled:cursor-wait disabled:opacity-60"
             >
               {loading ? "Logging in..." : "Login"}
             </button>

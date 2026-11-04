@@ -46,7 +46,7 @@ export default function BeatTableRow(p: BeatRowProps) {
       <td className="px-4 py-3 text-center">
         {typeof p.price === "number" ? (
           <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-xs text-white">
-            {p.price.toFixed(2)} EUR
+            {p.price.toFixed(2)} €
           </span>
         ) : (
           <span className="inline-block h-5 w-[60px]" />

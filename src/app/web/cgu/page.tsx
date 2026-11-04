@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 export default function CGU() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black text-white pt-24 pb-24">
+    <div className="min-h-screen text-white pt-28 pb-24">
       <div className="container mx-auto max-w-4xl px-4">
         <motion.div
           initial={{ opacity: 0, y: 8 }}

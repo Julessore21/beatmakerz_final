@@ -1,296 +1,152 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 
-import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { loginSchema, type LoginInput } from "@/schemas/forms/loginSchema";
-import { registerSchema, type RegisterInput } from "@/schemas/forms/registerSchema";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input, Label } from "@/components/ui/input";
+import { PageShell } from "@/components/ui/page";
+import { cn } from "@/lib/cn";
+import { loginSchema } from "@/schemas/forms/loginSchema";
+import { registerSchema } from "@/schemas/forms/registerSchema";
 
-// Forcer le rendu dynamique pour éviter l'erreur useSearchParams
-export const dynamic = 'force-dynamic';
+const MIN_PASSWORD = 8;
 
-const Profil: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true);
+type Mode = "login" | "signup";
+type Errors = { email?: string; password?: string; general?: string };
+
+/**
+ * N'accepte que des chemins internes pour éviter les redirections ouvertes.
+ * Rejette aussi "\" (que les navigateurs lisent comme "/", ex. "/\evil.com")
+ * et les caractères de contrôle, puis vérifie que l'URL résolue reste sur notre origine.
+ */
+const DEFAULT_NEXT = "/web/account";
+const safeNext = (value: string | null) => {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || /[\\\x00-\x1f]/.test(value)) return DEFAULT_NEXT;
+  try {
+    const base = "https://beatmakerz.invalid";
+    const url = new URL(value, base);
+    return url.origin === base ? url.pathname + url.search + url.hash : DEFAULT_NEXT;
+  } catch {
+    return DEFAULT_NEXT;
+  }
+};
+
+export default function ProfilPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, register, user: currentUser } = useAuth();
+  const { login, register, user } = useAuth();
+  const [mode, setMode] = useState<Mode>(searchParams.get("mode") === "signup" ? "signup" : "login");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<Errors>({});
+  const [pending, setPending] = useState(false);
+  const next = safeNext(searchParams.get("next"));
 
   useEffect(() => {
-    const mode = searchParams.get("mode");
-    if (mode === "signup") {
-      setIsLogin(false);
-    } else if (mode === "login") {
-      setIsLogin(true);
-    }
-  }, [searchParams]);
+    if (user) router.replace(next);
+  }, [user, router, next]);
 
-  useEffect(() => {
-    if (!currentUser) {
-      return;
-    }
-    router.replace("/web/account");
-    router.refresh();
-  }, [currentUser, router]);
-
-  const [loginData, setLoginData] = useState<LoginInput>({ email: "", password: "" });
-  const [signupData, setSignupData] = useState<RegisterInput>({ email: "", password: "" });
-  const [loginErrors, setLoginErrors] = useState<Partial<Record<keyof LoginInput | "general", string>>>({});
-  const [signupErrors, setSignupErrors] = useState<Partial<Record<keyof RegisterInput | "general", string>>>({});
-  const [loginTouched, setLoginTouched] = useState<Partial<Record<keyof LoginInput, boolean>>>({});
-  const [signupTouched, setSignupTouched] = useState<Partial<Record<keyof RegisterInput, boolean>>>({});
-
-  const handleLoginChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    const updated = { ...loginData, [name]: value };
-    setLoginData(updated);
-    if (loginTouched[name as keyof LoginInput]) {
-      const result = loginSchema.safeParse(updated);
-      if (!result.success) {
-        const issue = result.error.issues.find((i) => i.path[0] === name);
-        setLoginErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
-      } else {
-        setLoginErrors((prev) => ({ ...prev, [name]: undefined }));
-      }
-    }
+  const switchMode = (value: Mode) => {
+    setMode(value);
+    setErrors({});
   };
 
-  const handleLoginBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    const { name } = event.target;
-    setLoginTouched((prev) => ({ ...prev, [name]: true }));
-    const result = loginSchema.safeParse(loginData);
-    if (!result.success) {
-      const issue = result.error.issues.find((i) => i.path[0] === name);
-      setLoginErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
-    } else {
-      setLoginErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const handleSignupChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
-    const updated = { ...signupData, [name]: value };
-    setSignupData(updated);
-    if (signupTouched[name as keyof RegisterInput]) {
-      const result = registerSchema.safeParse(updated);
-      if (!result.success) {
-        const issue = result.error.issues.find((i) => i.path[0] === name);
-        setSignupErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
-      } else {
-        setSignupErrors((prev) => ({ ...prev, [name]: undefined }));
-      }
-    }
-  };
-
-  const handleSignupBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    const { name } = event.target;
-    setSignupTouched((prev) => ({ ...prev, [name]: true }));
-    const result = registerSchema.safeParse(signupData);
-    if (!result.success) {
-      const issue = result.error.issues.find((i) => i.path[0] === name);
-      setSignupErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
-    } else {
-      setSignupErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const handleLoginSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const result = loginSchema.safeParse(loginData);
+    const result = (mode === "login" ? loginSchema : registerSchema).safeParse({ email: email.trim(), password });
     if (!result.success) {
-      const errs: Partial<Record<keyof LoginInput, string>> = {};
-      result.error.issues.forEach((i) => {
-        const key = i.path[0] as keyof LoginInput;
-        if (key && !errs[key]) errs[key] = i.message;
-      });
-      setLoginErrors(errs);
-      setLoginTouched({ email: true, password: true });
+      const nextErrors: Errors = {};
+      for (const issue of result.error.issues) {
+        const field = issue.path[0] as "email" | "password";
+        nextErrors[field] ??= issue.message;
+      }
+      setErrors(nextErrors);
       return;
     }
+    setErrors({});
 
+    setPending(true);
     try {
-      await login(result.data);
-      router.replace("/web/account");
-      router.refresh();
-    } catch (error: unknown) {
-      setLoginErrors({ general: error instanceof Error ? error.message : "Identifiants invalides" });
-    }
-  };
-
-  const handleSignupSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const result = registerSchema.safeParse(signupData);
-    if (!result.success) {
-      const errs: Partial<Record<keyof RegisterInput, string>> = {};
-      result.error.issues.forEach((i) => {
-        const key = i.path[0] as keyof RegisterInput;
-        if (key && !errs[key]) errs[key] = i.message;
-      });
-      setSignupErrors(errs);
-      setSignupTouched({ email: true, password: true });
-      return;
-    }
-
-    try {
-      await register({
-        email: result.data.email,
-        password: result.data.password,
-        displayName: (result.data.email ?? "").split("@")[0] || result.data.email || "",
-      });
-      router.replace("/web/account");
-      router.refresh();
-    } catch (error: unknown) {
-      setSignupErrors({ general: error instanceof Error ? error.message : "Cet email est deja utilise ou invalide" });
+      if (mode === "login") {
+        await login({ email: email.trim(), password });
+      } else {
+        // L'API exige un nom d'au moins 2 caractères : partie avant @, sinon un nom par défaut.
+        const localPart = email.trim().split("@")[0] ?? "";
+        await register({ email: email.trim(), password, displayName: localPart.length >= 2 ? localPart : "Artiste" });
+      }
+      router.replace(next);
+    } catch (error) {
+      const fallback = mode === "login" ? "Identifiants invalides" : "Cet email est déjà utilisé ou invalide";
+      setErrors({ general: error instanceof Error && error.message ? error.message : fallback });
+    } finally {
+      setPending(false);
     }
   };
 
   return (
-    <div className="page-section">
-      <div className="card w-full max-w-3xl flex flex-col md:flex-row overflow-hidden bg-[#0b0d19] border border-white/10 shadow-2xl">
-        <div className="md:w-1/2 p-8 flex flex-col justify-center">
-          <div className="mx-auto mb-10 flex w-[260px] items-center justify-center gap-1 rounded-full border border-white/10 bg-[#0f0f18] p-1 shadow-[0_6px_24px_rgba(0,0,0,0.35)]">
-            <button
-              type="button"
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                isLogin ? "bg-[var(--brand-purple)] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.3)]" : "text-white/75 hover:text-white"
-              }`}
-            >
-              Se connecter
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                !isLogin ? "bg-[var(--brand-purple)] text-white shadow-[0_0_0_1px_rgba(0,0,0,0.3)]" : "text-white/75 hover:text-white"
-              }`}
-            >
-              S&apos;inscrire
-            </button>
+    <PageShell size="md" className="flex min-h-[85vh] items-center">
+      <Card className="flex w-full flex-col overflow-hidden p-0 md:flex-row">
+        <div className="flex flex-col justify-center p-8 md:w-1/2">
+          <div className="mx-auto mb-8 flex w-full max-w-[280px] gap-1 rounded-full border border-white/10 bg-white/5 p-1">
+            {(["login", "signup"] as const).map((value) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => switchMode(value)}
+                aria-pressed={mode === value}
+                className={cn(
+                  "flex-1 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+                  mode === value ? "bg-brand text-white" : "text-white/70 hover:text-white"
+                )}
+              >
+                {value === "login" ? "Se connecter" : "S’inscrire"}
+              </button>
+            ))}
           </div>
 
-          <AnimatePresence mode="wait">
-            {isLogin ? (
-              <motion.div
-                key="login"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <h2 className="text-2xl font-bold text-white mb-6 text-center">
-                  SE CONNECTER
-                </h2>
-                <form className="space-y-4" onSubmit={handleLoginSubmit} noValidate>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1" htmlFor="login-email">
-                      Email
-                    </label>
-                    <input
-                      id="login-email"
-                      name="email"
-                      type="email"
-                      value={loginData.email}
-                      onChange={handleLoginChange}
-                      onBlur={handleLoginBlur}
-                      className="input-field"
-                      placeholder="Entrez votre email"
-                    />
-                    {loginErrors.email && <p className="text-xs text-red-500 mt-1">{loginErrors.email}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1" htmlFor="login-password">
-                      Mot de passe
-                    </label>
-                    <input
-                      id="login-password"
-                      name="password"
-                      type="password"
-                      value={loginData.password}
-                      onChange={handleLoginChange}
-                      onBlur={handleLoginBlur}
-                      className="input-field"
-                      placeholder="Entrez votre mot de passe"
-                    />
-                    {loginErrors.password && <p className="text-xs text-red-500 mt-1">{loginErrors.password}</p>}
-                  </div>
-                  {loginErrors.general && <p className="text-xs text-red-500">{loginErrors.general}</p>}
-                  <button
-                    type="submit"
-                    className="w-full rounded-full px-5 py-3 text-sm font-semibold text-white transition shadow-[0_12px_32px_rgba(79,43,212,0.35)] bg-[var(--brand-purple)] hover:bg-[var(--brand-purple-strong)]"
-                  >
-                    Connexion
-                  </button>
-                </form>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="signup"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <h2 className="text-2xl font-bold text-white mb-6 text-center">
-                  S&apos;inscrire
-                </h2>
-                <form className="space-y-4" onSubmit={handleSignupSubmit} noValidate>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1" htmlFor="signup-email">
-                      Email
-                    </label>
-                    <input
-                      id="signup-email"
-                      name="email"
-                      type="email"
-                      value={signupData.email}
-                      onChange={handleSignupChange}
-                      onBlur={handleSignupBlur}
-                      className="input-field"
-                      placeholder="Entrez votre email"
-                    />
-                    {signupErrors.email && <p className="text-xs text-red-500 mt-1">{signupErrors.email}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-1" htmlFor="signup-password">
-                      Mot de passe
-                    </label>
-                    <input
-                      id="signup-password"
-                      name="password"
-                      type="password"
-                      value={signupData.password}
-                      onChange={handleSignupChange}
-                      onBlur={handleSignupBlur}
-                      className="input-field"
-                      placeholder="Entrez un mot de passe securise"
-                    />
-                    {signupErrors.password && <p className="text-xs text-red-500 mt-1">{signupErrors.password}</p>}
-                  </div>
-                  {signupErrors.general && <p className="text-xs text-red-500">{signupErrors.general}</p>}
-                  <button
-                    type="submit"
-                    className="w-full rounded-full px-5 py-3 text-sm font-semibold text-white transition shadow-[0_12px_32px_rgba(79,43,212,0.35)] bg-[var(--brand-purple)] hover:bg-[var(--brand-purple-strong)]"
-                  >
-                    Creer un compte
-                  </button>
-                </form>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <h1 className="mb-6 text-center text-2xl font-bold">{mode === "login" ? "Bon retour !" : "Crée ton compte"}</h1>
+
+          <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="toi@exemple.fr"
+              />
+              {errors.email && <p className="mt-1 text-xs text-rose-400">{errors.email}</p>}
+            </div>
+            <div>
+              <Label htmlFor="password">Mot de passe</Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={mode === "login" ? "Ton mot de passe" : `${MIN_PASSWORD} caractères minimum`}
+              />
+              {errors.password && <p className="mt-1 text-xs text-rose-400">{errors.password}</p>}
+            </div>
+            {errors.general && <p className="text-sm text-rose-400">{errors.general}</p>}
+            <Button type="submit" size="lg" fullWidth disabled={pending}>
+              {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+              {mode === "login" ? "Connexion" : "Créer mon compte"}
+            </Button>
+          </form>
         </div>
 
-        <div className="md:w-1/2 flex items-center justify-center p-4 bg-black/30">
-          <img
-            src="/img/beatmakerzlogin.png"
-            alt="beatmakerz logo"
-            className="object-contain max-h-60"
-          />
+        <div className="flex items-center justify-center bg-black/30 p-6 md:w-1/2">
+          <img src="/img/beatmakerzlogin.png" alt="Beatmakerz" className="max-h-60 object-contain" />
         </div>
-      </div>
-    </div>
+      </Card>
+    </PageShell>
   );
-};
-
-export default Profil;
+}

@@ -64,8 +64,9 @@ function BeatCard({
   const background = getBeatCover(coverUrl, [genre]);
 
   const handleAdd = () => {
-    addItem({ id, name, price });
-    onAdd?.();
+    // Le parent (catalogue) gère connexion, doublons et confirmation ; sinon ajout direct.
+    if (onAdd) onAdd();
+    else addItem({ id, name, price });
   };
 
   const handleFav = async () => {
@@ -82,7 +83,6 @@ function BeatCard({
       }
     } catch {
       setFav(!next);
-      alert("Impossible de mettre à jour les favoris");
     }
   };
 
@@ -90,7 +90,7 @@ function BeatCard({
     <motion.div
       layout
       whileHover={{ y: -2 }}
-      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-[#141416] shadow-xl"
+      className="group relative overflow-hidden rounded-2xl border border-white/10 bg-brand-card shadow-xl"
       data-testid="beat-card"
     >
       {background ? (
@@ -107,7 +107,7 @@ function BeatCard({
       <div className="relative flex h-full flex-col justify-between p-3 xs:p-4 sm:p-5">
         <div className="flex items-start justify-end">
           <span className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-xs font-semibold text-white">
-            {price.toFixed(2)} EUR
+            {price.toFixed(2)} €
           </span>
         </div>
 
@@ -151,18 +151,6 @@ function BeatCard({
   );
 }
 
-export default memo(BeatCard, (prev, next) =>
-  prev.id === next.id &&
-  prev.name === next.name &&
-  prev.artist === next.artist &&
-  prev.genre === next.genre &&
-  prev.bpm === next.bpm &&
-  prev.keySig === next.keySig &&
-  prev.price === next.price &&
-  prev.tag === next.tag &&
-  prev.isCurrent === next.isCurrent &&
-  prev.isPlaying === next.isPlaying &&
-  prev.isFav === next.isFav &&
-  prev.coverUrl === next.coverUrl &&
-  prev.showTag === next.showTag
-);
+// Pas de comparateur personnalisé : il ignorait onAdd/onFav/onPlayPause, et les cartes
+// gardaient des callbacks périmés (ex. favoris qui redemandent la connexion après login).
+export default memo(BeatCard);

@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 export default function CGV() {
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-b from-black via-[#0b0b12] to-black text-white pt-24 pb-24">
+      <div className="min-h-screen text-white pt-28 pb-24">
       <div className="container mx-auto max-w-4xl px-4">
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -55,7 +55,7 @@ const sections: {
   {
     title: "Préambule",
     content:
-      "Les présentes Conditions Générales de Vente (CGV) s'appliquent à toutes les transactions effectuées sur le site de vente d'instrumentales [BEATMAKERZ.FR]. En passant commande sur notre site, vous acceptez sans réserve les présentes conditions.",
+      "Les présentes Conditions Générales de Vente (CGV) s'appliquent à toutes les transactions effectuées sur le site de vente d'instrumentales Beatmakerz. En passant commande sur notre site, vous acceptez sans réserve les présentes conditions.",
   },
   {
     title: "1. Identité de l'entreprise",
@@ -75,9 +75,6 @@ const sections: {
     content: [
       "Les prix de nos instrumentales sont indiqués en euros (€) TTC. Nous nous réservons le droit de modifier les prix à tout moment, mais les produits seront facturés sur la base des tarifs en vigueur au moment de la validation de la commande.",
       "Instrumentale à l'unité : 9,99€",
-      "Abonnement 'Infini' : 19,99€/mois ou 199,99€/an (4 prods par mois incluses)",
-      "Abonnement 'Infini +' : 39,99€/mois ou 399,99€/an (10 prods par mois incluses)",
-      "Abonnement 'Infini X' : 59,99€/mois ou 599,99€/an (15 prods par mois incluses)",
       "Prod sur-mesure : 59,99€",
     ],
   },

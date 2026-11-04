@@ -1,19 +1,17 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import { FaInstagram, FaTiktok, FaYoutube, FaXTwitter } from "react-icons/fa6";
+import { FaInstagram, FaTiktok, FaYoutube, FaEnvelope } from "react-icons/fa6";
 
 const NAV_SECTIONS = {
   explore: [
     { label: "Catalogue", href: "/web/catalogue" },
-    { label: "Marketplace", href: "/web/marketplace" },
     { label: "Prod sur mesure", href: "/web/prodsurmesure" },
   ],
   account: [
-    { label: "Abonnements", href: "/web/abonnements" },
-    { label: "Cartes cadeau", href: "/web/cartes-cadeau" },
     { label: "Mon compte", href: "/web/account" },
+    { label: "Panier", href: "/web/panier" },
   ],
   legal: [
     { label: "Mentions légales", href: "/web/mentions" },
@@ -27,21 +25,9 @@ const NAV_SECTIONS = {
   ],
 };
 
-// Export for backwards compatibility
-export const LEGAL_LINKS: { label: string; href: string }[] = [
-  { label: "Mentions légales", href: "/web/mentions" },
-  { label: "CGV", href: "/web/cgv" },
-  { label: "CGU", href: "/web/cgu" },
-  { label: "Politique de confidentialité", href: "/web/politique" },
-  { label: "Cookies", href: "/web/politique#cookies" },
-  { label: "Propriété intellectuelle", href: "/web/mentions#propriete-intellectuelle" },
-];
-
 export default function Footer() {
-  const [lang, setLang] = useState<"FR" | "EN">("FR");
-
   return (
-    <footer className="relative w-full bg-[#030308] text-white">
+    <footer className="relative w-full bg-brand-footer text-white">
       {/* Top separator line with glow */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
 
@@ -66,8 +52,8 @@ export default function Footer() {
               <SocialIcon href="https://www.youtube.com/@BEATMAKERZ-PRO" label="YouTube">
                 <FaYoutube className="h-4 w-4" />
               </SocialIcon>
-              <SocialIcon href="https://x.com" label="X">
-                <FaXTwitter className="h-4 w-4" />
+              <SocialIcon href="mailto:beatmakerz.contact@gmail.com" label="Email">
+                <FaEnvelope className="h-4 w-4" />
               </SocialIcon>
             </div>
           </div>
@@ -84,9 +70,6 @@ export default function Footer() {
           <p className="text-xs text-white/30">
             © {new Date().getFullYear()} Beatmakerz. Tous droits réservés.
           </p>
-          <div className="flex items-center gap-6">
-            <LangSwitch lang={lang} setLang={setLang} />
-          </div>
         </div>
       </div>
     </footer>
@@ -124,25 +107,5 @@ function SocialIcon({ href, label, children }: { href: string; label: string; ch
     >
       {children}
     </a>
-  );
-}
-
-function LangSwitch({ lang, setLang }: { lang: "FR" | "EN"; setLang: (l: "FR" | "EN") => void }) {
-  return (
-    <div className="flex items-center gap-3 text-xs">
-      {(["FR", "EN"] as const).map((code) => {
-        const active = lang === code;
-        return (
-          <button
-            key={code}
-            type="button"
-            onClick={() => setLang(code)}
-            className={`transition-colors ${active ? "text-white font-medium" : "text-white/40 hover:text-white/70"}`}
-          >
-            {code}
-          </button>
-        );
-      })}
-    </div>
   );
 }

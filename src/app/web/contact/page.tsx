@@ -1,14 +1,28 @@
 "use client";
 
 import React, { useState, ChangeEvent, FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import { contactSchema, type ContactInput } from "@/schemas/forms/contactSchema";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input, Label, Textarea } from "@/components/ui/input";
+import { PageHeader, PageShell } from "@/components/ui/page";
 
 type Status = "idle" | "loading" | "success" | "error";
 
 const EMPTY_FORM: ContactInput = { name: "", email: "", subject: "", message: "" };
 
+// Sujets préremplis via ?subject=… (ex. lien « Supprimer mon compte » de la page compte)
+const PRESET_SUBJECTS: Record<string, string> = {
+  "suppression-compte": "Demande de suppression de compte",
+};
+
 const Contact: React.FC = () => {
-  const [formData, setFormData] = useState<ContactInput>(EMPTY_FORM);
+  const searchParams = useSearchParams();
+  const [formData, setFormData] = useState<ContactInput>({
+    ...EMPTY_FORM,
+    subject: PRESET_SUBJECTS[searchParams.get("subject") ?? ""] ?? "",
+  });
   const [status, setStatus] = useState<Status>("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ContactInput, string>>>({});
@@ -82,132 +96,72 @@ const Contact: React.FC = () => {
     }
   };
 
-  const inputClass = "w-full h-11 md:h-12 rounded-xl bg-white/[0.04] text-white placeholder:text-neutral-500/80 px-4 md:px-5 ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-white/30 focus:outline-none transition";
-  const errorClass = "mt-1 text-xs text-red-400";
+  const field = (name: keyof ContactInput, label: string, props: { type?: string; placeholder: string }) => (
+    <div>
+      <Label htmlFor={name}>{label}</Label>
+      <Input
+        id={name}
+        name={name}
+        type={props.type ?? "text"}
+        value={formData[name] ?? ""}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        placeholder={props.placeholder}
+        disabled={status === "loading"}
+      />
+      {fieldErrors[name] && <p className="mt-1 text-xs text-rose-400">{fieldErrors[name]}</p>}
+    </div>
+  );
 
   return (
-    <div className="relative min-h-screen bg-black text-white overflow-hidden">
-      <div className="pointer-events-none absolute -top-32 -left-32 h-[480px] w-[480px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(120,119,198,0.12),transparent_60%)] blur-2xl" />
-      <div className="pointer-events-none absolute -bottom-40 -right-32 h-[520px] w-[520px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.08),transparent_60%)] blur-2xl" />
+    <PageShell size="md">
+      <PageHeader
+        title="Nous contacter"
+        subtitle="Une question, une collaboration, un souci avec une commande ? On te répond rapidement."
+      />
 
-      <div className="relative z-10 flex flex-col items-center pt-28 pb-16 px-4">
-        <div className="max-w-2xl w-full text-center">
-          <h1 className="text-3xl md:text-5xl font-semibold tracking-tight leading-tight bg-gradient-to-b from-white to-neutral-400 bg-clip-text text-transparent">
-            Nous contacter
-          </h1>
-          <p className="mt-3 text-neutral-400">
-            Nous serions ravis de te lire. Contacte-nous pour toute question ou collaboration.
-          </p>
-        </div>
-
-        {status === "success" ? (
-          <div className="mt-8 w-full max-w-3xl rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-8 text-center">
-            <p className="text-lg font-medium text-white">Message envoyé !</p>
-            <p className="mt-2 text-neutral-400 text-sm">
-              On a bien reçu ton message et on te répondra dans les meilleurs délais.
-            </p>
-            <button
-              onClick={() => setStatus("idle")}
-              className="mt-6 px-6 h-10 rounded-full border border-white/20 text-sm text-white hover:bg-white/10 transition"
-            >
-              Envoyer un autre message
-            </button>
-          </div>
-        ) : (
-          <form
-            onSubmit={handleSubmit}
-            noValidate
-            className="mt-8 w-full max-w-3xl rounded-2xl border border-white/10 bg-white/5 backdrop-blur-xl p-6 md:p-8 space-y-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
-          >
-            <div className="space-y-2">
-              <label htmlFor="name" className="text-xs font-medium uppercase tracking-wider text-neutral-300">
-                Nom
-              </label>
-              <input
-                id="name"
-                name="name"
-                type="text"
-                value={formData.name}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="Votre nom"
-                className={inputClass}
-                disabled={status === "loading"}
-              />
-              {fieldErrors.name && <p className={errorClass}>{fieldErrors.name}</p>}
+      {status === "success" ? (
+        <Card className="p-8 text-center">
+          <p className="text-lg font-medium">Message envoyé !</p>
+          <p className="mt-2 text-sm text-zinc-400">On a bien reçu ton message et on te répondra dans les meilleurs délais.</p>
+          <Button variant="outline" className="mt-6" onClick={() => setStatus("idle")}>
+            Envoyer un autre message
+          </Button>
+        </Card>
+      ) : (
+        <Card className="p-6 md:p-8">
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {field("name", "Nom", { placeholder: "Ton nom" })}
+              {field("email", "Email", { type: "email", placeholder: "toi@exemple.fr" })}
             </div>
-
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-xs font-medium uppercase tracking-wider text-neutral-300">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="Votre email"
-                className={inputClass}
-                disabled={status === "loading"}
-              />
-              {fieldErrors.email && <p className={errorClass}>{fieldErrors.email}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="subject" className="text-xs font-medium uppercase tracking-wider text-neutral-300">
-                Sujet
-              </label>
-              <input
-                id="subject"
-                name="subject"
-                type="text"
-                value={formData.subject ?? ""}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="Sujet"
-                className={inputClass}
-                disabled={status === "loading"}
-              />
-              {fieldErrors.subject && <p className={errorClass}>{fieldErrors.subject}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="message" className="text-xs font-medium uppercase tracking-wider text-neutral-300">
-                Message
-              </label>
-              <textarea
+            {field("subject", "Sujet", { placeholder: "Sujet (optionnel)" })}
+            <div>
+              <Label htmlFor="message">Message</Label>
+              <Textarea
                 id="message"
                 name="message"
                 value={formData.message}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                placeholder="Votre message"
-                rows={5}
-                className="w-full min-h-[7rem] rounded-xl bg-white/[0.04] text-white placeholder:text-neutral-500/80 px-4 md:px-5 py-3 ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-white/30 focus:outline-none transition resize-none"
+                placeholder="Ton message"
+                rows={6}
                 disabled={status === "loading"}
               />
-              {fieldErrors.message && <p className={errorClass}>{fieldErrors.message}</p>}
+              {fieldErrors.message && <p className="mt-1 text-xs text-rose-400">{fieldErrors.message}</p>}
             </div>
 
             {status === "error" && (
-              <p className="text-sm text-red-400 bg-red-400/10 rounded-xl px-4 py-3">
-                {errorMsg}
-              </p>
+              <p className="rounded-xl bg-rose-400/10 px-4 py-3 text-sm text-rose-300">{errorMsg}</p>
             )}
 
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="w-full h-11 md:h-12 rounded-full bg-white text-black font-medium tracking-wide hover:bg-neutral-200 active:scale-[.99] transition ring-1 ring-inset ring-white/20 shadow-[0_10px_30px_-15px_rgba(255,255,255,0.4)] disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
-            >
+            <Button type="submit" size="lg" fullWidth disabled={status === "loading"}>
               {status === "loading" ? "Envoi en cours…" : "Envoyer"}
-            </button>
+            </Button>
           </form>
-        )}
-      </div>
-    </div>
+        </Card>
+      )}
+    </PageShell>
   );
 };
 

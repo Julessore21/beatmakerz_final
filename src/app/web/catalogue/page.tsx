@@ -13,6 +13,8 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import BeatCard from "@/components/BeatCard";
 import AuthRequiredModal from "@/components/AuthRequiredModal";
+import { Chip } from "@/components/ui/chip";
+import { Button, ButtonLink } from "@/components/ui/button";
 import BeatTableRow from "@/components/BeatTableRow";
 import ListSkeleton from "@/components/skeletons/ListSkeleton";
 import { fetchFileUpCatalogue } from "@/lib/services/fileup-catalogue";
@@ -34,10 +36,9 @@ export type Beat = {
   audio: string;
   price: number;
   coverUrl?: string | null;
+  licenseTypeId?: string;
 };
 
-// Utilise le même fichier test que la marketplace pour assurer la lecture sur les deux pages
-const TEST_AUDIO = "/audio/Woke up late, still rich from yesterday  (Remix) (Instrumental) (1).mp3";
 
 const GENRES = [
   "Trap",
@@ -111,18 +112,6 @@ const BPM_RANGE_SIZE = 30; // Taille fixe de la zone BPM (ex: 100-130)
 
 
 /* -------------------------------- helpers -------------------------------- */
-
-const Chip = ({ active, onClick, children }: { active?: boolean; onClick?: () => void; children: React.ReactNode }) => (
-  <button
-    onClick={onClick}
-    className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[12px] transition-colors
-      ${
-        active ? "border-indigo-500/70 bg-indigo-500 text-white" : "border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10"
-      }`}
-  >
-    {children}
-  </button>
-);
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <div className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-400">{children}</div>
@@ -208,7 +197,7 @@ const ZoneSlider = ({
 
           {/* Thumb principal - début de la zone */}
           <SliderPrimitive.Thumb
-            className="block h-6 w-4 cursor-grab rounded-md border-2 border-white/50 bg-white shadow-lg transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 active:cursor-grabbing active:scale-105"
+            className="block h-6 w-4 cursor-grab rounded-md border-2 border-white/50 bg-white shadow-lg transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand active:cursor-grabbing active:scale-105"
             aria-label="Position BPM"
           />
         </SliderPrimitive.Root>
@@ -232,7 +221,7 @@ function CatalogueContent() {
   const searchParams = useSearchParams();
 
   const { play, toggle, isPlaying, track, setQueue } = useAudio();
-  const { addItem } = useCart();
+  const { addItem, items: cartItems } = useCart();
   const { user } = useAuth();
 
   const [query, setQuery] = useState("");
@@ -262,21 +251,29 @@ function CatalogueContent() {
     setErrorBeats(null);
     try {
       const items = await fetchFileUpCatalogue();
-      const mapped =
-        items.map((b, idx) => ({
-          id: b._id || b.id || `beat-${idx}`,
-          name: b.title || b.name || "Beat",
-          artist: typeof b.artist === "string" ? b.artist : b.artist?.name || "Beatmaker",
-          genre: b.genres?.[0] || b.genre || "Beat",
-          bpm: b.bpm ?? 120,
-          key: b.key || "Am",
-          tag: null as Tag | null,
-          audio: b.assets?.find((a) => a.type === "preview")
-            ? `${process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com"}/beats/${b._id || b.id}/stream/preview`
-            : TEST_AUDIO,
-          price: typeof b.price === "number" ? b.price : (b.priceCents ?? 1999) / 100,
-          coverUrl: b.coverUrl ?? null,
-        })) || [];
+      // Un beat n'est en vente que s'il a une preview et un prix calculé par l'API
+      // (licence Basic, même calcul que le panier : prix affiché = prix facturé).
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
+      const mapped = items.flatMap((b, idx) => {
+        const id = b._id || b.id || `beat-${idx}`;
+        const hasPreview = b.assets?.some((a) => a.type === "preview");
+        if (!hasPreview || typeof b.priceCents !== "number") return [];
+        return [
+          {
+            id,
+            name: b.title || b.name || "Beat",
+            artist: typeof b.artist === "string" ? b.artist : b.artist?.name || "Beatmaker",
+            genre: b.genres?.[0] || b.genre || "Beat",
+            bpm: b.bpm ?? 120,
+            key: b.key || "Am",
+            tag: null as Tag | null,
+            audio: `${apiUrl}/beats/${id}/stream/preview`,
+            price: b.priceCents / 100,
+            licenseTypeId: b.licenseTypeId,
+            coverUrl: b.coverUrl ?? null,
+          },
+        ];
+      });
       setBeats(mapped);
       setErrorBeats(null);
     } catch {
@@ -447,6 +444,26 @@ function CatalogueContent() {
     (b: Beat) => (track?.id === b.id && isPlaying ? toggle() : play(b, currentBeats)),
     [track?.id, isPlaying, toggle, play, currentBeats]
   );
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 2500);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const onAddToCart = async (b: Beat) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    if (cartItems.some((item) => String(item.id) === String(b.id))) {
+      setToast(`« ${b.name} » est déjà dans ton panier`);
+      return;
+    }
+    const added = await addItem({ id: b.id, name: b.name, price: b.price, licenseTypeId: b.licenseTypeId });
+    setToast(added ? `« ${b.name} » ajouté au panier` : "Impossible d'ajouter ce beat pour le moment, réessaie.");
+  };
+
   const onToggleFav = useCallback(
     async (beatId: string) => {
       if (!user) {
@@ -461,7 +478,7 @@ function CatalogueContent() {
 
   const FiltersBlocks = () => (
     <>
-      <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl space-y-4">
+      <div className="rounded-2xl border border-white/10 bg-brand-card/80 p-4 backdrop-blur-xl space-y-4">
         <div className="flex items-center justify-between">
           <SectionTitle>Genres</SectionTitle>
           {selectedGenres.length > 0 && (
@@ -472,20 +489,19 @@ function CatalogueContent() {
         </div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {GENRES.map((g) => (
-            <button
+            <Chip
               key={g}
+              active={selectedGenres.includes(g)}
               onClick={() => toggleInArray(g, selectedGenres, setSelectedGenres)}
-              className={`h-8 rounded-xl border px-2 text-[11px] text-left ${
-                selectedGenres.includes(g) ? "border-indigo-500 bg-indigo-500 text-white" : "border-white/10 bg-white/5 hover:bg-white/10 text-zinc-100"
-              }`}
+              className="h-8 justify-start truncate px-3 text-xs"
             >
               {g}
-            </button>
+            </Chip>
           ))}
         </div>
       </div>
 
-      <div className="rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
+      <div className="rounded-2xl border border-white/10 bg-brand-card/80 p-4 backdrop-blur-xl">
         <div className="flex items-center justify-between">
           <SectionTitle>Tonalites</SectionTitle>
           {selectedKeys.length > 0 && (
@@ -496,7 +512,7 @@ function CatalogueContent() {
         </div>
         <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
           {KEYS.map((k) => (
-            <Chip key={k} active={selectedKeys.includes(k)} onClick={() => toggleInArray(k, selectedKeys, setSelectedKeys)}>
+            <Chip key={k} active={selectedKeys.includes(k)} onClick={() => toggleInArray(k, selectedKeys, setSelectedKeys)} className="justify-center px-2 py-1 text-xs">
               {k}
             </Chip>
           ))}
@@ -518,36 +534,21 @@ function CatalogueContent() {
   /* --------------------------------- render -------------------------------- */
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#0A0A12] text-white pt-24 pb-40">
-      {/* Ambient animated background (aligné avec account/abonnements) */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} transition={{ duration: 1.2 }} className="absolute -left-32 -top-32 h-96 w-96 rounded-full bg-violet-600/30 blur-3xl" />
-        <motion.div
-          animate={{ x: [0, 20, -10, 0], y: [0, -10, 10, 0] }}
-          transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
-          className="absolute right-[-10rem] top-10 h-[28rem] w-[28rem] rounded-full bg-violet-700/30 blur-[100px]"
-        />
-        <motion.div
-          animate={{ x: [0, -10, 15, 0], y: [0, 12, -8, 0] }}
-          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
-          className="absolute bottom-[-12rem] left-20 h-[26rem] w-[26rem] rounded-full bg-violet-900/25 blur-[100px]"
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.06),transparent_60%),radial-gradient(ellipse_at_bottom,rgba(255,255,255,0.04),transparent_60%)]" />
-      </div>
+    <div className="relative min-h-screen text-white pt-24 pb-40">
       {/* header */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
         className="container mx-auto max-w-screen-2xl px-4 xs:px-5 sm:px-6 lg:px-8"
       >
-        <div className="rounded-3xl border border-white/10 bg-[#141416]/90 p-6 backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]">
+        <div className="rounded-3xl border border-white/10 bg-brand-card/80 p-6 backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]">
           <div className="text-2xl font-bold tracking-tight">Catalogue</div>
           <div className="mt-1 text-sm text-zinc-300">{sorted.length} résultats • {GENRES.length} genres • vue {viewMode}</div>
         </div>
 
         {/* tools sticky (masqué si le catalogue est vide) */}
         {!isCatalogueEmpty && (
-        <div className="mt-6 sticky top-20 z-40 rounded-2xl border border-white/10 bg-[#141416]/80 p-4 backdrop-blur-xl">
+        <div className="mt-6 sticky top-20 z-40 rounded-2xl border border-white/10 bg-brand-card/80 p-4 backdrop-blur-xl">
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <div className="inline-flex items-center gap-2 text-sm text-zinc-400">
               <SlidersHorizontal className="h-4 w-4" />
@@ -556,45 +557,30 @@ function CatalogueContent() {
             </div>
             {/* Badges icônes: Tendance, Nouveaux, Populaire */}
             <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 -mx-1 px-1">
-              <button
-                onClick={() => setSelectedTag(selectedTag === "Tendance" ? null : "Tendance")}
-                className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs sm:text-sm shrink-0 ${selectedTag === "Tendance" ? "border-orange-400 bg-orange-400/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
-              >
+              <Chip active={selectedTag === "Tendance"} onClick={() => setSelectedTag(selectedTag === "Tendance" ? null : "Tendance")} className="shrink-0 text-xs sm:text-sm">
                 <Flame className="h-3.5 w-3.5 text-orange-400" /> Top
-              </button>
-              <button
-                onClick={() => setSelectedTag(selectedTag === "Nouveau" ? null : "Nouveau")}
-                className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs sm:text-sm shrink-0 ${selectedTag === "Nouveau" ? "border-yellow-300 bg-yellow-300/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
-              >
+              </Chip>
+              <Chip active={selectedTag === "Nouveau"} onClick={() => setSelectedTag(selectedTag === "Nouveau" ? null : "Nouveau")} className="shrink-0 text-xs sm:text-sm">
                 <Star className="h-3.5 w-3.5 text-yellow-300" /> Nouveaux
-              </button>
-              <button
-                onClick={() => setSelectedTag(selectedTag === "Populaire" ? null : "Populaire")}
-                className={`inline-flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs sm:text-sm shrink-0 ${selectedTag === "Populaire" ? "border-amber-400 bg-amber-400/10" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
-              >
+              </Chip>
+              <Chip active={selectedTag === "Populaire"} onClick={() => setSelectedTag(selectedTag === "Populaire" ? null : "Populaire")} className="shrink-0 text-xs sm:text-sm">
                 <Crown className="h-3.5 w-3.5 text-amber-300" /> Populaire
-              </button>
+              </Chip>
             </div>
 
             <div className="flex items-center gap-2 sm:ml-auto">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs sm:text-sm ${viewMode === "grid" ? "border-indigo-500 text-white bg-indigo-500" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
-              >
+              <Chip active={viewMode === "grid"} onClick={() => setViewMode("grid")} className="text-xs sm:text-sm">
                 <Grid3X3 className="h-3.5 w-3.5" /> Grille
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs sm:text-sm ${viewMode === "table" ? "border-indigo-500 text-white bg-indigo-500" : "border-white/10 bg-white/5 hover:bg-white/10"}`}
-              >
+              </Chip>
+              <Chip active={viewMode === "table"} onClick={() => setViewMode("table")} className="text-xs sm:text-sm">
                 <Rows3 className="h-3.5 w-3.5" /> Tableau
-              </button>
+              </Chip>
 
               <div className="relative">
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as (typeof SORTS)[number])}
-                  className="appearance-none rounded-full border border-white/10 bg-[#0e0e12]/80 px-4 pr-7 py-1.5 h-8 text-xs sm:text-sm outline-none text-center leading-none"
+                  className="appearance-none rounded-full border border-white/10 bg-white/5 px-4 pr-7 py-1.5 h-8 text-xs sm:text-sm outline-none text-center leading-none"
                 >
                   {SORTS.map((s) => (
                     <option key={s} value={s} className="text-center">
@@ -614,7 +600,7 @@ function CatalogueContent() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Tape un artiste, un genre…"
-              className="w-full rounded-2xl border border-white/10 bg-[#0e0e12]/80 pl-11 py-3"
+              className="rounded-2xl py-3 pl-11"
             />
           </div>
         </div>
@@ -627,28 +613,19 @@ function CatalogueContent() {
           <div className="relative flex flex-col items-center justify-center rounded-3xl border border-white/10 bg-brand-card/80 px-6 py-24 text-center backdrop-blur-xl">
             <h2 className="text-3xl font-bold uppercase tracking-tight text-white sm:text-5xl">LES PRODS ARRIVENT</h2>
             <p className="mt-4 max-w-md text-sm text-zinc-300">
-              Le catalogue se remplit. En attendant, fais ton son sur mesure ou prends un abonnement pour ne rien rater.
+              Le catalogue se remplit. En attendant, fais créer ton son sur mesure par nos beatmakers.
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
-              <Link
-                href="/web/prodsurmesure"
-                className="rounded-full bg-brand px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-hover"
-              >
+              <ButtonLink href="/web/prodsurmesure" size="lg">
                 PROD SUR MESURE
-              </Link>
-              <Link
-                href="/web/abonnements"
-                className="rounded-full bg-brand px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-hover"
-              >
-                VOIR LES ABONNEMENTS
-              </Link>
+              </ButtonLink>
             </div>
           </div>
         ) : (
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <section className="lg:col-span-12 lg:hidden">
             <div className="space-y-3">
-              <details className="group rounded-2xl border border-white/10 bg-[#141416]/80 backdrop-blur-xl">
+              <details className="group rounded-2xl border border-white/10 bg-brand-card/80 backdrop-blur-xl">
                 <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm text-zinc-200">
                   <span>Filtres</span>
                   <ChevronDown className="h-4 w-4 text-zinc-400 transition-transform group-open:rotate-180" />
@@ -656,12 +633,9 @@ function CatalogueContent() {
                 <div className="px-4 pb-4 space-y-3">
                   <FiltersBlocks />
                   {selectedGenres.length || selectedKeys.length || bpmFilterActive || selectedTag ? (
-                    <button
-                      onClick={resetFilters}
-                      className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
-                    >
-                      Réinitialiser tous les filtres
-                    </button>
+                    <Button variant="outline" fullWidth onClick={resetFilters}>
+                  Réinitialiser tous les filtres
+                </Button>
                   ) : null}
                 </div>
               </details>
@@ -672,12 +646,9 @@ function CatalogueContent() {
             <div className="sticky top-24 space-y-4">
               <FiltersBlocks />
               {selectedGenres.length || selectedKeys.length || bpmFilterActive || selectedTag ? (
-                <button
-                  onClick={resetFilters}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
-                >
+                <Button variant="outline" fullWidth onClick={resetFilters}>
                   Réinitialiser tous les filtres
-                </button>
+                </Button>
               ) : null}
             </div>
           </aside>
@@ -686,21 +657,6 @@ function CatalogueContent() {
           <section className="lg:col-span-9">
             <div className="mb-3 flex items-center justify-between text-sm text-zinc-400">
               <span>{sorted.length} résultats</span>
-              <div className="inline-flex items-center gap-2">
-                <span className="hidden sm:inline">Vue</span>
-                <button
-                  onClick={() => setViewMode("grid")}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${viewMode === "grid" ? "border-white/20 bg-white/10" : "border-white/10"}`}
-                >
-                  <Grid3X3 className="h-3.5 w-3.5" /> Grille
-                </button>
-                <button
-                  onClick={() => setViewMode("table")}
-                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${viewMode === "table" ? "border-white/20 bg-white/10" : "border-white/10"}`}
-                >
-                  <Rows3 className="h-3.5 w-3.5" /> Tableau
-                </button>
-              </div>
             </div>
             {isLoadingBeats ? (
               <ListSkeleton count={12} />
@@ -727,13 +683,9 @@ function CatalogueContent() {
                 <p className="mt-2 max-w-sm text-sm text-zinc-300">
                   Rien ne colle à ta recherche. Élargis tes filtres et trouve ton prochain son.
                 </p>
-                <button
-                  type="button"
-                  onClick={resetFilters}
-                  className="mt-6 rounded-full bg-brand px-6 py-2.5 text-sm font-bold uppercase tracking-wide text-white transition-colors hover:bg-brand-hover"
-                >
+                <Button className="mt-6" onClick={resetFilters}>
                   Réinitialiser les filtres
-                </button>
+                </Button>
               </div>
             ) : (
             <AnimatePresence mode="popLayout">
@@ -760,8 +712,8 @@ function CatalogueContent() {
                       isPlaying={isPlaying}
                       onPlayPause={() => onPlay(b)}
                       isFav={favIds.includes(String(b.id))}
+                      onAdd={() => onAddToCart(b)}
                       onFav={() => onToggleFav(String(b.id))}
-                      onMore={() => {}}
                       coverUrl={b.coverUrl}
                     />
                   ))}
@@ -801,9 +753,8 @@ function CatalogueContent() {
                       isCurrent={track?.id === b.id}
                       isPlaying={isPlaying}
                       onPlayPause={() => onPlay(b)}
-                      onAdd={() => addItem({ id: b.id, name: b.name, price: b.price })}
+                      onAdd={() => onAddToCart(b)}
                       onFav={() => onToggleFav(String(b.id))}
-                      onMore={() => {}}
                     />
                   ))}
                     </tbody>
@@ -816,42 +767,52 @@ function CatalogueContent() {
             {/* pagination */}
             {!isLoadingBeats && !errorBeats && sorted.length > 0 && (
             <div className="mt-6 flex items-center justify-center gap-3">
-              <button
+              <Button variant="secondary" size="sm"
                 disabled={currentPage === 1}
                 onClick={() => {
                   setCurrentPage((p) => Math.max(1, p - 1));
                   if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className="rounded-full bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 disabled:opacity-40"
-              >
+                }}>
                 Précédent
-              </button>
+              </Button>
               <div className="text-sm text-zinc-400">
                 Page {currentPage} sur {totalPages}
               </div>
-              <button
+              <Button variant="secondary" size="sm"
                 disabled={currentPage === totalPages}
                 onClick={() => {
                   setCurrentPage((p) => Math.min(totalPages, p + 1));
                   if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-                className="rounded-full bg-white/5 px-3 py-1.5 text-sm hover:bg-white/10 disabled:opacity-40"
-              >
+                }}>
                 Suivant
-              </button>
+              </Button>
             </div>
             )}
           </section>
         </div>
         )}
       </div>
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            role="status"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            className="fixed bottom-28 left-1/2 z-50 -translate-x-1/2 rounded-full border border-white/10 bg-brand-card px-5 py-2.5 text-sm shadow-2xl"
+          >
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <AuthRequiredModal
         open={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onLogin={() => {
           setShowAuthModal(false);
-          router.push("/web/profil?mode=login");
+          router.push("/web/profil?mode=login&next=/web/catalogue");
         }}
+        message="Connecte-toi pour ajouter des beats au panier et les retrouver dans tes favoris."
       />
     </div>
   );
@@ -862,7 +823,7 @@ export default function CataloguePage() {
     <>
       <Suspense
         fallback={
-          <div className="min-h-screen bg-[#0A0A12] px-4 pt-24 text-white">
+          <div className="min-h-screen px-4 pt-24 text-white">
             <div className="container mx-auto max-w-screen-2xl">
               <ListSkeleton count={12} />
             </div>

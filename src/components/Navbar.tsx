@@ -77,23 +77,19 @@ const AnimatedTwoBarsToggle = ({
 
 const primaryNavLinks: [string, string][] = [
   ["/", "Accueil"],
-  ["/catalogue", "Catalogue"],
-  ["/abonnements", "Abonnements"],
-  ["/prodsurmesure", "Prod personnalisée"],
-  ["/web/marketplace", "Marketplace"],
-  ["/cartecadeau", "Carte cadeau"],
-  ["/programmefidelite", "Programme fidélité"],
+  ["/web/catalogue", "Catalogue"],
+  ["/web/prodsurmesure", "Prod sur mesure"],
+  ["/web/account", "Mon compte"],
 ];
 
 const secondaryNavLinks: [string, string][] = [
-  ["/tarification", "Tarification"],
-  ["/faq", "FAQ"],
-  ["/retractation", "Droit de rétractation"],
-  ["/politique", "Politique de confidentialité"],
-  ["/cgv", "CGV"],
-  ["/cgu", "CGU"],
-  ["/mentions", "Mentions légales"],
-  ["/contact", "Contact"],
+  ["/web/faq", "FAQ"],
+  ["/web/retractation", "Droit de rétractation"],
+  ["/web/politique", "Politique de confidentialité"],
+  ["/web/cgv", "CGV"],
+  ["/web/cgu", "CGU"],
+  ["/web/mentions", "Mentions légales"],
+  ["/web/contact", "Contact"],
 ];
 
 const UnderlineLink = ({
@@ -201,14 +197,14 @@ const NavBar = () => {
           >
             <img src="/img/panier.png" alt="Panier" className="h-3.5 w-3.5" />
             {totalItems > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] px-1 rounded-full">
+              <span className="absolute -top-2 -right-2 bg-brand-vivid text-white text-[10px] px-1 rounded-full">
                 {totalItems}
               </span>
             )}
           </button>
 
           <Link
-            href={user ? "/account" : "/profil"}
+            href={user ? "/web/account" : "/web/profil"}
             className="p-1.5 rounded-full border border-white/20"
           >
             <img src="/img/profil.png" alt="Profil" className="h-3.5 w-3.5" />
@@ -217,10 +213,9 @@ const NavBar = () => {
 
         <div className="hidden lg:flex items-center justify-between">
           <div className="flex items-center space-x-6">
-            <UnderlineLink href="/catalogue" text="CATALOGUE" />
-            <UnderlineLink href="/abonnements" text="ABONNEMENTS" />
-            <UnderlineLink href="/prodsurmesure" text="PROD SUR MESURE" />
-            <UnderlineLink href="/web/marketplace" text="MARKETPLACE" />
+            <UnderlineLink href="/web/catalogue" text="CATALOGUE" />
+            <UnderlineLink href="/web/prodsurmesure" text="PROD SUR MESURE" />
+            <UnderlineLink href="/web/faq" text="FAQ" />
           </div>
 
           <div className="flex items-center space-x-2 ml-6">
@@ -234,14 +229,14 @@ const NavBar = () => {
             >
               <img src="/img/panier.png" alt="Panier" className="h-3 w-3" />
               {totalItems > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] px-1 rounded-full">
+                <span className="absolute -top-2 -right-2 bg-brand-vivid text-white text-[10px] px-1 rounded-full">
                   {totalItems}
                 </span>
               )}
             </button>
 
             <Link
-              href={user ? "/account" : "/profil"}
+              href={user ? "/web/account" : "/web/profil"}
               className="p-1 rounded-full border border-white/20"
             >
               <img src="/img/profil.png" alt="Profil" className="h-3 w-3" />

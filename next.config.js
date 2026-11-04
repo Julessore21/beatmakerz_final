@@ -1,16 +1,26 @@
+/**
+ * Pages masquées pour la V1 (pas encore de backend derrière).
+ * Pour réactiver une page : la retirer de cette liste et la remettre dans Navbar/Footer.
+ */
+const HIDDEN_IN_V1 = [
+  "/web/abonnements",
+  "/web/marketplace",
+  "/web/cartes-cadeau",
+  "/web/programmefidelite",
+  "/web/tarification",
+  "/web/notrehistoire", // texte provisoire à remplacer avant publication
+  "/web/vendeur",
+  "/web/vendeur/:path*",
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
     optimizePackageImports: ["react-icons", "framer-motion"],
   },
-  // Augmenter la limite pour les uploads audio
-  api: {
-    bodyParser: {
-      sizeLimit: '100mb',
-    },
-    responseLimit: '100mb',
-  },
+  // Évite que Next prenne un lockfile d'un dossier parent pour la racine du projet
+  outputFileTracingRoot: __dirname,
   images: {
     remotePatterns: [
       {
@@ -54,6 +64,7 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      ...HIDDEN_IN_V1.map((source) => ({ source, destination: "/web/catalogue", permanent: false })),
       { source: "/abonnements", destination: "/web/abonnements", permanent: true },
       { source: "/prodsurmesure", destination: "/web/prodsurmesure", permanent: true },
       { source: "/tarification", destination: "/web/tarification", permanent: true },

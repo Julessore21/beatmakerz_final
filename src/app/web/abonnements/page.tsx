@@ -131,7 +131,7 @@ function Abonnements() {
   const stickyPlan =
     PLAN_DEFINITIONS.find((plan) => plan.name === selectedPlan) ??
     PLAN_DEFINITIONS.find((plan) => plan.label === "POPULAIRE") ??
-    PLAN_DEFINITIONS[0];
+    PLAN_DEFINITIONS[0]!; // tableau constant, jamais vide
   const stickyLookupKey = stickyPlan.lookupKeys[billingCycle];
   const stickyPriceId = stickyPlan.priceIds[billingCycle];
   const stickyUnavailable = !stickyLookupKey && !stickyPriceId;

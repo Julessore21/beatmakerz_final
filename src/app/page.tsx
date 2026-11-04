@@ -12,7 +12,7 @@ const TRANSITION_MS = 900;
 // ffmpeg -i videotest0.mp4 -ss 00:00:03 -frames:v 1 public/videos/poster0.jpg
 const SLIDES = [
   {
-    subtitle: "LES PRODS A PRIX ABORDABLE",
+    subtitle: "LES PRODS À PRIX ABORDABLE",
     title: "BEAT DE QUALITÉ",
     href: "/web/catalogue",
     cta: "VOIR LE CATALOGUE",
@@ -20,15 +20,7 @@ const SLIDES = [
     poster: "/videos/poster0.jpg",
   },
   {
-    subtitle: "NOS ABONNEMENTS",
-    title: "INFINI",
-    href: "/web/abonnements",
-    cta: "VOIR NOS OFFRES",
-    video: "/videos/videotest1.mp4",
-    poster: "/videos/poster1.jpg",
-  },
-  {
-    subtitle: "OBTIENT TA PROD PERSONNALISÉE",
+    subtitle: "OBTIENS TA PROD PERSONNALISÉE",
     title: "SUR MESURE",
     href: "/web/prodsurmesure",
     cta: "EN SAVOIR PLUS",
@@ -37,15 +29,15 @@ const SLIDES = [
   },
   {
     subtitle: "LE COLLECTIF BEATMAKERZ",
-    title: "NOTRE HISTOIRE",
-    href: "/web/notrehistoire",
-    cta: "EN SAVOIR PLUS",
+    title: "PARLONS-EN",
+    href: "/web/contact",
+    cta: "NOUS CONTACTER",
     video: "/videos/videotest3.mp4",
     poster: "/videos/poster3.jpg",
   },
 ] as const;
 
-// 4 sections vidéo + 1 footer
+// Sections vidéo + 1 footer
 const SLIDE_COUNT = SLIDES.length + 1;
 
 export default function Home() {
