@@ -1,6 +1,9 @@
 /**
  * Pages masquées pour la V1 (pas encore de backend derrière).
  * Pour réactiver une page : la retirer de cette liste et la remettre dans Navbar/Footer.
+ * Abonnements : les routes /api/stripe/* ont été supprimées (portail de facturation
+ * accessible sans authentification, priceId libre). Les recréer côté API, derrière
+ * l'authentification, en vérifiant que le client Stripe appartient à l'utilisateur.
  */
 const HIDDEN_IN_V1 = [
   "/web/abonnements",
