@@ -97,11 +97,13 @@ const UnderlineLink = ({
   href,
   onClick,
   textSize = "text-xs",
+  className = "",
 }: {
   text: string;
   href: string;
   onClick?: () => void;
   textSize?: string;
+  className?: string;
 }) => {
   const textRef = useRef<HTMLSpanElement>(null);
   const [width, setWidth] = useState(0);
@@ -117,7 +119,7 @@ const UnderlineLink = ({
     <Link
       href={href}
       onClick={onClick}
-      className={`relative font-semibold py-1 ${textSize} uppercase`}
+      className={`relative font-semibold py-1 ${textSize} uppercase ${className}`}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -176,7 +178,13 @@ const NavBar = () => {
         {/* Toggle menu — toujours visible */}
         <div className="flex items-center m-2 space-x-2 cursor-pointer">
           <AnimatedTwoBarsToggle isOpen={isOpen} toggle={toggleMenu} />
-          <UnderlineLink text="MENU" onClick={toggleMenu} href="#" />
+          {/* Zone cliquable étendue à 44×44 via un pseudo-élément, sans changer le rendu */}
+          <UnderlineLink
+            text="MENU"
+            onClick={toggleMenu}
+            href="#"
+            className="before:absolute before:-inset-x-1 before:-inset-y-[10px] before:content-['']"
+          />
         </div>
 
         <div className="absolute left-1/2 transform -translate-x-1/2">
@@ -193,7 +201,8 @@ const NavBar = () => {
               e.preventDefault();
               setIsCartOpen(true);
             }}
-            className="p-1.5 rounded-full border border-white/20 relative"
+            aria-label="Panier"
+            className="p-1.5 rounded-full border border-white/20 relative before:absolute before:-inset-2 before:content-['']"
           >
             <img src="/img/panier.png" alt="Panier" className="h-3.5 w-3.5" />
             {totalItems > 0 && (
@@ -205,7 +214,8 @@ const NavBar = () => {
 
           <Link
             href={user ? "/web/account" : "/web/profil"}
-            className="p-1.5 rounded-full border border-white/20"
+            aria-label="Profil"
+            className="p-1.5 rounded-full border border-white/20 relative before:absolute before:-inset-2 before:content-['']"
           >
             <img src="/img/profil.png" alt="Profil" className="h-3.5 w-3.5" />
           </Link>
