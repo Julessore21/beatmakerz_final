@@ -34,9 +34,6 @@ export const metadata: Metadata = {
   },
   description:
     "Plateforme française de vente d'instrumentales et de services pour artistes",
-  alternates: {
-    canonical: "/",
-  },
   robots: {
     index: true,
     follow: true,
