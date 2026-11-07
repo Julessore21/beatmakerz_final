@@ -77,7 +77,7 @@ const sections: { title: string; content: string | string[] }[] = [
   },
   {
     title: "7. Cookies",
-    content: ["Cookies essentiels (securite, paiement)", "Cookies analytics", "Gestion via les reglages navigateur et notre bannière le cas echeant"],
+    content: ["Cookies essentiels uniquement (securite, paiement, connexion)", "Gestion via les reglages de votre navigateur"],
   },
   {
     title: "8. Contact",
