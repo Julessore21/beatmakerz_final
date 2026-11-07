@@ -78,7 +78,7 @@ const sections: { title: string; content: string | string[] }[] = [
   {
     title: "Cookies",
     content:
-      "Le site Beatmakerz utilise des cookies pour améliorer l'expérience utilisateur, analyser le trafic et personnaliser le contenu. Vous pouvez modifier vos préférences via votre navigateur.",
+      "Le site Beatmakerz utilise des cookies pour améliorer l'expérience utilisateur et personnaliser le contenu. Vous pouvez modifier vos préférences via votre navigateur.",
   },
   {
     title: "Limitation de responsabilité",
