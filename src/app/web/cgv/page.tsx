@@ -76,6 +76,9 @@ const sections: {
       "Les prix de nos instrumentales sont indiqués en euros (€) TTC. Nous nous réservons le droit de modifier les prix à tout moment, mais les produits seront facturés sur la base des tarifs en vigueur au moment de la validation de la commande.",
       "Instrumentale à l'unité : 9,99€",
       "Prod sur-mesure : 59,99€",
+      "Abonnement Infini : 19,99€ / mois ou 199,99€ / an (4 prods par mois)",
+      "Abonnement Infini + : 39,99€ / mois ou 399,99€ / an (10 prods par mois)",
+      "Abonnement Infini X : 59,99€ / mois ou 599,99€ / an (15 prods par mois)",
     ],
   },
   {
