@@ -196,7 +196,7 @@ export default function Home() {
 
                 {/* Contenu — slide-up + fade à l'activation */}
                 <div
-                  className="absolute bottom-16 left-4 right-4 sm:left-10 sm:right-auto lg:left-16 z-10 sm:max-w-lg lg:max-w-xl flex flex-col space-y-3 sm:space-y-4 items-start"
+                  className="absolute bottom-16 left-4 right-4 sm:left-10 sm:right-auto lg:left-16 z-10 sm:max-w-lg lg:max-w-xl flex flex-col space-y-4 sm:space-y-6 items-start"
                   style={{
                     opacity: isActive ? 1 : 0,
                     transform: isActive ? "translateY(0)" : "translateY(28px)",
@@ -205,10 +205,10 @@ export default function Home() {
                       : "opacity 0.25s ease, transform 0.25s ease",
                   }}
                 >
-                  <span className="uppercase text-[10px] xs:text-xs sm:text-sm font-semibold tracking-wider opacity-70 ml-1">
+                  <span className="uppercase text-xs sm:text-sm font-semibold tracking-wider opacity-[0.85] sm:opacity-70 ml-1">
                     {slide.subtitle}
                   </span>
-                  <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold leading-tight lg:whitespace-nowrap">
+                  <h1 className="text-4xl xs:text-5xl sm:text-5xl lg:text-7xl xl:text-8xl font-bold leading-tight lg:whitespace-nowrap">
                     {slide.title}
                   </h1>
                   <Link
@@ -224,7 +224,7 @@ export default function Home() {
                       />
                     )}
                   </Link>
-                  <div className="transform translate-y-5 sm:translate-y-6">
+                  <div className="mt-2">
                     <VisibleProgressCircle
                       duration={4}
                       onAnimationEnd={() => goTo(index + 1)}
@@ -284,7 +284,7 @@ export default function Home() {
               className="relative z-10 flex flex-col items-center justify-center gap-5 text-center px-6"
               style={{ flex: "0 0 42%" }}
             >
-              <p className="text-[9px] uppercase tracking-[0.55em] text-white/30">
+              <p className="text-[11px] uppercase tracking-[0.55em] text-white/60">
                 Le collectif
               </p>
               <h2
@@ -295,7 +295,7 @@ export default function Home() {
               </h2>
               <div className="flex items-center gap-3">
                 <div className="h-px w-12 bg-gradient-to-r from-transparent to-white/20" />
-                <p className="text-xs text-white/30 tracking-widest uppercase whitespace-nowrap">
+                <p className="text-xs text-white/60 tracking-widest uppercase whitespace-nowrap">
                   Prods de qualité&nbsp;· Sons sur mesure
                 </p>
                 <div className="h-px w-12 bg-gradient-to-l from-transparent to-white/20" />
@@ -309,9 +309,9 @@ export default function Home() {
           </section>
         </div>
 
-        {/* Navigation par points */}
+        {/* Navigation par points — boutons 32×32, même espacement visuel qu'avant */}
         <nav
-          className="fixed right-4 sm:right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3"
+          className="fixed right-4 sm:right-6 top-1/2 -translate-y-1/2 z-50 flex flex-col"
           aria-label="Navigation des sections"
         >
           {/* Points pour les 4 sections vidéo */}
@@ -321,7 +321,7 @@ export default function Home() {
               onClick={() => goTo(i)}
               aria-label={`Section ${i + 1}`}
               aria-current={currentIndex === i ? "true" : undefined}
-              className="group flex items-center justify-center w-5 h-5"
+              className="group flex items-center justify-center w-8 h-8"
             >
               <span
                 className="block rounded-full"
@@ -348,7 +348,7 @@ export default function Home() {
             onClick={() => goTo(SLIDES.length)}
             aria-label="Footer"
             aria-current={currentIndex === SLIDES.length ? "true" : undefined}
-            className="flex items-center justify-center w-5 h-5"
+            className="flex items-center justify-center w-8 h-8"
           >
             <span
               className="block"

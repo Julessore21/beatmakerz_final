@@ -13,6 +13,7 @@ export default function SplashScreen({
 }: SplashScreenProps) {
   const [progress, setProgress] = useState(0);
   const [isExiting, setIsExiting] = useState(false);
+  const [isDone, setIsDone] = useState(false);
 
   useEffect(() => {
     const steps = 20;
@@ -25,15 +26,21 @@ export default function SplashScreen({
       if (step >= steps) {
         clearInterval(timer);
         setIsExiting(true);
-        setTimeout(onLoadComplete, 500);
+        setTimeout(() => {
+          setIsDone(true);
+          onLoadComplete();
+        }, 500);
       }
     }, interval);
 
     return () => clearInterval(timer);
   }, [duration, onLoadComplete]);
 
+  if (isDone) return null;
+
   return (
     <div
+      aria-hidden="true"
       className={`fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center transition-opacity duration-500 ${
         isExiting ? 'opacity-0' : 'opacity-100'
       }`}

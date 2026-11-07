@@ -543,7 +543,7 @@ function CatalogueContent() {
       >
         <div className="rounded-3xl border border-white/10 bg-brand-card/80 p-6 backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]">
           <div className="text-2xl font-bold tracking-tight">Catalogue</div>
-          <div className="mt-1 text-sm text-zinc-300">{sorted.length} résultats • {GENRES.length} genres • vue {viewMode}</div>
+          <div className="mt-1 text-sm text-zinc-300">{sorted.length} résultats • {GENRES.length} genres • vue {viewMode === "grid" ? "grille" : "tableau"}</div>
         </div>
 
         {/* tools sticky (masqué si le catalogue est vide) */}
@@ -556,23 +556,31 @@ function CatalogueContent() {
               <span className="xs:hidden">Filtres</span>
             </div>
             {/* Badges icônes: Tendance, Nouveaux, Populaire */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0 -mx-1 px-1">
-              <Chip active={selectedTag === "Tendance"} onClick={() => setSelectedTag(selectedTag === "Tendance" ? null : "Tendance")} className="shrink-0 text-xs sm:text-sm">
+            <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-1 sm:pb-0 -mx-1 px-1">
+              <Chip active={selectedTag === "Tendance"} onClick={() => setSelectedTag(selectedTag === "Tendance" ? null : "Tendance")} className="shrink-0 min-h-[40px] px-4 text-sm font-medium sm:min-h-0 sm:px-3">
                 <Flame className="h-3.5 w-3.5 text-orange-400" /> Top
               </Chip>
-              <Chip active={selectedTag === "Nouveau"} onClick={() => setSelectedTag(selectedTag === "Nouveau" ? null : "Nouveau")} className="shrink-0 text-xs sm:text-sm">
+              <Chip active={selectedTag === "Nouveau"} onClick={() => setSelectedTag(selectedTag === "Nouveau" ? null : "Nouveau")} className="shrink-0 min-h-[40px] px-4 text-sm font-medium sm:min-h-0 sm:px-3">
                 <Star className="h-3.5 w-3.5 text-yellow-300" /> Nouveaux
               </Chip>
-              <Chip active={selectedTag === "Populaire"} onClick={() => setSelectedTag(selectedTag === "Populaire" ? null : "Populaire")} className="shrink-0 text-xs sm:text-sm">
+              <Chip active={selectedTag === "Populaire"} onClick={() => setSelectedTag(selectedTag === "Populaire" ? null : "Populaire")} className="shrink-0 min-h-[40px] px-4 text-sm font-medium sm:min-h-0 sm:px-3">
                 <Crown className="h-3.5 w-3.5 text-amber-300" /> Populaire
               </Chip>
             </div>
 
-            <div className="flex items-center gap-2 sm:ml-auto">
-              <Chip active={viewMode === "grid"} onClick={() => setViewMode("grid")} className="text-xs sm:text-sm">
+            <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+              <Chip
+                active={viewMode === "grid"}
+                onClick={() => setViewMode("grid")}
+                className={`min-h-[40px] px-4 text-sm sm:min-h-0 sm:px-3 ${viewMode === "grid" ? "bg-brand font-semibold text-white hover:bg-brand-hover" : "font-medium"}`}
+              >
                 <Grid3X3 className="h-3.5 w-3.5" /> Grille
               </Chip>
-              <Chip active={viewMode === "table"} onClick={() => setViewMode("table")} className="text-xs sm:text-sm">
+              <Chip
+                active={viewMode === "table"}
+                onClick={() => setViewMode("table")}
+                className={`min-h-[40px] px-4 text-sm sm:min-h-0 sm:px-3 ${viewMode === "table" ? "bg-brand font-semibold text-white hover:bg-brand-hover" : "font-medium"}`}
+              >
                 <Rows3 className="h-3.5 w-3.5" /> Tableau
               </Chip>
 
@@ -580,7 +588,7 @@ function CatalogueContent() {
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as (typeof SORTS)[number])}
-                  className="appearance-none rounded-full border border-white/10 bg-white/5 px-4 pr-7 py-1.5 h-8 text-xs sm:text-sm outline-none text-center leading-none"
+                  className="appearance-none rounded-full border border-white/[0.08] bg-white/[0.04] px-4 pr-7 h-[34px] text-sm text-zinc-200 outline-none text-center leading-none"
                 >
                   {SORTS.map((s) => (
                     <option key={s} value={s} className="text-center">
