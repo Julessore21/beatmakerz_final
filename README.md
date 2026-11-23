@@ -57,3 +57,16 @@ Pensez a mettre a jour `STRIPE_WEBHOOK_SECRET` avec la valeur retournee par la c
 
 
 
+
+## Mise en ligne sur Cloudflare (gratuit, usage commercial permis)
+
+Le site tourne sur Cloudflare Workers grâce à OpenNext (`wrangler.jsonc`, `open-next.config.ts`).
+
+1. dash.cloudflare.com › Workers & Pages › Create › **Import a repository** : `beatmakerz_final`, branche `main`.
+2. Build command : `npx opennextjs-cloudflare build` · Deploy command : `npx opennextjs-cloudflare deploy`.
+3. **Build variables** (figées à la construction) : `NEXT_PUBLIC_API_URL` = adresse Cloud Run de l'API,
+   `NEXT_PUBLIC_SITE_URL` = adresse du site.
+4. Le site répond sur `https://beatmakerz.<compte>.workers.dev`, puis sur votre domaine (Settings › Domains & Routes).
+5. Ajouter cette adresse à `FRONTEND_URL` de l'API (plusieurs possibles, séparées par des virgules).
+
+Essai en local dans le moteur de Cloudflare : `npm run preview`.

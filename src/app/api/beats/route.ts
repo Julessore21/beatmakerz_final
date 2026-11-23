@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getErrorMessage } from "@/lib/utils/error";
+import { API_URL } from "@/lib/apiUrl";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
 /**
  * GET /api/beats - Liste publique des beats (published + public)

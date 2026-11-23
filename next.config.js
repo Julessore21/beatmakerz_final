@@ -24,20 +24,9 @@ const nextConfig = {
   },
   // Évite que Next prenne un lockfile d'un dossier parent pour la racine du projet
   outputFileTracingRoot: __dirname,
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'file-up.fr',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.file-up.fr',
-        pathname: '/**',
-      },
-    ],
-  },
+  // Pas d'optimisation d'images côté serveur (Cloudflare) : les pochettes
+  // viennent de l'API, déjà à la bonne taille.
+  images: { unoptimized: true },
   async headers() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     const csp = [
@@ -91,3 +80,8 @@ const nextConfig = {
   },
 };
 module.exports = nextConfig;
+
+// En développement, donne accès aux liaisons Cloudflare (sans effet en production).
+if (process.env.NODE_ENV === "development") {
+  import("@opennextjs/cloudflare").then((m) => m.initOpenNextCloudflareForDev()).catch(() => {});
+}

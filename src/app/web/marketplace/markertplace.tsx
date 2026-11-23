@@ -13,6 +13,7 @@ import { useAudio } from "@/context/AudioPlayerContext";
 import { useAuth } from "@/context/AuthContext";
 import { apiGet } from "@/lib/services/api-client";
 import { fetchFavorites, toggleFavorite as toggleFavoriteApi } from "@/lib/services/user-api";
+import { API_URL } from "@/lib/apiUrl";
 
 type Mode = "consulter" | "vendre";
 type ViewMode = "grid" | "table";
@@ -369,7 +370,7 @@ export default function BeatmakerMarketplace() {
             price: (b.priceOverrides?.[0]?.priceCents ?? b.priceCents ?? 1999) / 100,
             tag: (b.tag as Beat["tag"]) ?? null,
             audio: b.assets?.find((a) => a.type === "preview")
-              ? `${process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com"}/beats/${String(b._id || b.id)}/stream/preview`
+              ? `${API_URL}/beats/${String(b._id || b.id)}/stream/preview`
               : "/audio/sample.mp3",
             coverUrl: b.coverUrl ?? null,
           })) || [];
