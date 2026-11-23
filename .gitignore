@@ -7,3 +7,8 @@ build/
 .vercel/
 .env*
 *.log
+
+# Cloudflare (OpenNext)
+.open-next
+.wrangler
+.dev.vars

@@ -19,6 +19,7 @@ import BeatTableRow from "@/components/BeatTableRow";
 import ListSkeleton from "@/components/skeletons/ListSkeleton";
 import { fetchFileUpCatalogue } from "@/lib/services/fileup-catalogue";
 import { fetchFavorites, toggleFavorite as toggleFavoriteApi } from "@/lib/services/user-api";
+import { API_URL } from "@/lib/apiUrl";
 
 /* ------------------------------ types & data ------------------------------ */
 
@@ -253,7 +254,7 @@ function CatalogueContent() {
       const items = await fetchFileUpCatalogue();
       // Un beat n'est en vente que s'il a une preview et un prix calculé par l'API
       // (licence Basic, même calcul que le panier : prix affiché = prix facturé).
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
+      const apiUrl = API_URL;
       const mapped = items.flatMap((b, idx) => {
         const id = b._id || b.id || `beat-${idx}`;
         const hasPreview = b.assets?.some((a) => a.type === "preview");

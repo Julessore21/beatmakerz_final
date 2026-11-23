@@ -1,9 +1,9 @@
+import { API_URL } from "@/lib/apiUrl";
 /**
  * Service d'authentification - Communique avec le backend API
  * Remplace le système d'authentification faible de server-auth.ts
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://beatmakerz-api.onrender.com';
 
 export interface AuthTokens {
   accessToken: string;

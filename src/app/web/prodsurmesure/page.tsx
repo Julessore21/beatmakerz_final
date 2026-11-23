@@ -10,6 +10,7 @@ import { fieldClasses } from "@/components/ui/input";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { ChevronDown, CheckCircle } from "lucide-react";
 import { briefSchema } from "@/schemas/forms/briefSchema";
+import { API_URL } from "@/lib/apiUrl";
 
 /* =========================== Types & Data =========================== */
 
@@ -51,7 +52,6 @@ const stepsData: Step[] = [
 const fillMap: Record<number, number> = { 1: 33, 2: 66, 3: 100 };
 
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
 /* =========================== Page =========================== */
 
