@@ -45,7 +45,7 @@ export function Catalogue() {
       <p className="mt-1 text-fg-muted">{beats ? `${beats.length} prod${beats.length > 1 ? "s" : ""}` : "Chargement des prods…"}</p>
 
       {/* Recherche et filtres, toujours à portée */}
-      <div className="sticky top-16 z-30 -mx-5 mt-8 border-b border-line bg-ink/85 px-5 py-4 backdrop-blur-xl sm:-mx-8 sm:px-8">
+      <div className="sticky top-[76px] z-30 sm:top-[84px] -mx-5 mt-8 border-b border-line bg-ink/85 px-5 py-4 backdrop-blur-xl sm:-mx-8 sm:px-8">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <label className="relative flex-1">
             <span className="sr-only">Rechercher une prod</span>

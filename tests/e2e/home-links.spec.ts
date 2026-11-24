@@ -8,7 +8,7 @@ for (const cta of [
   test(`le bouton « ${cta.label} » de l'accueil mène à ${cta.path}`, async ({ page }) => {
     await mockApi(page);
     await page.goto('/');
-    const link = page.locator('section').first().getByRole('link', { name: cta.label });
+    const link = page.locator('main').getByRole('link', { name: cta.label }).first();
     await expect(link).toHaveAttribute('href', cta.path);
     await link.click();
     await page.waitForURL(`**${cta.path}`);

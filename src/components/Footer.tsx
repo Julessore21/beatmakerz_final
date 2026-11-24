@@ -1,55 +1,74 @@
 import Link from "next/link";
-import { LEGAL, SITE } from "@/lib/site";
-import { Logo } from "./Logo";
+import { LEGAL, NAV, SITE } from "@/lib/site";
 
-const SOCIALS = [
-  { href: SITE.socials.tiktok, label: "TikTok" },
-  { href: SITE.socials.instagram, label: "Instagram" },
-  { href: SITE.socials.youtube, label: "YouTube" },
-];
+const link = "font-mono text-[11px] uppercase tracking-[0.14em] text-white/75 transition-colors hover:text-white";
 
+/** Le pied de page : un grand bloc violet, le nom en très grand, les liens en mono entre crochets. */
 export function Footer() {
   return (
-    <footer className="mt-24 border-t border-line">
-      <div className="container-site grid gap-12 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
-        <div className="max-w-xs">
-          <Logo className="flex" />
-          <p className="mt-4 text-[14px] leading-relaxed text-fg-muted">Des prods pour rappeurs, prêtes à poser. Écoute, choisis, télécharge.</p>
-          <div className="mt-5 flex gap-2">
-            {SOCIALS.map((s) => (
-              <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="rounded-full border border-line px-3 py-1.5 text-[13px] text-fg-muted transition-colors hover:border-line-strong hover:text-fg">
-                {s.label}
-              </a>
+    <footer className="mt-32 bg-accent-deep text-white">
+      <div className="container-site pb-8 pt-14 sm:pt-20">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <Col title="Navigation">
+            {[...NAV].map((n) => (
+              <Link key={n.href} href={n.href} className={link}>
+                [ {n.label} ]
+              </Link>
             ))}
-          </div>
+          </Col>
+          <Col title="Contact">
+            <a href={`mailto:${SITE.email}`} className={`${link} normal-case`}>
+              [ {SITE.email} ]
+            </a>
+            <Link href="/web/contact" className={link}>
+              [ Écrire un message ]
+            </Link>
+            <Link href="/web/account" className={link}>
+              [ Mon compte ]
+            </Link>
+          </Col>
+          <Col title="Réseaux">
+            <a href={SITE.socials.tiktok} target="_blank" rel="noreferrer" className={link}>
+              [ TikTok ]
+            </a>
+            <a href={SITE.socials.instagram} target="_blank" rel="noreferrer" className={link}>
+              [ Instagram ]
+            </a>
+            <a href={SITE.socials.youtube} target="_blank" rel="noreferrer" className={link}>
+              [ YouTube ]
+            </a>
+          </Col>
+          <Col title="Légal">
+            {LEGAL.map((l) => (
+              <Link key={l.href} href={l.href} className={link}>
+                [ {l.label} ]
+              </Link>
+            ))}
+          </Col>
         </div>
-        <FooterCol title="Boutique" links={[{ href: "/web/catalogue", label: "Catalogue" }, { href: "/web/prodsurmesure", label: "Prod sur mesure" }, { href: "/#licence", label: "La licence" }]} />
-        <FooterCol title="Aide" links={[{ href: "/web/faq", label: "Questions fréquentes" }, { href: "/web/contact", label: "Contact" }, { href: "/web/account", label: "Mon compte" }]} />
-        <FooterCol title="Légal" links={[...LEGAL]} />
-      </div>
-      <div className="border-t border-line">
-        <div className="container-site flex flex-col gap-2 py-6 text-[12px] text-fg-faint sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} Beatmakerz. Tous droits réservés.</p>
-          <p>Paiement sécurisé par Stripe</p>
+
+        {/* Le nom remplit exactement la largeur, quelle que soit l'écran. */}
+        <svg viewBox="0 0 1000 132" className="mt-16 block w-full select-none sm:mt-24" aria-hidden="true">
+          <text x="0" y="118" textLength="1000" lengthAdjust="spacingAndGlyphs" fill="currentColor" style={{ fontFamily: "var(--font-geist-sans)", fontWeight: 600, fontSize: 158, letterSpacing: "-0.04em" }}>
+            BEATMAKERZ
+          </text>
+        </svg>
+
+        <div className="mt-8 flex flex-col gap-2 border-t border-white/20 pt-6 font-mono text-[10px] uppercase tracking-[0.14em] text-white/60 sm:flex-row sm:justify-between">
+          <span>© {new Date().getFullYear()} Beatmakerz</span>
+          <span>Paiement sécurisé par Stripe</span>
+          <span>Tous droits réservés</span>
         </div>
       </div>
     </footer>
   );
 }
 
-function FooterCol({ title, links }: { title: string; links: { href: string; label: string }[] }) {
+function Col({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="eyebrow">{title}</p>
-      <ul className="mt-4 space-y-2.5">
-        {links.map((l) => (
-          <li key={l.href}>
-            <Link href={l.href} className="text-[14px] text-fg-muted transition-colors hover:text-fg">
-              {l.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/45">{title}</p>
+      <div className="mt-4 flex flex-col items-start gap-2.5">{children}</div>
     </div>
   );
 }

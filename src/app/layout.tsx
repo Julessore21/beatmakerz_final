@@ -52,7 +52,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <CartProvider>
             <AudioPlayerProvider>
               <Header />
-              <main className="w-full flex-1">{children}</main>
+              <main className="w-full flex-1 pt-24 sm:pt-28">{children}</main>
               <Footer />
               <PlayerBar />
               <CartDrawer />

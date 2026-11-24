@@ -1,165 +1,163 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Check, Download, Headphones, ShoppingBag } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
+import { ArrowUpRight, Pause, Play } from "lucide-react";
 import { useAudio } from "@/context/AudioPlayerContext";
-import { useCatalog } from "@/lib/useCatalog";
-import { useOffers } from "@/lib/useOffers";
+import { useCart } from "@/context/CartContext";
+import { cheapest, FORMAT_LABEL, genresOf, type Beat } from "@/lib/catalog";
 import { formatPrice } from "@/lib/format";
 import { SITE } from "@/lib/site";
-import { ButtonLink } from "@/components/ui/Button";
+import { useCatalog } from "@/lib/useCatalog";
+import { useOffers } from "@/lib/useOffers";
+import { cn } from "@/lib/cn";
 import { Accordion } from "@/components/ui/Accordion";
-import { SectionHead } from "@/components/ui/SectionHead";
-import { Cover } from "@/components/shop/Cover";
-import { EqBars, PlayToggle } from "@/components/shop/PlayToggle";
-import { TrackList, TrackListSkeleton } from "@/components/shop/TrackList";
+import { CountUp } from "@/components/fx/CountUp";
+import { LiveClock } from "@/components/fx/LiveClock";
+import { FadeUp, RevealLines } from "@/components/fx/Reveal";
+import { Scramble, Tag } from "@/components/fx/Scramble";
+import { ScrollWords } from "@/components/fx/ScrollWords";
+import { ArtCover } from "@/components/shop/ArtCover";
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+const VIDEOS = [
+  { src: "/videos/videotest3.mp4", poster: "/videos/poster3.jpg" },
+  { src: "/videos/videotest2.mp4", poster: "/videos/poster2.jpg" },
+  { src: "/videos/videotest0.mp4", poster: "/videos/poster0.jpg" },
+];
+const FALLBACK_GENRES = ["Trap", "Drill", "Cloud", "Lofi", "Boom bap", "Afro", "Rage"];
+const pill = "inline-flex h-11 items-center justify-center gap-2 rounded-full px-5 font-mono text-[11px] uppercase tracking-[0.14em] transition-colors";
 
 export default function Home() {
-  const { beats, error, retry } = useCatalog();
+  const { beats } = useCatalog();
   const { basic, custom } = useOffers();
-  const latest = beats?.slice(0, 8) ?? [];
+  const featured = beats?.slice(0, 4) ?? [];
+  const genres = beats && beats.length ? genresOf(beats).slice(0, 8) : FALLBACK_GENRES;
   const basicPrice = basic ? formatPrice(basic.priceCents, basic.currency) : null;
   const customPrice = custom?.priceCents != null ? formatPrice(custom.priceCents, custom.currency) : null;
 
   return (
     <>
-      {/* Ouverture */}
-      <section className="relative overflow-hidden">
-        <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_50%_at_70%_0%,rgba(124,92,255,0.18),transparent_70%)]" />
-        <div className="container-site relative grid items-center gap-12 pb-16 pt-12 sm:pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:pb-24">
-          <div className="animate-rise">
-            <p className="eyebrow mb-5">Beatmakerz · prods pour rappeurs</p>
-            <h1 className="text-[44px] font-semibold leading-[1.02] tracking-[-0.035em] sm:text-[64px]">
-              Des prods
-              <br />
-              prêtes à poser.
-            </h1>
-            <p className="mt-6 max-w-md text-[17px] leading-relaxed text-fg-muted">
-              Trap, drill, cloud, lofi. Écoute les extraits, prends la licence, et télécharge tes fichiers dès le paiement.
-            </p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <ButtonLink href="/web/catalogue" size="lg" className="w-full sm:w-auto">
-                Écouter le catalogue
-                <ArrowRight className="h-4 w-4" />
-              </ButtonLink>
-              <ButtonLink href="/web/prodsurmesure" size="lg" variant="secondary" className="w-full sm:w-auto">
-                Prod sur mesure
-              </ButtonLink>
-            </div>
-            <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-[13px] text-fg-muted">
-              {["Licence commerciale", "Téléchargement immédiat", "Paiement sécurisé Stripe"].map((t) => (
-                <li key={t} className="flex items-center gap-2">
-                  <Check className="h-3.5 w-3.5 text-accent" strokeWidth={2.5} />
-                  {t}
-                </li>
-              ))}
-            </ul>
+      <Hero latest={featured[0] ?? null} queue={featured} />
+
+      {/* Présentation */}
+      <section className="container-site grid gap-10 pt-16 sm:pt-24 lg:grid-cols-[1.1fr_0.9fr]">
+        <RevealLines lines={["Des prods", "prêtes", "à poser."]} className="text-[clamp(56px,9.5vw,140px)] font-medium leading-[0.88] tracking-[-0.055em]" />
+        <FadeUp className="max-w-md lg:justify-self-end lg:pt-3" delay={0.2}>
+          <Tag className="eyebrow">Beatmakerz · prods pour rappeurs</Tag>
+          <p className="mt-6 text-[22px] leading-[1.35] tracking-[-0.015em] sm:text-[24px]">
+            Des instrumentales pour poser ce soir.{" "}
+            <span className="text-fg-faint">Trap, drill, cloud, lofi : écoute les extraits, prends la licence, télécharge tes fichiers dès le paiement.</span>
+          </p>
+          <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-line pt-6">
+            <Fact k="TikTok" v={SITE.tiktokFollowers} />
+            <Fact k="La prod" v={basicPrice ?? "—"} />
+            <Fact k="Téléchargement" v="Immédiat" />
+          </dl>
+        </FadeUp>
+      </section>
+
+      {/* Les prods en grand */}
+      <section className="container-site pt-28 sm:pt-40" aria-label="Sélection de prods">
+        <div className="mb-10 flex items-end justify-between gap-6 border-b border-line pb-5">
+          <Tag className="eyebrow text-fg-muted">Sélection</Tag>
+          <Link href="/web/catalogue" className="group inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.14em] text-fg-muted hover:text-fg">
+            [ Tout le catalogue ]
+            <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+        {beats === null ? (
+          <div className="grid gap-10 lg:grid-cols-2">
+            <div className="skeleton aspect-[4/5] w-full rounded-[28px]" />
+            <div className="hidden lg:block" />
           </div>
-
-          <HeroVisual latest={latest[0] ?? null} queue={latest} />
-        </div>
-      </section>
-
-      {/* Repères */}
-      <section className="border-y border-line bg-ink-850/50">
-        <div className="container-site grid grid-cols-1 divide-y divide-line sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-          <Fact value={SITE.tiktokFollowers} label="abonnés sur TikTok" />
-          <Fact value={basicPrice ?? "—"} label="la licence d’une prod" />
-          <Fact value="Tout de suite" label="tes fichiers, après paiement" />
-        </div>
-      </section>
-
-      {/* Dernières prods */}
-      <section className="container-site pt-20">
-        <SectionHead eyebrow="Nouveautés" title="Les dernières prods" link={{ href: "/web/catalogue", label: "Tout le catalogue" }} />
-        {error ? (
-          <CatalogError onRetry={retry} />
-        ) : !beats ? (
-          <TrackListSkeleton rows={6} />
-        ) : latest.length ? (
-          <TrackList beats={latest} />
+        ) : featured.length ? (
+          <div className="space-y-16 sm:space-y-28">
+            {featured.map((b, i) => (
+              <Showcase key={b.id} beat={b} index={i} total={featured.length} queue={featured} />
+            ))}
+          </div>
         ) : (
-          <p className="card px-6 py-10 text-center text-fg-muted">Les premières prods arrivent très bientôt.</p>
+          <p className="py-20 text-center text-fg-muted">Les premières prods arrivent très bientôt.</p>
         )}
       </section>
 
-      {/* Offres */}
-      <section id="licence" className="container-site scroll-mt-24 pt-24">
-        <SectionHead eyebrow="Deux façons d’acheter" title="Une prod du catalogue, ou la tienne" text="Sans abonnement, sans surprise : tu paies la prod, tu repars avec tes fichiers et ta licence." />
-        <div className="grid gap-4 md:grid-cols-2">
-          <Offer
-            title="Licence prod"
-            price={basicPrice}
-            unit="la prod"
-            text="Pour poser sur une prod du catalogue et la sortir."
-            points={["Usage commercial : streaming, clips, scène", "MP3 haute qualité, WAV selon la prod", "Fichiers à télécharger depuis ton compte", "Licence non exclusive, revente interdite"]}
-            cta={{ href: "/web/catalogue", label: "Choisir une prod" }}
-            primary
-          />
-          <Offer
-            title="Prod sur mesure"
-            price={customPrice}
-            unit="la prod"
-            text="Une prod faite pour toi, à partir de tes références."
-            points={["Licence exclusive : elle n’est vendue qu’à toi", "Contrat de cession fourni", "Jamais remise en vente sur le site", "Brief simple : genre, tempo, ambiance, références"]}
-            cta={{ href: "/web/prodsurmesure", label: "Faire ma demande" }}
+      {/* Ce qu'on compose : la bande claire, les genres s'allument au défilement */}
+      <section className="mt-28 bg-[#F2F2F0] text-ink sm:mt-40">
+        <div className="container-site grid gap-12 py-24 sm:py-32 lg:grid-cols-[0.8fr_1.2fr]">
+          <div className="lg:sticky lg:top-36 lg:self-start">
+            <RevealLines as="h2" lines={["Ce qu’on", "compose."]} className="text-[clamp(40px,5vw,64px)] font-medium leading-[0.95] tracking-[-0.045em]" />
+            <p className="mt-6 max-w-xs text-[15px] leading-relaxed text-ink/55">Chaque genre du catalogue, et la prod que tu n’as pas encore trouvée : on la compose pour toi.</p>
+            <Link href="/web/prodsurmesure" className={cn(pill, "mt-8 bg-ink text-white hover:bg-ink/85")}>
+              [ Prod sur mesure ]
+            </Link>
+          </div>
+          <ScrollWords
+            className="text-[clamp(44px,6.4vw,96px)] font-medium leading-[1.02] tracking-[-0.045em]"
+            dim="rgba(9,9,11,0.12)"
+            lit="#09090B"
+            items={[...genres.map((g) => ({ label: g, href: `/web/catalogue?genre=${encodeURIComponent(g)}` })), { label: "Sur mesure", href: "/web/prodsurmesure" }]}
           />
         </div>
       </section>
 
-      {/* Comment ça marche */}
-      <section className="container-site pt-24">
-        <SectionHead eyebrow="Comment ça marche" title="De l’écoute au studio en trois minutes" />
-        <ol className="grid gap-4 md:grid-cols-3">
-          {[
-            { icon: Headphones, title: "Écoute", text: "Lance les extraits, filtre par genre et tempo. Le lecteur te suit partout sur le site." },
-            { icon: ShoppingBag, title: "Ajoute au panier", text: "Un clic par prod. Tu crées ton compte seulement au moment de payer." },
-            { icon: Download, title: "Télécharge", text: "Paiement par carte via Stripe. Tes fichiers sont dans ton compte aussitôt." },
-          ].map((s, i) => (
-            <li key={s.title} className="card p-6">
-              <div className="flex items-center justify-between">
-                <span className="grid h-10 w-10 place-items-center rounded-full bg-white/[0.06]">
-                  <s.icon className="h-[18px] w-[18px]" />
-                </span>
-                <span className="meta">0{i + 1}</span>
-              </div>
-              <p className="mt-6 text-[17px] font-medium">{s.title}</p>
-              <p className="mt-2 text-[14px] leading-relaxed text-fg-muted">{s.text}</p>
-            </li>
-          ))}
-        </ol>
+      {/* Les deux offres */}
+      <section id="licence" className="container-site scroll-mt-28 pt-28 sm:pt-40">
+        <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+          <div>
+            <Tag className="eyebrow text-fg-muted">Acheter</Tag>
+            <RevealLines as="h2" lines={["Une prod du catalogue,", "ou la tienne."]} className="mt-5 text-[clamp(36px,4.4vw,56px)] font-medium leading-[0.98] tracking-[-0.04em]" />
+            <p className="mt-6 max-w-sm text-fg-muted">Sans abonnement : tu paies la prod, tu repars avec tes fichiers et ta licence.</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Offer
+              tag="Licence"
+              price={basicPrice}
+              text="Pour poser sur une prod du catalogue et la sortir."
+              points={["Usage commercial : streaming, clips, scène", "MP3 haute qualité, WAV selon la prod", "Fichiers dans ton compte dès le paiement", "Non exclusive, revente interdite"]}
+              cta={{ href: "/web/catalogue", label: "Choisir une prod" }}
+              primary
+            />
+            <Offer
+              tag="Sur mesure"
+              price={customPrice}
+              text="Une prod faite pour toi, à partir de tes références."
+              points={["Exclusive : vendue qu’à toi", "Contrat de cession fourni", "Jamais remise en vente", "Brief simple, suivi par mail"]}
+              cta={{ href: "/web/prodsurmesure", label: "Faire ma demande" }}
+            />
+          </div>
+        </div>
       </section>
 
       {/* TikTok */}
-      <section className="container-site pt-24">
-        <div className="relative overflow-hidden rounded-card border border-line bg-ink-800 px-6 py-12 sm:px-12">
-          <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-accent/20 blur-3xl" />
-          <div className="relative flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
-            <div className="max-w-lg">
-              <p className="eyebrow mb-3">Sur TikTok</p>
-              <p className="text-[28px] font-semibold leading-tight tracking-[-0.02em] sm:text-[34px]">{SITE.tiktokFollowers} abonnés écoutent nos prods.</p>
-              <p className="mt-3 text-fg-muted">On y poste nos prods. Rejoins-les, et pose sur la prochaine.</p>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <ButtonLink href={SITE.socials.tiktok} size="lg">
-                Suivre sur TikTok
-              </ButtonLink>
-              <ButtonLink href={SITE.socials.instagram} size="lg" variant="secondary">
-                Instagram
-              </ButtonLink>
-            </div>
+      <section className="container-site pt-28 sm:pt-40">
+        <div className="flex flex-col gap-10 border-t border-line pt-10 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <Tag className="eyebrow text-fg-muted">Sur TikTok</Tag>
+            <p className="mt-4 text-[clamp(72px,13vw,200px)] font-medium leading-[0.85] tracking-[-0.06em] tabular-nums">
+              <CountUp to={40000} />
+            </p>
+            <p className="mt-4 text-[20px] text-fg-muted">abonnés écoutent nos prods.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a href={SITE.socials.tiktok} target="_blank" rel="noreferrer" className={cn(pill, "bg-fg text-ink hover:bg-white/85")}>
+              [ Suivre sur TikTok ]
+            </a>
+            <a href={SITE.socials.instagram} target="_blank" rel="noreferrer" className={cn(pill, "border border-line-strong text-fg hover:bg-white/[0.06]")}>
+              [ Instagram ]
+            </a>
           </div>
         </div>
       </section>
 
       {/* Questions */}
-      <section className="container-site grid gap-8 pt-24 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+      <section className="container-site grid gap-10 pt-28 sm:pt-40 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
-          <p className="eyebrow mb-3">Questions</p>
-          <h2 className="text-[28px] font-semibold leading-tight tracking-[-0.02em] sm:text-[34px]">Avant d’acheter</h2>
-          <Link href="/web/faq" className="group mt-4 inline-flex items-center gap-1.5 text-[14px] font-medium text-fg-muted transition-colors hover:text-fg">
-            Toutes les questions
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          <Tag className="eyebrow text-fg-muted">Questions</Tag>
+          <RevealLines as="h2" lines={["Avant", "d’acheter."]} className="mt-5 text-[clamp(36px,4.4vw,56px)] font-medium leading-[0.98] tracking-[-0.04em]" />
+          <Link href="/web/faq" className="mt-6 inline-flex font-mono text-[11px] uppercase tracking-[0.14em] text-fg-muted hover:text-fg">
+            [ Toutes les questions ]
           </Link>
         </div>
         <Accordion
@@ -172,90 +170,211 @@ export default function Home() {
         />
       </section>
 
-      {/* Fin */}
-      <section className="container-site pt-24 text-center">
-        <p className="mx-auto max-w-xl text-[32px] font-semibold leading-tight tracking-[-0.02em] sm:text-[40px]">Ta prochaine prod est dans le catalogue.</p>
-        <div className="mt-8 flex justify-center">
-          <ButtonLink href="/web/catalogue" size="lg">
-            Écouter le catalogue
-            <ArrowRight className="h-4 w-4" />
-          </ButtonLink>
-        </div>
-      </section>
+      {beats && beats.length > 0 && <TitleMarquee beats={beats.slice(0, 12)} />}
     </>
   );
 }
 
-function HeroVisual({ latest, queue }: { latest: import("@/lib/catalog").Beat | null; queue: import("@/lib/catalog").Beat[] }) {
-  const { track, isPlaying } = useAudio();
+/** Ouverture : la vidéo du studio se déploie en plein écran, trois plans en fondu enchaîné. */
+function Hero({ latest, queue }: { latest: Beat | null; queue: Beat[] }) {
+  const reduce = useReducedMotion();
+  const [active, setActive] = useState(0);
+  const refs = useRef<(HTMLVideoElement | null)[]>([]);
+  const section = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: section, offset: ["start start", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], ["0%", "18%"]);
+
+  useEffect(() => {
+    if (reduce) return;
+    const id = setInterval(() => setActive((a) => (a + 1) % VIDEOS.length), 7000);
+    return () => clearInterval(id);
+  }, [reduce]);
+  useEffect(() => {
+    const v = refs.current[active];
+    if (v) void v.play().catch(() => undefined);
+  }, [active]);
+
   return (
-    <div className="relative animate-rise [animation-delay:120ms]">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-[22px] border border-line bg-ink-800 sm:aspect-[5/4] lg:aspect-[4/5]">
-        <video className="h-full w-full object-cover opacity-90" src="/videos/videotest2.mp4" poster="/videos/poster2.jpg" autoPlay muted loop playsInline preload="metadata" aria-hidden="true" />
-        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-ink via-ink/10 to-transparent" />
-      </div>
-      {latest && (
-        <div className="absolute inset-x-4 bottom-4 flex items-center gap-3 rounded-2xl border border-line-strong bg-ink/75 p-3 backdrop-blur-xl sm:inset-x-6 sm:bottom-6">
-          <Cover id={latest.id} url={latest.coverUrl} title={latest.title} className="h-12 w-12 shrink-0 rounded-lg" />
-          <div className="min-w-0 flex-1">
-            <p className="eyebrow flex items-center gap-2 text-[10px]">
-              {track?.id === latest.id && isPlaying ? <EqBars className="h-2.5" /> : null}
-              Dernière prod
-            </p>
-            <Link href={`/web/prod/${latest.id}`} className="mt-0.5 block truncate font-medium hover:underline">
-              {latest.title}
+    <section ref={section} className="relative -mt-24 h-[100svh] min-h-[620px] sm:-mt-28">
+      <motion.div
+        className="absolute inset-0 overflow-hidden bg-ink-850"
+        initial={reduce ? false : { clipPath: "inset(16% 12% 22% 12% round 36px)" }}
+        animate={{ clipPath: "inset(0% 0% 0% 0% round 0px)" }}
+        transition={{ duration: 1.5, ease: EASE, delay: 0.15 }}
+      >
+        <motion.div className="absolute inset-0" style={reduce ? undefined : { y }} initial={reduce ? false : { scale: 1.18 }} animate={{ scale: 1 }} transition={{ duration: 2.2, ease: EASE, delay: 0.15 }}>
+          {VIDEOS.map((v, i) => (
+            <video
+              key={v.src}
+              ref={(el) => {
+                refs.current[i] = el;
+              }}
+              className={cn("absolute inset-0 h-full w-full object-cover transition-opacity duration-[1400ms]", i === active ? "opacity-100" : "opacity-0")}
+              src={v.src}
+              poster={v.poster}
+              muted
+              loop
+              playsInline
+              autoPlay={i === 0}
+              preload={i === 0 ? "auto" : "metadata"}
+              aria-hidden="true"
+            />
+          ))}
+        </motion.div>
+        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-ink/60 via-transparent to-ink" />
+        <div aria-hidden="true" className="absolute inset-0 bg-[radial-gradient(70%_60%_at_50%_100%,rgba(91,44,201,0.35),transparent_70%)]" />
+      </motion.div>
+
+      <div className="container-site relative flex h-full flex-col justify-end pb-6 sm:pb-8">
+        <div className="grid items-end gap-4 sm:grid-cols-3">
+          <motion.div className="hidden font-mono text-[11px] uppercase tracking-[0.14em] text-white/70 sm:block" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4, duration: 0.8 }}>
+            <LiveClock />
+          </motion.div>
+          <motion.div className="flex justify-center" initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1, duration: 0.8, ease: EASE }}>
+            <Link href="/web/catalogue" className={cn(pill, "h-12 bg-ink/80 px-6 text-white backdrop-blur-md hover:bg-ink")}>
+              <Scramble text="[ ÉCOUTER LE CATALOGUE ]" delay={1200} />
             </Link>
-          </div>
-          <PlayToggle beat={latest} queue={queue} />
+          </motion.div>
+          {latest && (
+            <motion.div className="flex justify-center sm:justify-end" initial={reduce ? false : { opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5, duration: 0.8, ease: EASE }}>
+              <NowCard beat={latest} queue={queue} />
+            </motion.div>
+          )}
         </div>
-      )}
+      </div>
+    </section>
+  );
+}
+
+function NowCard({ beat, queue }: { beat: Beat; queue: Beat[] }) {
+  const { track, isPlaying, toggle } = useAudio();
+  const playing = track?.id === beat.id && isPlaying;
+  return (
+    <button
+      type="button"
+      onClick={() => toggle(beat, queue)}
+      className="flex w-full max-w-[300px] items-center gap-3 rounded-full border border-white/15 bg-ink/60 py-1.5 pl-1.5 pr-5 text-left backdrop-blur-md transition-colors hover:bg-ink/80"
+      aria-label={playing ? `Mettre en pause ${beat.title}` : `Écouter ${beat.title}`}
+    >
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-fg text-ink">
+        {playing ? <Pause className="h-4 w-4" fill="currentColor" strokeWidth={0} /> : <Play className="h-4 w-4 translate-x-[1px]" fill="currentColor" strokeWidth={0} />}
+      </span>
+      <span className="min-w-0">
+        <span className="block font-mono text-[10px] uppercase tracking-[0.14em] text-white/60">{playing ? "En écoute" : "Dernière prod"}</span>
+        <span className="block truncate text-[14px] font-medium">{beat.title}</span>
+      </span>
+    </button>
+  );
+}
+
+/** Une prod présentée en grand : la pochette à gauche, sa fiche à droite (façon fiche projet). */
+function Showcase({ beat, index, total, queue }: { beat: Beat; index: number; total: number; queue: Beat[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+  const y = useTransform(scrollYProgress, [0, 1], ["6%", "-6%"]);
+  const scale = useTransform(scrollYProgress, [0, 0.35], [0.92, 1]);
+  const { track, isPlaying, toggle } = useAudio();
+  const { add, has, open } = useCart();
+  const playing = track?.id === beat.id && isPlaying;
+  const price = cheapest(beat);
+  const priceLabel = price ? formatPrice(price.priceCents, price.currency) : null;
+  const inCart = has(beat.id);
+  const rows: [string, string][] = [
+    ["Prod", beat.title],
+    ["Tempo", beat.bpm ? `${beat.bpm} BPM` : "—"],
+    ["Tonalité", beat.key ?? "—"],
+    ["Genre", beat.genres.slice(0, 2).join(", ") || "—"],
+    ["Fichiers", beat.formats.filter((f) => f !== "stems").map((f) => FORMAT_LABEL[f] ?? f).join(" + ") || "—"],
+  ];
+
+  return (
+    <div ref={ref} className="grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:gap-16">
+      <Link href={`/web/prod/${beat.id}`} className="block" aria-label={`Fiche de ${beat.title}`}>
+        <motion.div style={reduce ? undefined : { y, scale }}>
+          <ArtCover beat={beat} index={index} playing={playing} />
+        </motion.div>
+      </Link>
+      <div>
+        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-fg-faint">
+          {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+        </p>
+        <dl className="mt-6 space-y-2.5 font-mono text-[12px] uppercase tracking-[0.12em]">
+          {rows.map(([k, v], i) => (
+            <div key={k} className="grid grid-cols-[7.5rem_1fr] gap-3">
+              <dt className="text-fg-faint">{k} :</dt>
+              <dd className="text-fg">
+                <Scramble text={v.toUpperCase()} delay={i * 90} />
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <div className="mt-9 flex flex-wrap gap-2">
+          <button type="button" onClick={() => toggle(beat, queue)} disabled={!beat.previewUrl} className={cn(pill, "bg-fg text-ink hover:bg-white/85 disabled:opacity-40")}>
+            {playing ? <Pause className="h-3.5 w-3.5" fill="currentColor" strokeWidth={0} /> : <Play className="h-3.5 w-3.5" fill="currentColor" strokeWidth={0} />}
+            {playing ? "[ Pause ]" : "[ Écouter ]"}
+          </button>
+          {price && priceLabel && (
+            <button
+              type="button"
+              onClick={() => (inCart ? open() : void add(beat, price))}
+              className={cn(pill, inCart ? "bg-accent-soft text-accent" : "bg-accent text-white hover:bg-accent/85")}
+            >
+              {inCart ? "[ Dans le panier ]" : `[ Ajouter · ${priceLabel} ]`}
+            </button>
+          )}
+          <Link href={`/web/prod/${beat.id}`} className={cn(pill, "border border-line-strong text-fg-muted hover:text-fg")}>
+            [ Fiche ]
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }
 
-function Fact({ value, label }: { value: string; label: string }) {
+function Fact({ k, v }: { k: string; v: string }) {
   return (
-    <div className="flex items-baseline gap-3 px-1 py-6 sm:flex-col sm:gap-1 sm:px-8 sm:first:pl-0">
-      <span className="text-[26px] font-semibold tracking-[-0.02em] tabular-nums">{value}</span>
-      <span className="text-[14px] text-fg-muted">{label}</span>
+    <div>
+      <dt className="font-mono text-[10px] uppercase tracking-[0.16em] text-fg-faint">{k}</dt>
+      <dd className="mt-1.5 text-[17px] font-medium tracking-[-0.01em] tabular-nums">{v}</dd>
     </div>
   );
 }
 
-function Offer({ title, price, unit, text, points, cta, primary }: { title: string; price: string | null; unit: string; text: string; points: string[]; cta: { href: string; label: string }; primary?: boolean }) {
+function Offer({ tag, price, text, points, cta, primary }: { tag: string; price: string | null; text: string; points: string[]; cta: { href: string; label: string }; primary?: boolean }) {
   return (
-    <div className={`flex flex-col rounded-card border p-7 sm:p-8 ${primary ? "border-line-strong bg-ink-800" : "border-line bg-ink-850"}`}>
-      <p className="text-[15px] font-medium">{title}</p>
-      <p className="mt-4 flex items-baseline gap-2">
-        <span className="text-[40px] font-semibold tracking-[-0.03em] tabular-nums">{price ?? "—"}</span>
-        {price && <span className="text-fg-muted">{unit}</span>}
-      </p>
-      <p className="mt-2 text-[15px] text-fg-muted">{text}</p>
-      <ul className="mt-7 space-y-3 border-t border-line pt-7">
+    <FadeUp className={cn("flex flex-col rounded-[24px] border p-7", primary ? "border-line-strong bg-ink-800" : "border-line bg-ink-850")}>
+      <Tag className="eyebrow" scramble={false}>
+        {tag}
+      </Tag>
+      <p className="mt-8 text-[52px] font-medium leading-none tracking-[-0.045em] tabular-nums">{price ?? "—"}</p>
+      <p className="mt-3 text-[15px] text-fg-muted">{text}</p>
+      <ul className="mt-8 space-y-2.5 border-t border-line pt-6">
         {points.map((p) => (
-          <li key={p} className="flex gap-3 text-[14px] text-fg-muted">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-accent" strokeWidth={2.5} />
-            {p}
+          <li key={p} className="font-mono text-[11px] uppercase leading-relaxed tracking-[0.1em] text-fg-muted">
+            — {p}
           </li>
         ))}
       </ul>
-      <div className="mt-8 pt-1">
-        <ButtonLink href={cta.href} variant={primary ? "primary" : "secondary"} className="w-full">
-          {cta.label}
-        </ButtonLink>
-      </div>
-    </div>
+      <Link href={cta.href} className={cn(pill, "mt-8", primary ? "bg-fg text-ink hover:bg-white/85" : "border border-line-strong text-fg hover:bg-white/[0.06]")}>
+        [ {cta.label} ]
+      </Link>
+    </FadeUp>
   );
 }
 
-function CatalogError({ onRetry }: { onRetry: () => void }) {
+/** Les titres des prods qui défilent en très grand, juste avant le pied de page. */
+function TitleMarquee({ beats }: { beats: Beat[] }) {
+  const list = [...beats, ...beats];
   return (
-    <div className="card flex flex-col items-center gap-4 px-6 py-12 text-center">
-      <p className="font-medium">Le catalogue ne répond pas pour le moment.</p>
-      <p className="text-[14px] text-fg-muted">Ça arrive au premier chargement de la journée : il se réveille en quelques secondes.</p>
-      <button type="button" onClick={onRetry} className="rounded-full border border-line-strong px-4 py-2 text-[14px] hover:bg-white/[0.06]">
-        Réessayer
-      </button>
-    </div>
+    <section aria-hidden="true" className="mt-28 overflow-hidden border-y border-line py-8 sm:mt-40">
+      <div className="flex w-max animate-marquee gap-10 motion-reduce:animate-none">
+        {list.map((b, i) => (
+          <span key={`${b.id}-${i}`} className={cn("whitespace-nowrap text-[clamp(48px,7vw,104px)] font-medium uppercase leading-none tracking-[-0.045em]", i % 2 ? "text-transparent [-webkit-text-stroke:1px_rgba(255,255,255,0.35)]" : "text-fg")}>
+            {b.title} <span className="text-accent">·</span>
+          </span>
+        ))}
+      </div>
+    </section>
   );
 }
