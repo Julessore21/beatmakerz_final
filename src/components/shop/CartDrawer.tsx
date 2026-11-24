@@ -81,7 +81,7 @@ export function CartDrawer() {
             <ul className="flex-1 divide-y divide-line overflow-y-auto px-5">
               {lines.map((l) => (
                 <li key={l.beatId} className="flex items-center gap-3 py-4">
-                  <Cover id={l.beatId} url={l.coverUrl} title={l.title} className="h-14 w-14 shrink-0 rounded-md" />
+                  <Cover id={l.beatId} url={l.coverUrl} title={l.title} genres={l.genres} className="h-14 w-14 shrink-0 rounded-md" />
                   <div className="min-w-0 flex-1">
                     <Link href={`/web/prod/${l.beatId}`} onClick={close} className="block truncate font-medium hover:underline">
                       {l.title}

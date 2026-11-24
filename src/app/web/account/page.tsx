@@ -104,7 +104,7 @@ function Purchase({ order, item }: { order: Order; item: PurchasedItem }) {
   return (
     <li className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5">
       <div className="flex min-w-0 flex-1 items-center gap-4">
-        <Cover id={item.beatId} url={item.beat?.coverUrl ?? null} title={title} className="h-14 w-14 shrink-0 rounded-lg" />
+        <Cover id={item.beatId} url={item.beat?.coverUrl ?? null} title={title} genres={item.beat?.genres} className="h-14 w-14 shrink-0 rounded-lg" />
         <div className="min-w-0">
           <Link href={`/web/prod/${item.beatId}`} className="block truncate font-medium hover:underline">
             {title}

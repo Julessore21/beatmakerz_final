@@ -111,14 +111,10 @@ function Artwork({ beat, queue }: { beat: Beat; queue: Beat[] }) {
   const pct = current && duration > 0 ? (currentTime / duration) * 100 : 0;
   return (
     <div>
-      <div className="relative">
-        <Cover id={beat.id} url={beat.coverUrl} title={beat.title} className="w-full rounded-[20px] border border-line" />
-        <div className="absolute bottom-5 left-5 flex items-center gap-3">
-          <PlayToggle beat={beat} queue={queue} size="lg" className="shadow-2xl" />
-          {current && isPlaying && <EqBars className="h-4" />}
-        </div>
-      </div>
+      <Cover id={beat.id} url={beat.coverUrl} title={beat.title} genres={beat.genres} bpm={beat.bpm} keyName={beat.key} className="w-full rounded-[20px] border border-line" />
       <div className="mt-4 flex items-center gap-3">
+        <PlayToggle beat={beat} queue={queue} size="lg" />
+        {current && isPlaying && <EqBars className="h-4" />}
         <span className="meta w-9 text-right">{formatTime(current ? currentTime : 0)}</span>
         <input
           type="range"

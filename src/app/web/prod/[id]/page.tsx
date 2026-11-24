@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title: beat.title,
     description,
     alternates: { canonical: `/web/prod/${id}` },
-    openGraph: { title: `${beat.title} · Beatmakerz`, description, type: "music.song", url: `/web/prod/${id}`, ...(beat.coverUrl ? { images: [{ url: beat.coverUrl }] } : {}) },
+    openGraph: { title: `${beat.title} · Beatmakerz`, description, type: "music.song", url: `/web/prod/${id}` },
   };
 }
 

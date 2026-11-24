@@ -34,7 +34,7 @@ export type PurchasedItem = {
   licenseTypeId: string;
   unitPriceCents: number;
   qty: number;
-  beat?: { title?: string; coverUrl?: string; bpm?: number; key?: string } | null;
+  beat?: { title?: string; coverUrl?: string; bpm?: number; key?: string; genres?: string[] } | null;
   license?: { code?: string } | null;
   downloadable: boolean;
   /** Fichiers que la licence donne et qui existent (mp3, wav, stems). */

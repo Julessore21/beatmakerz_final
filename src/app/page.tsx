@@ -18,7 +18,7 @@ import { LiveClock } from "@/components/fx/LiveClock";
 import { FadeUp, RevealLines } from "@/components/fx/Reveal";
 import { Scramble, Tag } from "@/components/fx/Scramble";
 import { ScrollWords } from "@/components/fx/ScrollWords";
-import { ArtCover } from "@/components/shop/ArtCover";
+import { BeatCover } from "@/components/shop/BeatCover";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 const VIDEOS = [
@@ -292,7 +292,7 @@ function Showcase({ beat, index, total, queue }: { beat: Beat; index: number; to
     <div ref={ref} className="grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:gap-16">
       <Link href={`/web/prod/${beat.id}`} className="block" aria-label={`Fiche de ${beat.title}`}>
         <motion.div style={reduce ? undefined : { y, scale }}>
-          <ArtCover beat={beat} index={index} playing={playing} />
+          <BeatCover id={beat.id} title={beat.title} genres={beat.genres} bpm={beat.bpm} keyName={beat.key} url={beat.coverUrl} index={index} playing={playing} className="aspect-[4/5] w-full rounded-[28px] border border-white/10" />
         </motion.div>
       </Link>
       <div>

@@ -51,7 +51,7 @@ export default function PanierPage() {
           <ul className="divide-y divide-line rounded-card border border-line bg-ink-850">
             {lines.map((l) => (
               <li key={l.beatId} className="flex items-center gap-4 p-4 sm:p-5">
-                <Cover id={l.beatId} url={l.coverUrl} title={l.title} className="h-16 w-16 shrink-0 rounded-lg" />
+                <Cover id={l.beatId} url={l.coverUrl} title={l.title} genres={l.genres} className="h-16 w-16 shrink-0 rounded-lg" />
                 <div className="min-w-0 flex-1">
                   <Link href={`/web/prod/${l.beatId}`} className="block truncate text-[16px] font-medium hover:underline">
                     {l.title}

@@ -49,7 +49,7 @@ export function PlayerBar() {
       />
       <div className="container-site flex h-[68px] items-center gap-3 sm:h-[76px] sm:gap-5">
         <Link href={`/web/prod/${track.id}`} className="flex min-w-0 flex-1 items-center gap-3 sm:w-72 sm:flex-none">
-          <Cover id={track.id} url={track.coverUrl} title={track.title} className="h-11 w-11 shrink-0 rounded-md" />
+          <Cover id={track.id} url={track.coverUrl} title={track.title} genres={track.genres} className="h-11 w-11 shrink-0 rounded-md" />
           <div className="min-w-0">
             <p className="truncate text-[14px] font-medium">{track.title}</p>
             <p className="meta truncate">{error ?? [track.bpm ? `${track.bpm} BPM` : null, track.key, track.genres[0]].filter(Boolean).join(" · ")}</p>

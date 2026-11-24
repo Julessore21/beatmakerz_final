@@ -17,6 +17,8 @@ export interface CartLine {
   licenseCode: string;
   title: string;
   coverUrl: string | null;
+  /** Genres de la prod : pour dessiner sa pochette. */
+  genres?: string[];
   priceCents: number;
   currency: string;
   /** Ligne côté API (absente tant qu'on n'est pas connecté). */
@@ -67,7 +69,7 @@ type ApiCartItem = {
   beatId?: string;
   licenseTypeId?: string;
   unitPriceSnapshotCents?: number;
-  beat?: { title?: string; coverUrl?: string } | null;
+  beat?: { title?: string; coverUrl?: string; genres?: string[] } | null;
   licenseType?: { code?: string; currency?: string } | null;
 };
 
@@ -91,6 +93,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         licenseCode: it.licenseType?.code ?? "Basic",
         title: it.beat?.title ?? "Prod",
         coverUrl: it.beat?.coverUrl ?? null,
+        genres: it.beat?.genres ?? [],
         priceCents: it.unitPriceSnapshotCents ?? 0,
         currency: it.licenseType?.currency ?? "EUR",
         cartItemId: it._id,
@@ -145,6 +148,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         licenseCode: price.code,
         title: beat.title,
         coverUrl: beat.coverUrl,
+        genres: beat.genres,
         priceCents: price.priceCents,
         currency: price.currency,
       };

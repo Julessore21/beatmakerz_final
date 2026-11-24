@@ -60,7 +60,7 @@ function TrackRow({ beat, index, queue, numbered }: { beat: Beat; index: number;
       </div>
 
       <div className="flex min-w-0 items-center gap-3">
-        <Cover id={beat.id} url={beat.coverUrl} title={beat.title} className="h-11 w-11 shrink-0 rounded-md" />
+        <Cover id={beat.id} url={beat.coverUrl} title={beat.title} genres={beat.genres} className="h-11 w-11 shrink-0 rounded-md" />
         <div className="min-w-0">
           <Link href={href} onClick={(e) => e.stopPropagation()} className={cn("block truncate text-[15px] font-medium leading-snug hover:underline", current && "text-accent")}>
             {beat.title}

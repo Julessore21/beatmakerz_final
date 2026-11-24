@@ -120,6 +120,19 @@
   }
 }
 
+/* Pochettes : tout se règle sur leur largeur ; titre et libellés seulement quand ils se lisent. */
+.cover {
+  container-type: inline-size;
+}
+.cover-big {
+  visibility: hidden;
+}
+@container (min-width: 150px) {
+  .cover-big {
+    visibility: visible;
+  }
+}
+
 /* Curseur de progression et de volume : piste fine, pastille blanche. */
 input[type="range"].range {
   -webkit-appearance: none;
