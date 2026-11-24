@@ -1,9 +1,7 @@
 /**
- * Pages masquées pour la V1 (pas encore de backend derrière).
- * Pour réactiver une page : la retirer de cette liste et la remettre dans Navbar/Footer.
- * Abonnements : les routes /api/stripe/* ont été supprimées (portail de facturation
- * accessible sans authentification, priceId libre). Les recréer côté API, derrière
- * l'authentification, en vérifiant que le client Stripe appartient à l'utilisateur.
+ * Pages retirées de la V1 (abonnements, marketplace, cartes cadeau, fidélité, tarification,
+ * notre histoire, espace vendeur) : leur code est dans l'historique Git, leurs anciennes
+ * adresses mènent au catalogue.
  */
 const HIDDEN_IN_V1 = [
   "/web/abonnements",
@@ -76,6 +74,9 @@ const nextConfig = {
       { source: "/account", destination: "/web/account", permanent: true },
       { source: "/marketplace", destination: "/web/marketplace", permanent: true },
       { source: "/catalogue", destination: "/web/catalogue", permanent: true },
+      // Lien court d'une prod, à mettre sous un TikTok : beatmakerz.fr/prod/<id>
+      { source: "/prod/:id", destination: "/web/prod/:id", permanent: true },
+      { source: "/sur-mesure", destination: "/web/prodsurmesure", permanent: true },
     ];
   },
 };

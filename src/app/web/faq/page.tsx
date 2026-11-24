@@ -1,102 +1,64 @@
-"use client";
+import Link from "next/link";
+import { SITE } from "@/lib/site";
+import { Accordion } from "@/components/ui/Accordion";
+import { PageTitle } from "@/components/ui/PageTitle";
+import { ButtonLink } from "@/components/ui/Button";
 
-import React from "react";
-import { motion } from "framer-motion";
+const GROUPS: { title: string; items: { q: string; a: React.ReactNode }[] }[] = [
+  {
+    title: "Acheter une prod",
+    items: [
+      { q: "Qu’est-ce que je reçois après l’achat ?", a: "Le fichier MP3 de la prod, et le WAV quand la prod en a un (c’est indiqué sur sa fiche). Ils sont à télécharger dans ton compte dès que le paiement est validé." },
+      { q: "Je dois créer un compte ?", a: "Seulement au moment de payer. Tu peux écouter et remplir ton panier sans compte ; il te suit quand tu te connectes." },
+      { q: "Quels moyens de paiement ?", a: "La carte bancaire (Visa, Mastercard, American Express) via Stripe, notre prestataire de paiement sécurisé. Nous ne voyons jamais tes données bancaires." },
+      { q: "Je peux écouter avant d’acheter ?", a: "Oui, chaque prod a son extrait. Lance-le depuis le catalogue ou sa fiche : le lecteur te suit sur tout le site." },
+      { q: "Je n’arrive pas à télécharger mon fichier.", a: <>Chaque clic sur « MP3 » ou « WAV » dans ton compte crée un lien valable quelques minutes. Si ça bloque encore, écris-nous à <a className="text-fg underline underline-offset-4" href={`mailto:${SITE.email}`}>{SITE.email}</a>.</> },
+    ],
+  },
+  {
+    title: "La licence",
+    items: [
+      { q: "Je peux sortir mon morceau sur les plateformes ?", a: "Oui. La licence permet l’usage personnel et commercial : streaming, clips, scène." },
+      { q: "La prod est exclusive ?", a: "Non, la licence du catalogue n’est pas exclusive : d’autres artistes peuvent acheter la même prod. Tu veux une exclusivité ? Demande une prod sur mesure, ou écris-nous pour une prod du catalogue." },
+      { q: "Je peux revendre la prod ?", a: "Non. La revente ou la redistribution de la prod elle-même est interdite, quelle que soit la licence." },
+    ],
+  },
+  {
+    title: "Prod sur mesure",
+    items: [
+      { q: "Comment ça marche ?", a: "Tu remplis un court brief (genre, ambiance, tempo, références), tu paies, et on compose ta prod. On te recontacte par mail pour la suite et la livraison." },
+      { q: "Qu’est-ce qui change avec une prod sur mesure ?", a: "Elle est exclusive : elle n’est vendue qu’à toi, n’est jamais remise en vente sur le site, et tu reçois un contrat de cession." },
+    ],
+  },
+  {
+    title: "Remboursement",
+    items: [
+      { q: "Je peux être remboursé ?", a: <>Les fichiers étant livrés tout de suite, le droit de rétractation prend fin au premier téléchargement (tu l’acceptes en cochant la case avant de payer). En cas de problème technique avéré avec un fichier, écris-nous. Détails sur la page <Link className="text-fg underline underline-offset-4" href="/web/retractation">rétractation</Link>.</> },
+    ],
+  },
+];
 
-export default function FAQ() {
+export default function FaqPage() {
   return (
-    <div className="min-h-screen text-white pt-28 pb-24">
-      <div className="container mx-auto max-w-4xl px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]"
-        >
-          <h1 className="text-4xl font-bold tracking-tight">F.A.Q</h1>
-          <p className="mt-1 text-sm text-zinc-400">Questions fréquentes et réponses rapides</p>
-        </motion.div>
-
-        <div className="mt-8 space-y-6">
-          {sections.map(({ title, content }, index) => (
-            <section key={index} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur">
-              <h2 className="text-lg font-semibold">{title}</h2>
-              {typeof content === "string" ? (
-                <p className="mt-2 text-sm text-zinc-300">{content}</p>
-              ) : (
-                <ul className="mt-2 list-disc list-inside text-sm text-zinc-300 space-y-1">
-                  {content.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ))}
+    <div className="container-site pt-10 sm:pt-14">
+      <PageTitle eyebrow="Aide" title="Questions fréquentes" text="Tout ce qu’il faut savoir avant et après l’achat." />
+      <div className="mt-12 space-y-14">
+        {GROUPS.map((g) => (
+          <section key={g.title} className="grid gap-6 lg:grid-cols-[240px_1fr]">
+            <h2 className="text-[17px] font-semibold">{g.title}</h2>
+            <Accordion items={g.items} />
+          </section>
+        ))}
+      </div>
+      <div className="card mt-16 flex flex-col items-start gap-4 p-7 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-medium">Pas trouvé ta réponse ?</p>
+          <p className="mt-1 text-[14px] text-fg-muted">On répond par mail, en général dans la journée.</p>
         </div>
+        <ButtonLink href="/web/contact" variant="secondary">
+          Nous écrire
+        </ButtonLink>
       </div>
     </div>
   );
 }
-
-const sections: { title: string; content: string | string[] }[] = [
-  {
-    title:
-      "1. Une fois mon achat effectué, en combien de temps est-il délivré ?",
-    content:
-      "Une fois votre achat effectué sur le site, notre émetteur de paiement vérifiera que tout est en règle et vous recevrez votre instrumentale sous la forme d'un fichier MP3 ou au format WAV (sur demande).",
-  },
-  {
-    title:
-      "2. Quelle est la licence que j'obtiens une fois mon achat effectué ?",
-    content: [
-      "Achat classique (prod à l'unité) : licence non exclusive. Vous pouvez utiliser l'instrumentale à des fins commerciales.",
-      "Prod sur mesure : licence exclusive unique. Vous pouvez l'utiliser à des fins commerciales et elle ne sera ni revendue ni remise en vente sur le site.",
-    ],
-  },
-  {
-    title: "3. Comment fonctionne le service de prod sur mesure ?",
-    content:
-      "Le service de prod sur mesure permet d'obtenir une instrumentale exclusive personnalisée pour 59,99€. Après vérification du paiement, vous recevez un contrat de cession SACEM et une licence exclusive. L'instrumentale n'est pas remise en vente sur le site.",
-  },
-  {
-    title: "4. Quels sont les modes de paiement acceptés ?",
-    content:
-      "Carte bancaire (Visa, Mastercard, American Express) via notre prestataire de paiement sécurisé Stripe.",
-  },
-  {
-    title: "5. Puis-je écouter un extrait avant d'acheter une instrumentale ?",
-    content:
-      "Oui. Un extrait de 1min30 est disponible sur chaque instrumentale, et les versions complètes sont aussi sur notre chaîne YouTube.",
-  },
-  {
-    title: "6. Est-ce que les instrumentales sont exclusives ?",
-    content:
-      "Nous proposons des licences exclusives et non exclusives. Les exclusives vous donnent des droits complets et retirent l'instrumentale de la vente.",
-  },
-  {
-    title:
-      "7. Que se passe-t-il si je rencontre un problème technique avec le téléchargement ?",
-    content:
-      "Contactez-nous à beatmakerz.contact@gmail.com — le support vous aidera rapidement à résoudre le problème.",
-  },
-  {
-    title: "8. Puis-je obtenir un remboursement après l'achat ?",
-    content:
-      "Les remboursements ne sont pas proposés en général pour les produits numériques, sauf problème technique avéré avec le fichier. Écrivez à beatmakerz.contact@gmail.com.",
-  },
-  {
-    title:
-      "9. Puis-je utiliser les instrumentales pour des performances en direct ?",
-    content:
-      "Oui, selon les termes de la licence achetée. Référez-vous à votre licence pour les restrictions et permissions.",
-  },
-  {
-    title: "10. Comment puis-je contacter le support client ?",
-    content:
-      "Par email à beatmakerz.contact@gmail.com. Nous répondons généralement sous 24h.",
-  },
-  {
-    title: "11. Y a-t-il des réductions pour les achats en gros ?",
-    content:
-      "Non, nous n'offrons pas de réductions pour les achats en gros. Pour toute question, écrivez à beatmakerz.contact@gmail.com.",
-  },
-];

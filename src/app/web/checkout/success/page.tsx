@@ -1,51 +1,30 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { CheckCircle, Download } from "lucide-react";
+import { useEffect } from "react";
+import { CheckCircle2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
-import { ButtonLink } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { PageShell } from "@/components/ui/page";
+import { ButtonLink } from "@/components/ui/Button";
 
-export default function CheckoutSuccessPage() {
+export default function SuccessPage() {
   const { refresh } = useCart();
-
-  // Le webhook Stripe vide le panier côté API : on resynchronise l'affichage
-  // (deux fois, au cas où le webhook arrive juste après la redirection).
+  // L'API vide le panier à la confirmation du paiement : on le relit.
   useEffect(() => {
-    void refresh();
-    const timer = setTimeout(() => void refresh(), 4000);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
+    const t = setTimeout(() => void refresh(), 1500);
+    return () => clearTimeout(t);
+  }, [refresh]);
   return (
-    <PageShell size="md" className="flex min-h-[80vh] items-center">
-      <Card className="w-full p-8 sm:p-10">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-300">
-            <CheckCircle className="h-6 w-6" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-emerald-300">Paiement validé</p>
-            <h1 className="text-2xl font-semibold">Merci pour ton achat !</h1>
-          </div>
-        </div>
-
-        <p className="mt-6 text-sm text-zinc-300">
-          Tes beats sont disponibles au téléchargement dans ton compte. Stripe t’envoie aussi le reçu par e-mail.
-          Si un achat n’apparaît pas tout de suite, actualise la page dans quelques secondes.
-        </p>
-
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <ButtonLink href="/web/account#achats" size="lg">
-            <Download className="h-4 w-4" /> Télécharger mes beats
-          </ButtonLink>
-          <ButtonLink href="/web/catalogue" variant="outline" size="lg">
-            Continuer mes achats
-          </ButtonLink>
-        </div>
-      </Card>
-    </PageShell>
+    <div className="container-site flex min-h-[60vh] flex-col items-center justify-center text-center">
+      <CheckCircle2 className="h-12 w-12 text-accent" />
+      <h1 className="mt-6 text-[32px] font-semibold tracking-[-0.02em] sm:text-[40px]">Merci, c’est payé.</h1>
+      <p className="mt-3 max-w-md text-fg-muted">Tes prods sont dans ton compte, prêtes à télécharger. Si elles n’apparaissent pas tout de suite, recharge la page dans quelques secondes.</p>
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <ButtonLink href="/web/account" size="lg">
+          Télécharger mes prods
+        </ButtonLink>
+        <ButtonLink href="/web/catalogue" size="lg" variant="secondary">
+          Continuer mes achats
+        </ButtonLink>
+      </div>
+    </div>
   );
 }

@@ -1,86 +1,64 @@
-"use client";
+import { LegalPage, type LegalSection } from "@/components/LegalPage";
 
-import React from "react";
-import { motion } from "framer-motion";
-
-export default function PolitiqueConfidentialite() {
-  return (
-      <div className="min-h-screen text-white pt-28 pb-24">
-        <div className="container mx-auto max-w-4xl px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]"
-          >
-            <h1 className="text-4xl font-bold tracking-tight">Politique de confidentialite</h1>
-            <p className="mt-1 text-sm text-zinc-400">Comment nous collectons et protegeons vos donnees</p>
-          </motion.div>
-
-          <div className="mt-8 space-y-6">
-            {sections.map(({ title, content }, index) => (
-              <section key={index} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur">
-                <h2 className="text-lg font-semibold">{title}</h2>
-                {typeof content === "string" ? (
-                  <p className="mt-2 text-sm text-zinc-300">{content}</p>
-                ) : (
-                  <ul className="mt-2 list-disc list-inside text-sm text-zinc-300 space-y-1">
-                    {content.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            ))}
-          </div>
-        </div>
-      </div>
-  );
+export default function Page() {
+  return <LegalPage title="Politique de confidentialité" updated="24 novembre 2026" current="/web/politique" sections={sections} />;
 }
 
-const sections: { title: string; content: string | string[] }[] = [
+const sections: LegalSection[] = [
   {
     title: "Introduction",
     content:
-      "Bienvenue sur notre site de vente d'instrumentales. Nous prenons votre vie privee tres au serieux et nous nous engageons a proteger vos informations personnelles. Cette politique explique comment nous collectons, utilisons, divulguons et protegons vos informations lorsque vous visitez notre site et utilisez nos services.",
+      "Beatmakerz prend la protection de vos données personnelles au sérieux. Cette politique explique quelles informations nous collectons, pourquoi, avec qui elles sont partagées et quels sont vos droits, conformément au Règlement général sur la protection des données (RGPD) et à la loi Informatique et Libertés.",
   },
   {
-    title: "1. Collecte des informations",
+    title: "1. Données collectées",
     content: [
-      "Informations personnelles : nom, email, adresse postale, telephone, paiement.",
-      "Informations de navigation : adresse IP, navigateur, pages visitees, date et heure.",
-      "Cookies et technologies similaires pour ameliorer votre experience.",
+      "Compte : adresse e-mail, nom d’artiste et mot de passe (conservé uniquement sous forme chiffrée).",
+      "Achats : prods achetées, licence, montant, date. Le paiement est traité par Stripe : nous ne voyons ni ne conservons jamais vos données bancaires.",
+      "Prod sur mesure : le brief que vous remplissez (genre, tempo, ambiance, références) et l’adresse e-mail de livraison.",
+      "Données techniques : adresse IP et informations du navigateur, enregistrées par nos hébergeurs pour la sécurité et le bon fonctionnement du site.",
     ],
   },
   {
-    title: "2. Utilisation des informations",
-    content: ["Traiter vos achats", "Support client", "Communications promotionnelles", "Personnalisation et amelioration du site", "Obligations legales"],
+    title: "2. Utilisation",
+    content: ["Créer et gérer votre compte", "Traiter vos achats et mettre vos fichiers à disposition", "Réaliser et livrer les prods sur mesure", "Répondre à vos messages", "Respecter nos obligations légales (comptabilité, fiscalité)"],
   },
   {
-    title: "3. Partage des informations",
+    title: "3. Partage",
     content: [
-      "Fournisseurs de services (paiement, emailing) strictement necessaires",
-      "Obligations legales ou protection de nos droits",
-      "Transfert d'entreprise (fusion, acquisition, vente d'actifs)",
+      "Stripe (paiement), Cloudflare (site et stockage des fichiers), Google Cloud (serveur applicatif) et MongoDB Atlas (base de données) : uniquement pour faire fonctionner le service.",
+      "Autorités, si la loi l’exige.",
+      "Vos données ne sont jamais vendues ni utilisées pour de la publicité.",
     ],
   },
   {
-    title: "4. Protection des informations",
-    content: "Mesures techniques et organisationnelles (chiffrement, controle d'acces, audits) pour proteger vos donnees.",
+    title: "4. Sécurité",
+    content: "Connexions chiffrées (HTTPS), mots de passe chiffrés, fichiers achetés servis par des liens personnels et temporaires, accès à l’administration restreint.",
   },
   {
-    title: "5. Vos droits",
-    content: ["Acces, rectification, suppression", "Opposition ou limitation", "Portabilite", "Retrait du consentement", "Reclamation CNIL"],
+    title: "5. Durée de conservation",
+    content: "Les données du compte sont conservées tant que le compte existe. Les données d’achat sont conservées pendant la durée imposée par les obligations comptables (10 ans). Vous pouvez demander la suppression de votre compte à tout moment.",
   },
   {
-    title: "6. Conservation",
-    content: "Les donnees sont conservees aussi longtemps que necessaire pour les finalites prevues ou pour respecter les obligations legales.",
+    title: "6. Vos droits",
+    content: [
+      "Accès, rectification et suppression de vos données",
+      "Opposition et limitation du traitement",
+      "Portabilité",
+      "Réclamation auprès de la CNIL (cnil.fr)",
+      "Pour exercer ces droits : beatmakerz.contact@gmail.com",
+    ],
   },
   {
-    title: "7. Cookies",
-    content: ["Cookies essentiels uniquement (securite, paiement, connexion)", "Gestion via les reglages de votre navigateur"],
+    title: "7. Cookies et stockage local",
+    content: [
+      "Un seul cookie, technique et indispensable : il garde votre connexion active.",
+      "Votre panier (avant connexion) et le volume du lecteur sont gardés dans votre navigateur, jamais envoyés ailleurs.",
+      "Aucun cookie publicitaire ni de mesure d’audience.",
+    ],
   },
   {
     title: "8. Contact",
-    content: ["Email : beatmakerz.contact@gmail.com", "Coordonnées de l'éditeur : voir les Mentions légales"],
+    content: ["E-mail : beatmakerz.contact@gmail.com", "Coordonnées de l’éditeur : voir les mentions légales"],
   },
 ];

@@ -1,10 +1,14 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Beatmakerz";
+export const alt = "Beatmakerz · Des prods prêtes à poser";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
+/** Image de partage du site : le logo, la promesse, sur le noir du site. */
 export default function OpenGraphImage() {
+  const bar = (left: number) => (
+    <div style={{ position: "absolute", left, top: 26, width: 16, height: 62, borderRadius: 8, background: "#fff", boxShadow: "0 5px 0 #5B2CC9" }} />
+  );
   return new ImageResponse(
     (
       <div
@@ -13,56 +17,31 @@ export default function OpenGraphImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-end",
-          padding: 72,
-          background:
-            "radial-gradient(circle at 15% 15%, rgba(124,92,255,0.55) 0%, rgba(79,43,212,0.25) 35%, #090912 70%)",
-          backgroundColor: "#090912",
-          color: "#FFFFFF",
+          justifyContent: "space-between",
+          padding: 80,
+          backgroundColor: "#09090B",
+          backgroundImage: "radial-gradient(60% 70% at 85% 0%, rgba(124,92,255,0.28), transparent 70%)",
+          color: "#FAFAFA",
           fontFamily: "ui-sans-serif, system-ui, sans-serif",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            fontSize: 22,
-            letterSpacing: 8,
-            textTransform: "uppercase",
-            color: "#9F8CFF",
-            marginBottom: 24,
-          }}
-        >
-          Prods · Beats · Sons sur mesure
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <div style={{ position: "relative", display: "flex", width: 118, height: 124 }}>
+            <div style={{ position: "absolute", left: 0, top: 8, width: 116, height: 116, borderRadius: 30, background: "#5B2CC9" }} />
+            <div style={{ position: "absolute", left: 0, top: 0, width: 116, height: 116, borderRadius: 30, background: "#fff" }} />
+            <div style={{ position: "absolute", left: 9, top: 9, width: 98, height: 98, borderRadius: 24, background: "#09090B" }} />
+            {bar(26)}
+            {bar(50)}
+            {bar(74)}
+          </div>
+          <div style={{ fontSize: 34, fontWeight: 600, letterSpacing: 8 }}>BEATMAKERZ</div>
         </div>
-        <div
-          style={{
-            display: "flex",
-            fontSize: 150,
-            fontWeight: 900,
-            letterSpacing: 6,
-            lineHeight: 1,
-            textTransform: "uppercase",
-          }}
-        >
-          BEATMAKERZ
-        </div>
-        <div
-          style={{
-            display: "flex",
-            marginTop: 36,
-            padding: "16px 36px",
-            borderRadius: 999,
-            backgroundColor: "#4F2BD4",
-            fontSize: 30,
-            fontWeight: 700,
-            textTransform: "uppercase",
-            alignSelf: "flex-start",
-          }}
-        >
-          Qualité et prix abordable
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ fontSize: 96, fontWeight: 700, letterSpacing: -4, lineHeight: 1 }}>Des prods prêtes à poser.</div>
+          <div style={{ marginTop: 28, fontSize: 32, color: "#A1A1AA" }}>Trap, drill, cloud, lofi · licence commerciale · téléchargement immédiat</div>
         </div>
       </div>
     ),
-    { ...size }
+    size,
   );
 }

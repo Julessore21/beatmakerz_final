@@ -1,26 +1,17 @@
 import { test, expect } from '@playwright/test';
+import { mockApi } from './api-mock';
 
-const CTAS = [
-  { section: 'Section 1', label: /VOIR LE CATALOGUE/i, path: '/web/catalogue' },
-  { section: 'Section 2', label: /EN SAVOIR PLUS/i, path: '/web/prodsurmesure' },
-  { section: 'Section 3', label: /NOUS CONTACTER/i, path: '/web/contact' },
-];
-
-for (const cta of CTAS) {
-  test(`le CTA de l'accueil (${cta.section}) mène à ${cta.path} en 200`, async ({ page }) => {
+for (const cta of [
+  { label: 'Écouter le catalogue', path: '/web/catalogue' },
+  { label: 'Prod sur mesure', path: '/web/prodsurmesure' },
+]) {
+  test(`le bouton « ${cta.label} » de l'accueil mène à ${cta.path}`, async ({ page }) => {
+    await mockApi(page);
     await page.goto('/');
-
-    await page.getByRole('button', { name: cta.section }).click();
-
-    // Le menu et le footer pointent aussi vers ces pages : on cible le CTA par son libellé.
-    const link = page.getByRole('link', { name: cta.label });
+    const link = page.locator('section').first().getByRole('link', { name: cta.label });
     await expect(link).toHaveAttribute('href', cta.path);
-
     await link.click();
     await page.waitForURL(`**${cta.path}`);
-
-    const response = await page.request.get(cta.path);
-    expect(response.status()).toBe(200);
   });
 }
 

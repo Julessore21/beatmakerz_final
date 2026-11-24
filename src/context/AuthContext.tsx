@@ -102,7 +102,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     if (!user) return;
 
-    // Rafraîchir le token toutes les 50 minutes (avant expiration de 1h)
     const refreshInterval = setInterval(
       async () => {
         try {
@@ -114,8 +113,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setUser(null);
         }
       },
-      50 * 60 * 1000,
-    ); // 50 minutes
+      12 * 60 * 1000,
+    ); // 12 minutes : le jeton d'accès de l'API vit 15 minutes
 
     return () => clearInterval(refreshInterval);
   }, [user]);

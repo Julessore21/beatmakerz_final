@@ -1,16 +1,12 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Catalogue de beats",
-  description: "Découvre notre catalogue de prods: trap, drill, R&B, lofi et plus.",
+  title: "Catalogue",
+  description: "Toutes les prods Beatmakerz : trap, drill, cloud, lofi. Écoute les extraits, filtre par genre et tempo, achète la licence en un clic.",
   alternates: { canonical: "/web/catalogue" },
-  openGraph: {
-    title: "Catalogue de beats | Beatmakerz",
-    url: "/web/catalogue",
-  },
+  openGraph: { title: "Catalogue · Beatmakerz", url: "/web/catalogue" },
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
-

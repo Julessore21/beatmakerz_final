@@ -1,111 +1,55 @@
-"use client";
-
-import React from "react";
 import Link from "next/link";
-import { FaInstagram, FaTiktok, FaYoutube, FaEnvelope } from "react-icons/fa6";
+import { LEGAL, SITE } from "@/lib/site";
+import { Logo } from "./Logo";
 
-const NAV_SECTIONS = {
-  explore: [
-    { label: "Catalogue", href: "/web/catalogue" },
-    { label: "Prod sur mesure", href: "/web/prodsurmesure" },
-  ],
-  account: [
-    { label: "Mon compte", href: "/web/account" },
-    { label: "Panier", href: "/web/panier" },
-  ],
-  legal: [
-    { label: "Mentions légales", href: "/web/mentions" },
-    { label: "CGV", href: "/web/cgv" },
-    { label: "CGU", href: "/web/cgu" },
-    { label: "Confidentialité", href: "/web/politique" },
-  ],
-  support: [
-    { label: "Contact", href: "/web/contact" },
-    { label: "FAQ", href: "/web/faq" },
-  ],
-};
+const SOCIALS = [
+  { href: SITE.socials.tiktok, label: "TikTok" },
+  { href: SITE.socials.instagram, label: "Instagram" },
+  { href: SITE.socials.youtube, label: "YouTube" },
+];
 
-export default function Footer() {
+export function Footer() {
   return (
-    <footer className="relative w-full bg-brand-footer text-white">
-      {/* Top separator line with glow */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-      {/* Main content */}
-      <div className="mx-auto w-full max-w-6xl px-6 lg:px-8 pt-16 pb-8">
-        {/* Grid layout */}
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:grid-cols-5">
-          {/* Brand column */}
-          <div className="col-span-2 sm:col-span-4 lg:col-span-1 lg:pr-8">
-            <div className="text-xl font-bold tracking-[0.25em] text-white">BEATMAKERZ</div>
-            <p className="mt-3 text-xs leading-relaxed text-white/40">
-              Plateforme française pour artistes & beatmakers
-            </p>
-            {/* Social icons */}
-            <div className="mt-6 flex items-center gap-3">
-              <SocialIcon href="https://www.instagram.com/beatmakerz_pro/" label="Instagram">
-                <FaInstagram className="h-4 w-4" />
-              </SocialIcon>
-              <SocialIcon href="https://www.tiktok.com/@beatmakerz.pro" label="TikTok">
-                <FaTiktok className="h-4 w-4" />
-              </SocialIcon>
-              <SocialIcon href="https://www.youtube.com/@BEATMAKERZ-PRO" label="YouTube">
-                <FaYoutube className="h-4 w-4" />
-              </SocialIcon>
-              <SocialIcon href="mailto:beatmakerz.contact@gmail.com" label="Email">
-                <FaEnvelope className="h-4 w-4" />
-              </SocialIcon>
-            </div>
+    <footer className="mt-24 border-t border-line">
+      <div className="container-site grid gap-12 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+        <div className="max-w-xs">
+          <Logo className="flex" />
+          <p className="mt-4 text-[14px] leading-relaxed text-fg-muted">Des prods pour rappeurs, prêtes à poser. Écoute, choisis, télécharge.</p>
+          <div className="mt-5 flex gap-2">
+            {SOCIALS.map((s) => (
+              <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="rounded-full border border-line px-3 py-1.5 text-[13px] text-fg-muted transition-colors hover:border-line-strong hover:text-fg">
+                {s.label}
+              </a>
+            ))}
           </div>
-
-          {/* Navigation columns */}
-          <NavColumn title="Explorer" links={NAV_SECTIONS.explore} />
-          <NavColumn title="Compte" links={NAV_SECTIONS.account} />
-          <NavColumn title="Légal" links={NAV_SECTIONS.legal} />
-          <NavColumn title="Support" links={NAV_SECTIONS.support} />
         </div>
-
-        {/* Bottom bar */}
-        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
-          <p className="text-xs text-white/30">
-            © {new Date().getFullYear()} Beatmakerz. Tous droits réservés.
-          </p>
+        <FooterCol title="Boutique" links={[{ href: "/web/catalogue", label: "Catalogue" }, { href: "/web/prodsurmesure", label: "Prod sur mesure" }, { href: "/#licence", label: "La licence" }]} />
+        <FooterCol title="Aide" links={[{ href: "/web/faq", label: "Questions fréquentes" }, { href: "/web/contact", label: "Contact" }, { href: "/web/account", label: "Mon compte" }]} />
+        <FooterCol title="Légal" links={[...LEGAL]} />
+      </div>
+      <div className="border-t border-line">
+        <div className="container-site flex flex-col gap-2 py-6 text-[12px] text-fg-faint sm:flex-row sm:items-center sm:justify-between">
+          <p>© {new Date().getFullYear()} Beatmakerz. Tous droits réservés.</p>
+          <p>Paiement sécurisé par Stripe</p>
         </div>
       </div>
     </footer>
   );
 }
 
-function NavColumn({ title, links }: { title: string; links: { label: string; href: string }[] }) {
+function FooterCol({ title, links }: { title: string; links: { href: string; label: string }[] }) {
   return (
     <div>
-      <h3 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/50">{title}</h3>
+      <p className="eyebrow">{title}</p>
       <ul className="mt-4 space-y-2.5">
-        {links.map((link) => (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              className="text-sm text-white/70 transition-colors hover:text-white"
-            >
-              {link.label}
+        {links.map((l) => (
+          <li key={l.href}>
+            <Link href={l.href} className="text-[14px] text-fg-muted transition-colors hover:text-fg">
+              {l.label}
             </Link>
           </li>
         ))}
       </ul>
     </div>
-  );
-}
-
-function SocialIcon({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={label}
-      className="flex h-8 w-8 items-center justify-center text-white/50 transition-colors hover:text-white"
-    >
-      {children}
-    </a>
   );
 }

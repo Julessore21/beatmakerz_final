@@ -12,3 +12,7 @@ build/
 .open-next
 .wrangler
 .dev.vars
+
+# Playwright
+test-results/
+playwright-report/
