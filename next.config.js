@@ -32,7 +32,7 @@ const nextConfig = {
       "base-uri 'self';",
       "frame-ancestors 'self';",
       "img-src 'self' data: https:;",
-      "media-src 'self' data: https:;",
+      `media-src 'self' data: ${apiUrl} https:;`,
       "font-src 'self' data: https:;",
       "style-src 'self' 'unsafe-inline' https:;",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;",
