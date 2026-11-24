@@ -28,7 +28,7 @@ test('sans compte : on remplit le panier, la case de rétractation conditionne l
   await expect(page.locator('[role="listitem"]')).toHaveCount(3);
   await page.getByRole('button', { name: /Ajouter Dark Melo au panier/ }).click();
   const drawer = page.getByRole('dialog', { name: 'Panier' });
-  await expect(drawer.getByText('Dark Melo')).toBeVisible();
+  await expect(drawer.getByRole('link', { name: 'Dark Melo' })).toBeVisible();
   const pay = drawer.getByRole('button', { name: 'Payer' });
   await expect(pay).toBeDisabled();
   await drawer.getByRole('checkbox').check();
@@ -37,7 +37,7 @@ test('sans compte : on remplit le panier, la case de rétractation conditionne l
   await expect(page.getByRole('heading', { name: 'Crée ton compte' })).toBeVisible();
   // Le panier sans compte reste dans le navigateur.
   await page.goto('/web/panier');
-  await expect(page.locator('main').getByText('Dark Melo')).toBeVisible();
+  await expect(page.locator('main').getByRole('link', { name: 'Dark Melo' })).toBeVisible();
 });
 
 test('le catalogue filtre par genre et par recherche', async ({ page }) => {

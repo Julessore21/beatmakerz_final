@@ -33,21 +33,22 @@ export function BeatCover({ id, title, genres, bpm, keyName, url, index, playing
   const layout = TITLE[style.id];
 
   return (
-    <div className={cn("cover relative overflow-hidden", className)} style={{ background: style.bg, color: style.fg }}>
-      {url ? <img src={url} alt={`Pochette de ${title}`} className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" /> : <Art style={style} s1={s1} s2={s2} s3={s3} />}
+    // Une image pour les lecteurs d'écran : son texte (titre, tempo) est déjà dit à côté.
+    <div role="img" aria-label={`Pochette de ${title}`} className={cn("cover relative overflow-hidden", className)} style={{ background: style.bg, color: style.fg }}>
+      {url ? <img src={url} alt="" className="absolute inset-0 h-full w-full object-cover" loading="lazy" decoding="async" /> : <Art style={style} s1={s1} s2={s2} s3={s3} />}
 
       {/* Grain : la matière commune à toutes les pochettes. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.16] mix-blend-overlay [background-image:radial-gradient(rgba(255,255,255,0.9)_0.6px,transparent_0.6px)] [background-size:3px_3px]" />
       {url && <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-black/30" />}
 
       {/* Libellés du haut (à partir d'une taille lisible). */}
-      <div className="cover-big absolute inset-x-0 top-0 flex items-start justify-between font-mono uppercase" style={{ padding: "6cqw", fontSize: "max(9px, 2.4cqw)", letterSpacing: "0.16em", opacity: 0.85 }}>
+      <div aria-hidden="true" className="cover-big absolute inset-x-0 top-0 flex items-start justify-between font-mono uppercase" style={{ padding: "6cqw", fontSize: "max(9px, 2.4cqw)", letterSpacing: "0.16em", opacity: 0.85 }}>
         <span>Beatmakerz{index != null ? ` — N°${String(index + 1).padStart(2, "0")}` : ""}</span>
         <span>{style.id === "default" ? "" : style.label}</span>
       </div>
 
       {/* Le titre, posé selon le style. */}
-      <div className={cn("cover-big absolute", layout.box)} style={{ padding: "6cqw" }}>
+      <div aria-hidden="true" className={cn("cover-big absolute", layout.box)} style={{ padding: "6cqw" }}>
         {playing && (
           <span className="mb-[3cqw] flex h-[5cqw] items-end gap-[0.8cqw]" aria-hidden="true">
             {[0, 0.15, 0.3, 0.45, 0.6].map((d) => (
