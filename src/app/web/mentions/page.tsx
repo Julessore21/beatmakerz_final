@@ -1,43 +1,10 @@
-"use client";
+import { LegalPage, type LegalSection } from "@/components/LegalPage";
 
-import React from "react";
-import { motion } from "framer-motion";
-
-export default function MentionsLegales() {
-  return (
-    <div className="min-h-screen text-white pt-28 pb-24">
-      <div className="container mx-auto max-w-4xl px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]"
-        >
-          <h1 className="text-4xl font-bold tracking-tight">Mentions légales</h1>
-          <p className="mt-1 text-sm text-zinc-400">Informations légales et obligations réglementaires</p>
-        </motion.div>
-
-        <div className="mt-8 space-y-6">
-          {sections.map(({ title, content }, index) => (
-            <section key={index} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur">
-              <h2 className="text-lg font-semibold">{title}</h2>
-              {typeof content === "string" ? (
-                <p className="mt-2 text-sm text-zinc-300">{content}</p>
-              ) : (
-                <ul className="mt-2 list-disc list-inside text-sm text-zinc-300 space-y-1">
-                  {content.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+export default function Page() {
+  return <LegalPage title="Mentions légales" updated="24 novembre 2026" current="/web/mentions" sections={sections} />;
 }
 
-const sections: { title: string; content: string | string[] }[] = [
+const sections: LegalSection[] = [
   {
     title: "Éditeur du site",
     content: [
@@ -49,14 +16,14 @@ const sections: { title: string; content: string | string[] }[] = [
   {
     title: "Hébergement du site",
     content: [
-      "Site : Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis — vercel.com",
-      "Serveur applicatif : Render Services, Inc., 525 Brannan Street, Suite 300, San Francisco, CA 94107, États-Unis — render.com",
+      "Site : Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis — cloudflare.com",
+      "Serveur applicatif : Google Cloud (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irlande) — cloud.google.com",
       "Base de données : MongoDB Atlas (MongoDB, Inc.) — mongodb.com",
     ],
   },
   {
     title: "Hébergement des instrumentales",
-    content: "file-up.fr",
+    content: "Cloudflare R2 (Cloudflare, Inc., 101 Townsend Street, San Francisco, CA 94107, États-Unis) — cloudflare.com",
   },
   {
     title: "Contact",
@@ -78,7 +45,7 @@ const sections: { title: string; content: string | string[] }[] = [
   {
     title: "Cookies",
     content:
-      "Le site Beatmakerz utilise des cookies pour améliorer l'expérience utilisateur et personnaliser le contenu. Vous pouvez modifier vos préférences via votre navigateur.",
+      "Le site n'utilise qu'un cookie technique, indispensable pour rester connecté. Aucun cookie publicitaire ni de mesure d'audience. Détails dans la politique de confidentialité.",
   },
   {
     title: "Limitation de responsabilité",

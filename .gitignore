@@ -7,3 +7,12 @@ build/
 .vercel/
 .env*
 *.log
+
+# Cloudflare (OpenNext)
+.open-next
+.wrangler
+.dev.vars
+
+# Playwright
+test-results/
+playwright-report/

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { getBeatCover } from "@/lib/genre-cover";
+import { API_URL } from "@/lib/apiUrl";
 
 type Artist = {
   _id: string;
@@ -267,7 +268,7 @@ export default function AdminCataloguePage() {
       formData.append("file", file);
       const token = sessionStorage.getItem("access_token");
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
+      const apiUrl = API_URL;
       const res = await fetch(`${apiUrl}/beats/${beatId}/upload-audio`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},

@@ -1,57 +1,10 @@
-"use client";
+import { LegalPage, type LegalSection } from "@/components/LegalPage";
 
-import React from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
-
-export default function CGV() {
-  return (
-    <>
-      <div className="min-h-screen text-white pt-28 pb-24">
-      <div className="container mx-auto max-w-4xl px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]"
-        >
-          <h1 className="text-4xl font-bold tracking-tight">C.G.V</h1>
-          <p className="mt-1 text-sm text-zinc-400">Conditions générales de vente</p>
-        </motion.div>
-
-        <div className="mt-8 space-y-6">
-          {sections.map(({ title, content, link }, index) => (
-            <section key={index} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur">
-              <h2 className="text-lg font-semibold">{title}</h2>
-              {typeof content === "string" ? (
-                <p className="mt-2 text-sm text-zinc-300">{content}</p>
-              ) : (
-                <ul className="mt-2 list-disc list-inside text-sm text-zinc-300 space-y-1">
-                  {content.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-              )}
-              {link && (
-                <p className="mt-2 text-sm text-zinc-300">
-                  <Link href={link.href} className="underline hover:text-white">
-                    {link.label}
-                  </Link>
-                </p>
-              )}
-            </section>
-          ))}
-        </div>
-        </div>
-      </div>
-    </>
-  );
+export default function Page() {
+  return <LegalPage title="Conditions générales de vente" updated="24 novembre 2026" current="/web/cgv" sections={sections} />;
 }
 
-const sections: {
-  title: string;
-  content: string | string[];
-  link?: { href: string; label: string };
-}[] = [
+const sections: LegalSection[] = [
   {
     title: "Préambule",
     content:
@@ -68,23 +21,19 @@ const sections: {
   {
     title: "2. Produits et Services",
     content:
-      "Nous proposons à la vente des instrumentales de musique en format numérique (fichiers WAV et MP3). Chaque instrumental est décrit sur une page dédiée avec ses caractéristiques (titre, durée, BPM, etc.).",
+      "Nous proposons à la vente des instrumentales de musique en format numérique (fichier MP3, et fichier WAV lorsque l'instrumentale en dispose), ainsi que des productions sur mesure. Chaque instrumentale est décrite sur une page dédiée avec ses caractéristiques (titre, tempo, tonalité, formats disponibles, extrait).",
   },
   {
     title: "3. Prix",
     content: [
       "Les prix de nos instrumentales sont indiqués en euros (€) TTC. Nous nous réservons le droit de modifier les prix à tout moment, mais les produits seront facturés sur la base des tarifs en vigueur au moment de la validation de la commande.",
-      "Instrumentale à l'unité : 9,99€",
-      "Prod sur-mesure : 59,99€",
-      "Abonnement Infini : 19,99€ / mois ou 199,99€ / an (4 prods par mois)",
-      "Abonnement Infini + : 39,99€ / mois ou 399,99€ / an (10 prods par mois)",
-      "Abonnement Infini X : 59,99€ / mois ou 599,99€ / an (15 prods par mois)",
+      "Le prix de chaque instrumentale et de la prod sur mesure est affiché sur le site avant l'ajout au panier, puis rappelé avant le paiement.",
     ],
   },
   {
     title: "4. Commande",
     content:
-      "Pour passer commande, vous devez créer un compte utilisateur sur notre site. Une fois votre panier validé, vous serez redirigé vers la page de paiement.",
+      "Vous pouvez constituer votre panier sans compte. Un compte utilisateur est nécessaire pour payer : c'est dans ce compte que vos fichiers sont mis à disposition. Une fois votre panier validé, vous êtes redirigé vers la page de paiement sécurisée de Stripe. La prod sur mesure se commande depuis sa page, avec l'adresse e-mail à laquelle elle sera livrée.",
   },
   {
     title: "5. Paiement",
@@ -94,7 +43,7 @@ const sections: {
   {
     title: "6. Livraison des Instrumentales",
     content:
-      "Une fois le paiement vérifié, vous recevrez immédiatement l'instrumentale achetée sous forme de fichier téléchargeable (MP3 et WAV sur demande) dans votre compte utilisateur.",
+      "Une fois le paiement validé, les fichiers compris dans la licence achetée (MP3, et WAV lorsque l'instrumentale en dispose) sont immédiatement téléchargeables depuis votre compte utilisateur. La prod sur mesure est livrée par e-mail.",
   },
   {
     title: "7. Droit de Rétractation",

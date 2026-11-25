@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { API_URL } from "@/lib/apiUrl";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://beatmakerz-api.onrender.com";
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,6 +1,6 @@
 import { parseApiError, type ApiErrorBody } from "@/lib/utils/error";
+import { API_URL } from "@/lib/apiUrl";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 const ACCESS_TOKEN_KEY = "access_token"; // Aligne avec auth.service.ts
 
 const getToken = () => {

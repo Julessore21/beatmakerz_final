@@ -1,22 +1,27 @@
 import { test, expect } from '@playwright/test';
+import { mockApi } from './api-mock';
 
-test('le brief prod sur mesure part vers le checkout de l’API', async ({ page }) => {
-  // On intercepte l'appel API : le test ne dépend ni du backend ni de Stripe.
+test('le brief prod sur mesure part vers le paiement de l’API, avec l’adresse de livraison', async ({ page }) => {
+  await mockApi(page);
   let payload: Record<string, string> | null = null;
-  await page.route('**/checkout/custom-prod', async (route) => {
+  await page.route(/\/checkout\/custom-prod$/, async (route) => {
+    if (route.request().method() !== 'POST') return route.fallback();
     payload = route.request().postDataJSON();
     await route.fulfill({ json: { url: 'http://localhost:3000/web/prodsurmesure?success=true' } });
   });
 
   await page.goto('/web/prodsurmesure');
-  await page.getByRole('button', { name: /Remplir le formulaire/i }).click();
-  await expect(page.getByText(/Formulaire de production/i)).toBeVisible();
+  await expect(page.getByText('59,99 €').first()).toBeVisible();
+  await page.getByRole('button', { name: /Payer/ }).click();
+  await expect(page.getByText('Choisis un genre.')).toBeVisible();
 
-  await page.getByRole('button', { name: /^Piano$/i }).click();
-  await page.locator('textarea[name="details"]').fill('Prod trap sombre, piano planant et 808 lourde.');
-  await page.getByRole('button', { name: /Proc[ée]der au paiement/i }).click();
+  await page.getByRole('button', { name: 'Trap', exact: true }).click();
+  await page.getByRole('button', { name: 'Sombre', exact: true }).click();
+  await page.getByPlaceholder('Piano, 808…').fill('Piano');
+  await page.getByPlaceholder(/Le thème du morceau/).fill('Prod trap sombre, piano planant et 808 lourde.');
+  await page.getByPlaceholder('toi@exemple.fr').fill('artiste@exemple.fr');
+  await page.getByRole('button', { name: /Payer/ }).click();
 
-  // Laisse le temps au serveur de dev de compiler la page de retour.
-  await expect(page.getByText(/Paiement reçu, merci/)).toBeVisible({ timeout: 20_000 });
-  expect(payload).toMatchObject({ instruments: 'Piano', brief: expect.stringContaining('808') });
+  await expect(page.getByText(/C’est parti pour ta prod/)).toBeVisible({ timeout: 20_000 });
+  expect(payload).toMatchObject({ genre: 'Trap', style: 'Sombre', instruments: 'Piano', email: 'artiste@exemple.fr', brief: expect.stringContaining('808') });
 });

@@ -1,136 +1,97 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import { useCart } from "@/context/CartContext";
-import { Trash2, ShieldCheck, CreditCard, PackageSearch, Loader2 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
-import AuthRequiredModal from "@/components/AuthRequiredModal";
-import RetractationConsent from "@/components/RetractationConsent";
-import { Button, ButtonLink } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { PageShell, PageHeader } from "@/components/ui/page";
-
-const VAT_RATE = 0.2;
-const fmt = (value: number) => `${value.toFixed(2)} €`;
-
-const SummaryRow = ({ label, value, bold = false }: { label: string; value: string; bold?: boolean }) => (
-  <div className="flex items-center justify-between text-sm">
-    <span className="text-zinc-400">{label}</span>
-    <span className={bold ? "text-base font-semibold text-white" : "text-zinc-200"}>{value}</span>
-  </div>
-);
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Loader2, Lock, ShoppingBag } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useCart } from "@/context/CartContext";
+import { formatPrice } from "@/lib/format";
+import { Button, ButtonLink } from "@/components/ui/Button";
+import { PageTitle } from "@/components/ui/PageTitle";
+import { Cover } from "@/components/shop/Cover";
+import { WaiverCheck } from "@/components/shop/WaiverCheck";
 
 export default function PanierPage() {
+  const { lines, totalCents, currency, remove, checkout, isLoading, error } = useCart();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const { user } = useAuth();
-  const { items, totalPrice, removeItem, checkout } = useCart();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [consent, setConsent] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [waiver, setWaiver] = useState(false);
 
-  const hasItems = items.length > 0;
-  // Les prix affichés sont TTC : on extrait la part de TVA.
-  const vatAmount = totalPrice - totalPrice / (1 + VAT_RATE);
-
-  const handleCheckout = async () => {
-    if (!user) {
-      setShowAuthModal(true);
-      return;
-    }
-    setError(null);
-    setLoading(true);
-    const failure = await checkout();
-    if (failure) {
-      setError(failure);
-      setLoading(false);
-    }
+  const pay = async () => {
+    setPaying(true);
+    setMessage(null);
+    const r = await checkout();
+    if (r === "login") router.push("/web/profil?next=/web/panier&raison=paiement");
+    else if (r) setMessage(r);
+    setPaying(false);
   };
 
   return (
-    <PageShell>
-      <PageHeader
-        title="Mon panier"
-        subtitle={`${items.length} beat${items.length > 1 ? "s" : ""} · ${fmt(totalPrice)}`}
-      />
-
-      <div className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-        <div className="space-y-3">
-          {!hasItems && (
-            <Card className="flex flex-col items-center gap-3 py-10 text-center">
-              <PackageSearch className="h-8 w-8 text-zinc-400" />
-              <p className="text-base font-semibold">Ton panier est vide.</p>
-              <p className="text-sm text-zinc-400">Ajoute des beats depuis le catalogue pour commencer.</p>
-              <ButtonLink href="/web/catalogue" className="mt-2">
-                Aller au catalogue
-              </ButtonLink>
-            </Card>
-          )}
-
-          {items.map((item) => (
-            <Card key={item.id} className="flex items-center justify-between gap-4 p-4 sm:p-5">
-              <div className="min-w-0">
-                <p className="truncate text-base font-semibold">{item.name}</p>
-                <p className="text-xs text-zinc-400">Licence Basic</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-semibold tabular-nums">{fmt(Number(item.price) || 0)}</span>
-                <Button variant="ghost" size="icon" onClick={() => removeItem(item.id)} aria-label={`Retirer ${item.name}`}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </Card>
-          ))}
+    <div className="container-site pt-10 sm:pt-14">
+      <PageTitle title="Panier" />
+      {isLoading && lines.length === 0 ? (
+        <div className="grid min-h-[30vh] place-items-center">
+          <Loader2 className="h-6 w-6 animate-spin text-fg-faint" />
         </div>
+      ) : lines.length === 0 ? (
+        <div className="card mt-10 flex flex-col items-center gap-4 px-6 py-16 text-center">
+          <span className="grid h-14 w-14 place-items-center rounded-full bg-white/[0.05]">
+            <ShoppingBag className="h-6 w-6 text-fg-muted" />
+          </span>
+          <p className="font-medium">Ton panier est vide</p>
+          <ButtonLink href="/web/catalogue" variant="secondary">
+            Voir le catalogue
+          </ButtonLink>
+        </div>
+      ) : (
+        <div className="mt-10 grid items-start gap-8 lg:grid-cols-[1fr_380px]">
+          <ul className="divide-y divide-line rounded-card border border-line bg-ink-850">
+            {lines.map((l) => (
+              <li key={l.beatId} className="flex items-center gap-4 p-4 sm:p-5">
+                <Cover id={l.beatId} url={l.coverUrl} title={l.title} genres={l.genres} className="h-16 w-16 shrink-0 rounded-lg" />
+                <div className="min-w-0 flex-1">
+                  <Link href={`/web/prod/${l.beatId}`} className="block truncate text-[16px] font-medium hover:underline">
+                    {l.title}
+                  </Link>
+                  <p className="meta mt-1">Licence {l.licenseCode}</p>
+                </div>
+                <div className="text-right">
+                  <p className="font-mono tabular-nums">{formatPrice(l.priceCents, l.currency)}</p>
+                  <button type="button" onClick={() => void remove(l.beatId)} className="mt-1 text-[13px] text-fg-faint hover:text-fg">
+                    Retirer
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
 
-        <Card className="h-fit space-y-4 p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <CreditCard className="h-4 w-4 text-brand-lavender" /> Récapitulatif
-          </div>
-          <SummaryRow label="Sous-total HT" value={fmt(totalPrice - vatAmount)} />
-          <SummaryRow label="TVA (20 %)" value={fmt(vatAmount)} />
-          <div className="border-t border-white/10 pt-3">
-            <SummaryRow label="Total TTC" value={fmt(totalPrice)} bold />
-          </div>
-
-          <RetractationConsent checked={consent} onChange={setConsent} />
-
-          <div className="flex flex-col gap-2 pt-2">
-            <Button fullWidth size="lg" onClick={handleCheckout} disabled={loading || !hasItems || !consent}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-              {loading ? "Redirection vers Stripe…" : "Payer avec Stripe"}
+          <aside className="card space-y-5 p-6 lg:sticky lg:top-24">
+            <div className="flex items-baseline justify-between">
+              <span className="text-fg-muted">
+                {lines.length} prod{lines.length > 1 ? "s" : ""}
+              </span>
+              <span className="text-[28px] font-semibold tracking-[-0.02em] tabular-nums">{formatPrice(totalCents, currency)}</span>
+            </div>
+            {(message ?? error) && <p className="rounded-lg bg-white/[0.04] px-3 py-2 text-[13px] text-fg-muted">{message ?? error}</p>}
+            <WaiverCheck checked={waiver} onChange={setWaiver} />
+            <Button size="lg" className="w-full" onClick={() => void pay()} disabled={paying || !waiver}>
+              {paying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
+              {isAuthenticated ? "Payer" : "Continuer vers le paiement"}
             </Button>
-            <ButtonLink href="/web/catalogue" variant="outline" fullWidth>
-              Continuer mes achats
-            </ButtonLink>
-          </div>
-
-          {error && <p className="text-sm text-rose-300">{error}</p>}
-
-          <p className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs text-zinc-300">
-            <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-300" />
-            Paiement sécurisé par Stripe. Tes fichiers sont disponibles dans ton compte dès la validation.
-          </p>
-          <p className="text-center text-xs text-zinc-400">
-            100&nbsp;% royalty free ·{" "}
-            <Link href="/web/cgv" className="underline hover:text-white">
-              CGV
-            </Link>
-          </p>
-        </Card>
-      </div>
-
-      <AuthRequiredModal
-        open={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onLogin={() => {
-          setShowAuthModal(false);
-          router.push("/web/profil?mode=login&next=/web/panier");
-        }}
-        message="Connecte-toi pour finaliser ton achat."
-      />
-    </PageShell>
+            {!isAuthenticated && <p className="text-[13px] text-fg-muted">Tu crées ton compte (ou tu te connectes) juste avant de payer : c’est là que tes fichiers t’attendront.</p>}
+            <p className="border-t border-line pt-4 text-[12px] leading-relaxed text-fg-faint">
+              Paiement par carte, sécurisé par Stripe. En payant, tu acceptes les{" "}
+              <Link href="/web/cgv" className="underline underline-offset-2 hover:text-fg">
+                conditions de vente
+              </Link>
+              .
+            </p>
+          </aside>
+        </div>
+      )}
+    </div>
   );
 }

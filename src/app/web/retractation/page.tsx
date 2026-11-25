@@ -1,43 +1,10 @@
-"use client";
+import { LegalPage, type LegalSection } from "@/components/LegalPage";
 
-import React from "react";
-import { motion } from "framer-motion";
-
-export default function DroitDeRetractation() {
-  return (
-      <div className="min-h-screen text-white pt-28 pb-24">
-        <div className="container mx-auto max-w-4xl px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="rounded-3xl border border-white/10 bg-white/[0.04] p-8 text-center backdrop-blur-xl shadow-[0_10px_60px_rgba(0,0,0,.35)]"
-          >
-            <h1 className="text-4xl font-bold tracking-tight">Droit de rétractation</h1>
-            <p className="mt-1 text-sm text-zinc-400">Informations sur vos droits pour les contenus digitaux (beats, licences, prods sur mesure)</p>
-          </motion.div>
-
-          <div className="mt-8 space-y-6">
-            {sections.map(({ title, content }, index) => (
-              <section key={index} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur">
-                <h2 className="text-lg font-semibold">{title}</h2>
-                {typeof content === "string" ? (
-                  <p className="mt-2 text-sm text-zinc-300">{content}</p>
-                ) : (
-                  <ul className="mt-2 list-disc list-inside text-sm text-zinc-300 space-y-1">
-                    {content.map((item, idx) => (
-                      <li key={idx}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            ))}
-          </div>
-        </div>
-      </div>
-  );
+export default function Page() {
+  return <LegalPage title="Droit de rétractation" current="/web/retractation" sections={sections} />;
 }
 
-const sections: { title: string; content: string | string[] }[] = [
+const sections: LegalSection[] = [
   {
     title: "1. Cadre légal",
     content:

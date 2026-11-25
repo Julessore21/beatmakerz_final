@@ -4,127 +4,161 @@
 
 @layer base {
   :root {
-    --brand-purple: #4f2bd4;
-    --brand-purple-strong: #5b35e8;
-    --brand-vivid: #7c5cff;
-    --brand-hover: #5b35e8;
-    --brand-lavender: #9f8cff;
-    --brand-night: #090912;
-    --brand-card: #0f0f18;
-    --brand-footer: #030308;
-    --brand-surface: #0f0f18;
-    --brand-border: rgba(255, 255, 255, 0.08);
+    color-scheme: dark;
+    /* Hauteur du lecteur collé en bas : le contenu ne passe jamais dessous. */
+    --player-h: 0px;
   }
+
   html {
-    background-color: var(--brand-night);
-  }
-  body {
-    min-height: 100vh;
-    color: white;
-    background-color: var(--brand-night);
-    background-image:
-      radial-gradient(circle at 15% 20%, rgba(120, 63, 255, 0.18), transparent 34%),
-      radial-gradient(circle at 85% 22%, rgba(120, 63, 255, 0.14), transparent 32%),
-      radial-gradient(circle at 25% 82%, rgba(80, 40, 180, 0.12), transparent 30%),
-      linear-gradient(180deg, #0b0b14 0%, #08080f 40%, #08080e 100%);
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-ink text-fg font-sans;
+    padding-bottom: var(--player-h);
+  }
+
+  ::selection {
+    background: rgba(124, 92, 255, 0.35);
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid #7c5cff;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
-  /* utilitaire pour dǸsactiver le scroll anchoring (Ǹvite les sauts au scroll) */
-  .overflow-anchor-none {
-    overflow-anchor: none;
+  .container-site {
+    @apply mx-auto w-full max-w-site px-5 sm:px-8;
   }
-  .page-section {
-    @apply min-h-screen flex flex-col items-center justify-center p-4;
+
+  .eyebrow {
+    @apply font-mono text-[11px] uppercase tracking-[0.16em] text-fg-faint;
+  }
+
+  .meta {
+    @apply font-mono text-[12px] tabular-nums text-fg-muted;
   }
 
   .card {
-    @apply bg-[#191926] border border-gray-700 rounded-2xl shadow-xl;
+    @apply rounded-card border border-line bg-ink-800;
   }
 
-  .btn-primary {
-    @apply text-white font-semibold py-2 px-4 rounded-full transition-colors;
-    background-color: var(--brand-purple);
-    border: 1px solid var(--brand-border);
-  }
-  .btn-primary:hover {
-    background-color: var(--brand-purple-strong);
+  .field {
+    @apply h-11 w-full rounded-xl border border-line bg-ink-850 px-4 text-[15px] text-fg placeholder:text-fg-faint
+      transition-colors focus:border-accent focus:outline-none;
   }
 
-  .input-field {
-    @apply w-full bg-black text-white p-2 rounded-full border border-gray-600 focus:outline-none focus:border-gray-400 text-sm;
+  select.field {
+    @apply appearance-none pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23a1a1aa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+  }
+  select.field option {
+    background: #121216;
+  }
+
+  textarea.field {
+    @apply h-auto min-h-[120px] py-3 leading-relaxed;
+  }
+
+  .skeleton {
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.08) 50%, rgba(255, 255, 255, 0.04) 100%);
+    background-size: 200% 100%;
+    @apply animate-shimmer rounded-lg;
+  }
+
+  /* Texte long (pages légales) : lisible, aéré, hiérarchie nette. */
+  .prose-legal {
+    @apply max-w-prose text-[15px] leading-7 text-fg-muted;
+  }
+  .prose-legal h2 {
+    @apply mt-12 mb-3 text-[17px] font-semibold tracking-tight text-fg;
+  }
+  .prose-legal p {
+    @apply mb-4;
+  }
+  .prose-legal ul {
+    @apply mb-4 list-disc space-y-1.5 pl-5 marker:text-fg-faint;
+  }
+  .prose-legal a {
+    @apply text-fg underline decoration-line-strong underline-offset-4 transition-colors hover:decoration-accent;
+  }
+  .prose-legal strong {
+    @apply font-medium text-fg;
   }
 }
 
-/* Style des inputs range pour la barre de volume/progress (violet) */
-input[type="range"].volume-purple {
-  accent-color: var(--brand-vivid);
+/* Pochettes : tout se règle sur leur largeur ; titre et libellés seulement quand ils se lisent. */
+.cover {
+  container-type: inline-size;
+}
+.cover-big {
+  visibility: hidden;
+}
+@container (min-width: 150px) {
+  .cover-big {
+    visibility: visible;
+  }
 }
 
-/* Webkit (Chrome/Safari) - personnalisation plus visible */
-input[type="range"].volume-purple::-webkit-slider-runnable-track {
-  background: linear-gradient(90deg, var(--brand-vivid) 0%, var(--brand-lavender) 100%);
-  height: 4px;
-  border-radius: 9999px;
-}
-input[type="range"].volume-purple::-webkit-slider-thumb {
+/* Curseur de progression et de volume : piste fine, pastille blanche. */
+input[type="range"].range {
   -webkit-appearance: none;
   appearance: none;
-  width: 14px;
-  height: 14px;
-  background: white;
-  border-radius: 9999px;
-  margin-top: -5px; /* centrer sur la piste */
-  border: 2px solid rgba(255,255,255,0.4);
-}
-
-/* Firefox */
-input[type="range"].volume-purple::-moz-range-track {
-  background: linear-gradient(90deg, var(--brand-vivid) 0%, var(--brand-lavender) 100%);
   height: 4px;
-  border-radius: 9999px;
+  border-radius: 999px;
+  background: linear-gradient(to right, #fafafa var(--fill, 0%), rgba(255, 255, 255, 0.16) var(--fill, 0%));
+  cursor: pointer;
 }
-input[type="range"].volume-purple::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  background: white;
-  border-radius: 9999px;
-  border: 2px solid rgba(255,255,255,0.4);
-}
-
-/* Tous les sliders du site en violet */
-input[type="range"] {
-  accent-color: var(--brand-vivid);
-}
-input[type="range"]::-webkit-slider-runnable-track {
-  background: linear-gradient(90deg, var(--brand-vivid) 0%, var(--brand-lavender) 100%);
-  height: 4px;
-  border-radius: 9999px;
-}
-input[type="range"]::-webkit-slider-thumb {
+input[type="range"].range::-webkit-slider-thumb {
   -webkit-appearance: none;
-  appearance: none;
-  width: 14px;
-  height: 14px;
-  background: white;
-  border-radius: 9999px;
-  margin-top: -5px;
-  border: 2px solid rgba(255,255,255,0.4);
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: #fff;
+  opacity: 0;
+  transition: opacity 0.15s;
 }
-input[type="range"]::-moz-range-track {
-  background: linear-gradient(90deg, var(--brand-vivid) 0%, var(--brand-lavender) 100%);
-  height: 4px;
-  border-radius: 9999px;
+input[type="range"].range:hover::-webkit-slider-thumb,
+input[type="range"].range:focus-visible::-webkit-slider-thumb {
+  opacity: 1;
 }
-input[type="range"]::-moz-range-thumb {
-  width: 14px;
-  height: 14px;
-  background: white;
-  border-radius: 9999px;
-  border: 2px solid rgba(255,255,255,0.4);
+input[type="range"].range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
 }

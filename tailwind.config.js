@@ -4,12 +4,36 @@ module.exports = {
   theme: {
     extend: {
       screens: {
-        xxs: "320px",
         xs: "375px",
-        // keep Tailwind defaults: sm, md, lg, xl, 2xl
         "3xl": "1920px",
       },
       colors: {
+        // Fond et surfaces : du plus profond au plus élevé.
+        ink: {
+          DEFAULT: "#09090B",
+          900: "#09090B",
+          850: "#0E0E11",
+          800: "#121216",
+          750: "#17171C",
+          700: "#1D1D23",
+          600: "#26262E",
+        },
+        line: {
+          DEFAULT: "rgba(255,255,255,0.08)",
+          strong: "rgba(255,255,255,0.14)",
+        },
+        fg: {
+          DEFAULT: "#FAFAFA",
+          muted: "#A1A1AA",
+          faint: "#71717A",
+        },
+        // Le violet du logo : ce qui joue, ce qui est choisi, ce qui est mis en avant.
+        accent: {
+          DEFAULT: "#7C5CFF",
+          soft: "rgba(124,92,255,0.14)",
+          deep: "#5B2CC9",
+        },
+        // Anciens noms (admin) gardés pour ne rien casser.
         brand: {
           DEFAULT: "#4F2BD4",
           vivid: "#7C5CFF",
@@ -19,23 +43,43 @@ module.exports = {
           card: "#0F0F18",
           footer: "#030308",
         },
-        primary: {
-          DEFAULT: "#7C5CFF",
-          soft: "#5b3bc4",
-        },
-        surface: {
-          card: "#151224",
-          base: "#0c0a13",
-        },
+        primary: { DEFAULT: "#7C5CFF", soft: "#5b3bc4" },
+        surface: { card: "#151224", base: "#0c0a13" },
+      },
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+        mono: ["var(--font-geist-mono)", "ui-monospace", "SFMono-Regular", "monospace"],
+      },
+      maxWidth: {
+        site: "1200px",
+        prose: "68ch",
+      },
+      borderRadius: {
+        card: "16px",
       },
       keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0', transform: 'scale(0.95)' },
-          '100%': { opacity: '1', transform: 'scale(1)' },
+        rise: {
+          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        bars: {
+          "0%, 100%": { transform: "scaleY(0.35)" },
+          "50%": { transform: "scaleY(1)" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
+        },
+        marquee: {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(-50%)" },
         },
       },
       animation: {
-        'fade-in': 'fadeIn 0.8s ease-out forwards',
+        rise: "rise 0.5s cubic-bezier(0.22,1,0.36,1) both",
+        bars: "bars 0.9s ease-in-out infinite",
+        shimmer: "shimmer 1.6s linear infinite",
+        marquee: "marquee 45s linear infinite",
       },
     },
   },

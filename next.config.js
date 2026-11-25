@@ -1,9 +1,7 @@
 /**
- * Pages masquées pour la V1 (pas encore de backend derrière).
- * Pour réactiver une page : la retirer de cette liste et la remettre dans Navbar/Footer.
- * Abonnements : les routes /api/stripe/* ont été supprimées (portail de facturation
- * accessible sans authentification, priceId libre). Les recréer côté API, derrière
- * l'authentification, en vérifiant que le client Stripe appartient à l'utilisateur.
+ * Pages retirées de la V1 (abonnements, marketplace, cartes cadeau, fidélité, tarification,
+ * notre histoire, espace vendeur) : leur code est dans l'historique Git, leurs anciennes
+ * adresses mènent au catalogue.
  */
 const HIDDEN_IN_V1 = [
   "/web/abonnements",
@@ -24,20 +22,9 @@ const nextConfig = {
   },
   // Évite que Next prenne un lockfile d'un dossier parent pour la racine du projet
   outputFileTracingRoot: __dirname,
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'file-up.fr',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '**.file-up.fr',
-        pathname: '/**',
-      },
-    ],
-  },
+  // Pas d'optimisation d'images côté serveur (Cloudflare) : les pochettes
+  // viennent de l'API, déjà à la bonne taille.
+  images: { unoptimized: true },
   async headers() {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
     const csp = [
@@ -45,7 +32,7 @@ const nextConfig = {
       "base-uri 'self';",
       "frame-ancestors 'self';",
       "img-src 'self' data: https:;",
-      "media-src 'self' data: https:;",
+      `media-src 'self' data: ${apiUrl} https:;`,
       "font-src 'self' data: https:;",
       "style-src 'self' 'unsafe-inline' https:;",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:;",
@@ -87,7 +74,15 @@ const nextConfig = {
       { source: "/account", destination: "/web/account", permanent: true },
       { source: "/marketplace", destination: "/web/marketplace", permanent: true },
       { source: "/catalogue", destination: "/web/catalogue", permanent: true },
+      // Lien court d'une prod, à mettre sous un TikTok : beatmakerz.fr/prod/<id>
+      { source: "/prod/:id", destination: "/web/prod/:id", permanent: true },
+      { source: "/sur-mesure", destination: "/web/prodsurmesure", permanent: true },
     ];
   },
 };
 module.exports = nextConfig;
+
+// En développement, donne accès aux liaisons Cloudflare (sans effet en production).
+if (process.env.NODE_ENV === "development") {
+  import("@opennextjs/cloudflare").then((m) => m.initOpenNextCloudflareForDev()).catch(() => {});
+}

@@ -1,3 +1,4 @@
+import { API_URL } from "@/lib/apiUrl";
 import { apiGet, apiPost, apiDelete, apiPatch } from "./api-client";
 
 export type FavoriteItem = {
@@ -33,9 +34,11 @@ export type PurchasedItem = {
   licenseTypeId: string;
   unitPriceCents: number;
   qty: number;
-  beat?: { title?: string; coverUrl?: string } | null;
+  beat?: { title?: string; coverUrl?: string; bpm?: number; key?: string; genres?: string[] } | null;
   license?: { code?: string } | null;
   downloadable: boolean;
+  /** Fichiers que la licence donne et qui existent (mp3, wav, stems). */
+  files?: string[];
 };
 
 /** Commande payée (ou remboursée) telle que renvoyée par GET /me/orders. */
@@ -59,15 +62,14 @@ export const markNotificationRead = (id: string) => apiPost(`/me/notifications/$
 
 export const fetchOrders = () => apiGet<Order[]>("/me/orders");
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 /**
  * Lien de téléchargement d'un beat acheté : l'API renvoie un lien signé
  * (valable 15 min) qui relaie le fichier sans exposer son URL de stockage.
  */
-export const fetchDownloadUrl = async (orderId: string, itemId: string) => {
+export const fetchDownloadUrl = async (orderId: string, itemId: string, type = "mp3") => {
   const { downloadUrl } = await apiGet<{ downloadUrl: string; expiresAt: string }>(
-    `/me/orders/${orderId}/items/${itemId}/download`
+    `/me/orders/${orderId}/items/${itemId}/download?type=${encodeURIComponent(type)}`
   );
   return `${API_URL}${downloadUrl}`;
 };

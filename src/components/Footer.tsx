@@ -1,111 +1,74 @@
-"use client";
-
-import React from "react";
 import Link from "next/link";
-import { FaInstagram, FaTiktok, FaYoutube, FaEnvelope } from "react-icons/fa6";
+import { LEGAL, NAV, SITE } from "@/lib/site";
 
-const NAV_SECTIONS = {
-  explore: [
-    { label: "Catalogue", href: "/web/catalogue" },
-    { label: "Prod sur mesure", href: "/web/prodsurmesure" },
-  ],
-  account: [
-    { label: "Mon compte", href: "/web/account" },
-    { label: "Panier", href: "/web/panier" },
-  ],
-  legal: [
-    { label: "Mentions légales", href: "/web/mentions" },
-    { label: "CGV", href: "/web/cgv" },
-    { label: "CGU", href: "/web/cgu" },
-    { label: "Confidentialité", href: "/web/politique" },
-  ],
-  support: [
-    { label: "Contact", href: "/web/contact" },
-    { label: "FAQ", href: "/web/faq" },
-  ],
-};
+const link = "font-mono text-[11px] uppercase tracking-[0.14em] text-white/75 transition-colors hover:text-white";
 
-export default function Footer() {
+/** Le pied de page : un grand bloc violet, le nom en très grand, les liens en mono entre crochets. */
+export function Footer() {
   return (
-    <footer className="relative w-full bg-brand-footer text-white">
-      {/* Top separator line with glow */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-      {/* Main content */}
-      <div className="mx-auto w-full max-w-6xl px-6 lg:px-8 pt-16 pb-8">
-        {/* Grid layout */}
-        <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 lg:grid-cols-5">
-          {/* Brand column */}
-          <div className="col-span-2 sm:col-span-4 lg:col-span-1 lg:pr-8">
-            <div className="text-xl font-bold tracking-[0.25em] text-white">BEATMAKERZ</div>
-            <p className="mt-3 text-xs leading-relaxed text-white/40">
-              Plateforme française pour artistes & beatmakers
-            </p>
-            {/* Social icons */}
-            <div className="mt-6 flex items-center gap-3">
-              <SocialIcon href="https://www.instagram.com/beatmakerz_pro/" label="Instagram">
-                <FaInstagram className="h-4 w-4" />
-              </SocialIcon>
-              <SocialIcon href="https://www.tiktok.com/@beatmakerz.pro" label="TikTok">
-                <FaTiktok className="h-4 w-4" />
-              </SocialIcon>
-              <SocialIcon href="https://www.youtube.com/@BEATMAKERZ-PRO" label="YouTube">
-                <FaYoutube className="h-4 w-4" />
-              </SocialIcon>
-              <SocialIcon href="mailto:beatmakerz.contact@gmail.com" label="Email">
-                <FaEnvelope className="h-4 w-4" />
-              </SocialIcon>
-            </div>
-          </div>
-
-          {/* Navigation columns */}
-          <NavColumn title="Explorer" links={NAV_SECTIONS.explore} />
-          <NavColumn title="Compte" links={NAV_SECTIONS.account} />
-          <NavColumn title="Légal" links={NAV_SECTIONS.legal} />
-          <NavColumn title="Support" links={NAV_SECTIONS.support} />
+    <footer className="mt-32 bg-accent-deep text-white">
+      <div className="container-site pb-8 pt-14 sm:pt-20">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <Col title="Navigation">
+            {[...NAV].map((n) => (
+              <Link key={n.href} href={n.href} className={link}>
+                [ {n.label} ]
+              </Link>
+            ))}
+          </Col>
+          <Col title="Contact">
+            <a href={`mailto:${SITE.email}`} className={`${link} normal-case`}>
+              [ {SITE.email} ]
+            </a>
+            <Link href="/web/contact" className={link}>
+              [ Écrire un message ]
+            </Link>
+            <Link href="/web/account" className={link}>
+              [ Mon compte ]
+            </Link>
+          </Col>
+          <Col title="Réseaux">
+            <a href={SITE.socials.tiktok} target="_blank" rel="noreferrer" className={link}>
+              [ TikTok ]
+            </a>
+            <a href={SITE.socials.instagram} target="_blank" rel="noreferrer" className={link}>
+              [ Instagram ]
+            </a>
+            <a href={SITE.socials.youtube} target="_blank" rel="noreferrer" className={link}>
+              [ YouTube ]
+            </a>
+          </Col>
+          <Col title="Légal">
+            {LEGAL.map((l) => (
+              <Link key={l.href} href={l.href} className={link}>
+                [ {l.label} ]
+              </Link>
+            ))}
+          </Col>
         </div>
 
-        {/* Bottom bar */}
-        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
-          <p className="text-xs text-white/30">
-            © {new Date().getFullYear()} Beatmakerz. Tous droits réservés.
-          </p>
+        {/* Le nom remplit exactement la largeur, quelle que soit l'écran. */}
+        <svg viewBox="0 0 1000 132" className="mt-16 block w-full select-none sm:mt-24" aria-hidden="true">
+          <text x="0" y="118" textLength="1000" lengthAdjust="spacingAndGlyphs" fill="currentColor" style={{ fontFamily: "var(--font-geist-sans)", fontWeight: 600, fontSize: 158, letterSpacing: "-0.04em" }}>
+            BEATMAKERZ
+          </text>
+        </svg>
+
+        <div className="mt-8 flex flex-col gap-2 border-t border-white/20 pt-6 font-mono text-[10px] uppercase tracking-[0.14em] text-white/60 sm:flex-row sm:justify-between">
+          <span>© {new Date().getFullYear()} Beatmakerz</span>
+          <span>Paiement sécurisé par Stripe</span>
+          <span>Tous droits réservés</span>
         </div>
       </div>
     </footer>
   );
 }
 
-function NavColumn({ title, links }: { title: string; links: { label: string; href: string }[] }) {
+function Col({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="text-[10px] font-semibold uppercase tracking-[0.3em] text-white/50">{title}</h3>
-      <ul className="mt-4 space-y-2.5">
-        {links.map((link) => (
-          <li key={link.href}>
-            <Link
-              href={link.href}
-              className="text-sm text-white/70 transition-colors hover:text-white"
-            >
-              {link.label}
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/45">{title}</p>
+      <div className="mt-4 flex flex-col items-start gap-2.5">{children}</div>
     </div>
-  );
-}
-
-function SocialIcon({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noreferrer"
-      aria-label={label}
-      className="flex h-8 w-8 items-center justify-center text-white/50 transition-colors hover:text-white"
-    >
-      {children}
-    </a>
   );
 }

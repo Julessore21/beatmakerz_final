@@ -1,168 +1,73 @@
 "use client";
 
-import React, { useState, ChangeEvent, FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
-import { contactSchema, type ContactInput } from "@/schemas/forms/contactSchema";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input, Label, Textarea } from "@/components/ui/input";
-import { PageHeader, PageShell } from "@/components/ui/page";
+import { useState } from "react";
+import { Mail, Send } from "lucide-react";
+import { SITE } from "@/lib/site";
+import { Button } from "@/components/ui/Button";
+import { PageTitle } from "@/components/ui/PageTitle";
 
-type Status = "idle" | "loading" | "success" | "error";
+/**
+ * Le formulaire prépare le mail dans la messagerie de l'artiste : le message part de son adresse
+ * et arrive directement dans la boîte de Beatmakerz (rien ne se perd dans une base que personne ne lit).
+ */
+export default function ContactPage() {
+  const [name, setName] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-const EMPTY_FORM: ContactInput = { name: "", email: "", subject: "", message: "" };
-
-// Sujets préremplis via ?subject=… (ex. lien « Supprimer mon compte » de la page compte)
-const PRESET_SUBJECTS: Record<string, string> = {
-  "suppression-compte": "Demande de suppression de compte",
-};
-
-const Contact: React.FC = () => {
-  const searchParams = useSearchParams();
-  const [formData, setFormData] = useState<ContactInput>({
-    ...EMPTY_FORM,
-    subject: PRESET_SUBJECTS[searchParams.get("subject") ?? ""] ?? "",
-  });
-  const [status, setStatus] = useState<Status>("idle");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ContactInput, string>>>({});
-  const [touched, setTouched] = useState<Partial<Record<keyof ContactInput, boolean>>>({});
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (touched[name as keyof ContactInput]) {
-      const result = contactSchema.safeParse({ ...formData, [name]: value });
-      if (!result.success) {
-        const issue = result.error.issues.find((i) => i.path[0] === name);
-        setFieldErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
-      } else {
-        setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
-      }
-    }
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name } = e.target;
-    setTouched((prev) => ({ ...prev, [name]: true }));
-    const result = contactSchema.safeParse(formData);
-    if (!result.success) {
-      const issue = result.error.issues.find((i) => i.path[0] === name);
-      setFieldErrors((prev) => ({ ...prev, [name]: issue?.message ?? "" }));
-    } else {
-      setFieldErrors((prev) => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    const result = contactSchema.safeParse(formData);
-    if (!result.success) {
-      const errs: Partial<Record<keyof ContactInput, string>> = {};
-      result.error.issues.forEach((i) => {
-        const key = i.path[0] as keyof ContactInput;
-        if (key && !errs[key]) errs[key] = i.message;
-      });
-      setFieldErrors(errs);
-      setTouched({ name: true, email: true, subject: true, message: true });
-      return;
-    }
-
-    setStatus("loading");
-    setErrorMsg("");
-
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(result.data),
-      });
-
-      const data = await res.json() as { error?: string };
-
-      if (!res.ok) {
-        setStatus("error");
-        setErrorMsg(data.error || "Une erreur est survenue. Réessaie plus tard.");
-        return;
-      }
-
-      setStatus("success");
-      setFormData(EMPTY_FORM);
-      setFieldErrors({});
-      setTouched({});
-    } catch {
-      setStatus("error");
-      setErrorMsg("Impossible de contacter le serveur. Vérifie ta connexion.");
-    }
+    if (message.trim().length < 10) return setError("Écris quelques mots de plus (10 caractères au moins).");
+    setError(null);
+    const body = `${message.trim()}\n\n${name.trim() ? `— ${name.trim()}` : ""}`;
+    window.location.href = `mailto:${SITE.email}?subject=${encodeURIComponent(subject.trim() || "Message depuis le site")}&body=${encodeURIComponent(body)}`;
   };
-
-  const field = (name: keyof ContactInput, label: string, props: { type?: string; placeholder: string }) => (
-    <div>
-      <Label htmlFor={name}>{label}</Label>
-      <Input
-        id={name}
-        name={name}
-        type={props.type ?? "text"}
-        value={formData[name] ?? ""}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        placeholder={props.placeholder}
-        disabled={status === "loading"}
-      />
-      {fieldErrors[name] && <p className="mt-1 text-xs text-rose-400">{fieldErrors[name]}</p>}
-    </div>
-  );
 
   return (
-    <PageShell size="md">
-      <PageHeader
-        title="Nous contacter"
-        subtitle="Une question, une collaboration, un souci avec une commande ? On te répond rapidement."
-      />
+    <div className="container-site grid gap-12 pt-10 sm:pt-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+      <div>
+        <PageTitle eyebrow="Contact" title="Une question ? Écris-nous." text="Une commande, une licence, une exclusivité, un problème de téléchargement : on répond par mail, en général dans la journée." />
+        <a href={`mailto:${SITE.email}`} className="mt-8 inline-flex items-center gap-3 rounded-full border border-line-strong px-5 py-3 text-[15px] transition-colors hover:bg-white/[0.06]">
+          <Mail className="h-4 w-4" />
+          {SITE.email}
+        </a>
+        <div className="mt-10 border-t border-line pt-8">
+          <p className="eyebrow mb-4">Sur les réseaux</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { href: SITE.socials.tiktok, label: "TikTok" },
+              { href: SITE.socials.instagram, label: "Instagram" },
+              { href: SITE.socials.youtube, label: "YouTube" },
+            ].map((s) => (
+              <a key={s.label} href={s.href} target="_blank" rel="noreferrer" className="rounded-full border border-line px-4 py-2 text-[14px] text-fg-muted transition-colors hover:border-line-strong hover:text-fg">
+                {s.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
 
-      {status === "success" ? (
-        <Card className="p-8 text-center">
-          <p className="text-lg font-medium">Message envoyé !</p>
-          <p className="mt-2 text-sm text-zinc-400">On a bien reçu ton message et on te répondra dans les meilleurs délais.</p>
-          <Button variant="outline" className="mt-6" onClick={() => setStatus("idle")}>
-            Envoyer un autre message
-          </Button>
-        </Card>
-      ) : (
-        <Card className="p-6 md:p-8">
-          <form onSubmit={handleSubmit} noValidate className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {field("name", "Nom", { placeholder: "Ton nom" })}
-              {field("email", "Email", { type: "email", placeholder: "toi@exemple.fr" })}
-            </div>
-            {field("subject", "Sujet", { placeholder: "Sujet (optionnel)" })}
-            <div>
-              <Label htmlFor="message">Message</Label>
-              <Textarea
-                id="message"
-                name="message"
-                value={formData.message}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="Ton message"
-                rows={6}
-                disabled={status === "loading"}
-              />
-              {fieldErrors.message && <p className="mt-1 text-xs text-rose-400">{fieldErrors.message}</p>}
-            </div>
-
-            {status === "error" && (
-              <p className="rounded-xl bg-rose-400/10 px-4 py-3 text-sm text-rose-300">{errorMsg}</p>
-            )}
-
-            <Button type="submit" size="lg" fullWidth disabled={status === "loading"}>
-              {status === "loading" ? "Envoi en cours…" : "Envoyer"}
-            </Button>
-          </form>
-        </Card>
-      )}
-    </PageShell>
+      <form onSubmit={submit} className="card space-y-4 p-6 sm:p-8" noValidate>
+        <label className="block">
+          <span className="mb-1.5 block text-[13px] font-medium text-fg-muted">Ton nom (ou nom d’artiste)</span>
+          <input className="field" value={name} onChange={(e) => setName(e.target.value.slice(0, 100))} autoComplete="name" />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-[13px] font-medium text-fg-muted">Sujet</span>
+          <input className="field" value={subject} onChange={(e) => setSubject(e.target.value.slice(0, 200))} placeholder="Ma commande, une exclusivité…" />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-[13px] font-medium text-fg-muted">Message</span>
+          <textarea className="field min-h-[180px]" value={message} onChange={(e) => setMessage(e.target.value.slice(0, 5000))} />
+        </label>
+        {error && <p className="rounded-lg bg-white/[0.05] px-3 py-2.5 text-[14px]">{error}</p>}
+        <Button type="submit" size="lg" className="w-full">
+          <Send className="h-4 w-4" />
+          Ouvrir dans ma messagerie
+        </Button>
+        <p className="text-center text-[12px] text-fg-faint">Ton message s’ouvre dans ta messagerie, prêt à partir.</p>
+      </form>
+    </div>
   );
-};
-
-export default Contact;
+}

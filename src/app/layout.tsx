@@ -1,108 +1,62 @@
 import "@/styles/globals.css";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
-import { CartProvider } from "@/context/CartContext";
-import { FavoritesProvider } from "@/context/FavoritesContext";
-import GlobalAudioPlayer from "@/components/GlobalAudioPlayer";
-import NavBar from "@/components/Navbar";
 import { AuthProvider } from "@/context/AuthContext";
-import FooterWrapper from "@/components/FooterWrapper";
+import { CartProvider } from "@/context/CartContext";
+import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
+import { CartDrawer } from "@/components/shop/CartDrawer";
+import { PlayerBar } from "@/components/shop/PlayerBar";
 
-const siteUrl = (
-  process.env.NEXT_PUBLIC_SITE_URL ||
-  (process.env.NODE_ENV === "production"
-    ? process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "https://beatmakerz-final.vercel.app"
-    : "http://localhost:3000")
-).replace(/\/$/, "");
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || (process.env.NODE_ENV === "production" ? "https://beatmakerz.fr" : "http://localhost:3000")).replace(/\/$/, "");
+const description = "Des prods pour rappeurs, prêtes à poser : trap, drill, cloud, lofi. Écoute, achète la licence, télécharge tes fichiers tout de suite.";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
+  applicationName: "Beatmakerz",
+  title: { default: "Beatmakerz · Prods pour rappeurs", template: "%s · Beatmakerz" },
+  description,
+  openGraph: {
+    type: "website",
+    siteName: "Beatmakerz",
+    title: "Beatmakerz · Prods pour rappeurs",
+    description,
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Beatmakerz" }],
+    locale: "fr_FR",
+    url: siteUrl,
+  },
+  twitter: { card: "summary_large_image", title: "Beatmakerz · Prods pour rappeurs", description, images: ["/opengraph-image"] },
+  icons: { icon: [{ url: "/icon.svg", type: "image/svg+xml" }], apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }] },
+  robots: { index: true, follow: true },
+};
+
+export const viewport: Viewport = { themeColor: "#09090B", colorScheme: "dark" };
 
 const organizationJsonLd = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "Beatmakerz",
   url: siteUrl,
-  logo: `${siteUrl}/img/beatmakerz.png`,
+  logo: `${siteUrl}/icon.svg`,
+  sameAs: ["https://www.tiktok.com/@beatmakerz.pro", "https://www.instagram.com/beatmakerz_pro/", "https://www.youtube.com/@BEATMAKERZ-PRO"],
 };
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  applicationName: "Beatmakerz",
-  title: {
-    default: "Beatmakerz",
-    template: "%s | Beatmakerz",
-  },
-  description:
-    "Plateforme française de vente d'instrumentales et de services pour artistes",
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-      "max-video-preview": -1,
-    },
-  },
-  openGraph: {
-    type: "website",
-    siteName: "Beatmakerz",
-    title: "Beatmakerz",
-    description:
-      "Plateforme française de vente d'instrumentales et de services pour artistes",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "Beatmakerz",
-      },
-    ],
-    locale: "fr_FR",
-    url: siteUrl,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Beatmakerz",
-    description:
-      "Plateforme française de vente d'instrumentales et de services pour artistes",
-    images: ["/opengraph-image"],
-  },
-  icons: {
-    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
-  },
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr" suppressHydrationWarning>
-      <body className="font-sans flex min-h-screen flex-col bg-transparent">
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationJsonLd).replace(/</g, "\\u003c"),
-          }}
-        />
+    <html lang="fr" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
+      <body className="flex min-h-screen flex-col">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd).replace(/</g, "\\u003c") }} />
         <AuthProvider>
           <CartProvider>
-            <FavoritesProvider>
-              <AudioPlayerProvider>
-                <header>
-                  <NavBar />
-                </header>
-                <main className="flex-1 w-full">
-                  {children}
-                </main>
-                <FooterWrapper />
-                <GlobalAudioPlayer />
-              </AudioPlayerProvider>
-            </FavoritesProvider>
+            <AudioPlayerProvider>
+              <Header />
+              <main className="w-full flex-1 pt-24 sm:pt-28">{children}</main>
+              <Footer />
+              <PlayerBar />
+              <CartDrawer />
+            </AudioPlayerProvider>
           </CartProvider>
         </AuthProvider>
       </body>
